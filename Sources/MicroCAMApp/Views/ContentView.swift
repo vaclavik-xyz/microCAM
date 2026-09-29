@@ -62,7 +62,7 @@ struct ContentView: View {
             MoveToJobSheet(files: request.files)
         }
         .sheet(item: $compare) { pair in
-            Text("Porovnání \(pair.before.lastPathComponent) / \(pair.after.lastPathComponent)").padding()
+            CompareView(before: pair.before, after: pair.after)
         }
     }
 }
