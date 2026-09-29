@@ -85,7 +85,16 @@ final class AppModel: ObservableObject {
         recorder.onFailure = { [weak self] error in
             self?.stopRecording(reason: error.localizedDescription)
         }
-        lifecycle.onWillSleep = { [weak self] in self?.stopRecording(reason: "Mac usnul") }
+        lifecycle.onWillSleep = { [weak self] in
+            self?.stopRecording(reason: "Mac usnul")
+            self?.stopTimelapse()
+        }
+        timelapse.onShot = { [weak self] in self?.takePhoto(kind: .timelapse) }
+        timelapse.onFinish = { [weak self] in
+            guard let self else { return }
+            self.lifecycle.update { $0.timelapseRunning = false }
+            self.message = StatusMessage(text: "Časosběr skončil (\(self.timelapse.shotsTaken) snímků).", isError: false)
+        }
         lifecycle.update { $0.pauseWhenHidden = settings.pauseWhenHidden }
         lifecycle.onChange = { [weak self] _ in self?.applyLifecycle() }
         engine.onCameraDisconnected = { [weak self] in
@@ -411,4 +420,23 @@ final class AppModel: ObservableObject {
         message = StatusMessage(text: "Nalezen nedokončený záznam – otevírám jeho složku.", isError: true)
         NSWorkspace.shared.open(dir)
     }
+
+    // MARK: Timelapse
+
+    let timelapse = TimelapseRunner()
+
+    func startTimelapse() {
+        guard !timelapse.isRunning else { return }
+        guard settings.storageRoot != nil else { showFirstRun = true; return }
+        guard let schedule = TimelapseSchedule(interval: settings.timelapseInterval,
+                                               duration: settings.timelapseDuration) else {
+            message = StatusMessage(text: "Časosběr: interval musí být aspoň 1 s a délka aspoň jeden interval (max. 7 dní).",
+                                    isError: true)
+            return
+        }
+        lifecycle.update { $0.timelapseRunning = true }
+        timelapse.start(schedule)
+    }
+
+    func stopTimelapse() { timelapse.stop() }
 }

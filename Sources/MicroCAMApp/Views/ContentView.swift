@@ -37,6 +37,7 @@ struct ContentView: View {
                 .help("Nahrávat / zastavit (R)")
                 Button { model.revealCaptureFolder() } label: { Label("Složka", systemImage: "folder") }
                     .help("Otevřít složku, kam se teď ukládá")
+                TimelapseToolbarButton(runner: model.timelapse)
                 Button { showAdjustments.toggle() } label: {
                     Label("Úpravy obrazu", systemImage: "slider.horizontal.3")
                 }
@@ -70,6 +71,21 @@ struct CameraStateOverlay: View {
             Text(error).foregroundStyle(.red)
                 .padding(12).background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
                 .frame(maxHeight: .infinity, alignment: .top).padding(.top, 12)
+        }
+    }
+}
+
+struct TimelapseToolbarButton: View {
+    @ObservedObject var runner: TimelapseRunner
+    @State private var show = false
+
+    var body: some View {
+        Button { show.toggle() } label: {
+            Label("Časosběr", systemImage: runner.isRunning ? "timer.circle.fill" : "timer")
+        }
+        .help("Časosběr")
+        .popover(isPresented: $show) {
+            TimelapseForm(runner: runner).padding().frame(width: 340)
         }
     }
 }
