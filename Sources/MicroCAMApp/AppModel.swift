@@ -476,22 +476,33 @@ final class AppModel: ObservableObject {
     let library = LibraryModel()
     @Published var filesToMove: [URL]?
 
+    @Published private(set) var isMovingFiles = false
+
+    /// Runs off the main thread: a move to another volume copies whole videos.
     func moveFiles(_ urls: [URL], to target: JobContext) {
         guard let layout = settings.layout else { showFirstRun = true; return }
-        let outcomes = JobFileMover(layout: layout).move(urls, to: target)
-        var moved = 0, skipped = 0
-        var failed: [MoveOutcome] = []
-        for outcome in outcomes {
-            switch outcome.result {
-            case .success: moved += 1
-            case .failure(.alreadyThere): skipped += 1
-            case .failure: failed.append(outcome)
+        guard !isMovingFiles else { return }
+        isMovingFiles = true
+        message = StatusMessage(text: "Přesouvám \(urls.count) soubor(ů)…", isError: false)
+        Task {
+            let outcomes = await Task.detached(priority: .userInitiated) {
+                JobFileMover(layout: layout).move(urls, to: target)
+            }.value
+            isMovingFiles = false
+            var moved = 0, skipped = 0
+            var failed: [MoveOutcome] = []
+            for outcome in outcomes {
+                switch outcome.result {
+                case .success: moved += 1
+                case .failure(.alreadyThere): skipped += 1
+                case .failure: failed.append(outcome)
+                }
             }
+            var text = "Přesunuto: \(moved)"
+            if skipped > 0 { text += ", přeskočeno \(skipped) (už u zakázky)" }
+            if let first = failed.first { text += ", nepodařilo se \(failed.count) (\(first.source.lastPathComponent))" }
+            message = StatusMessage(text: text + ".", isError: !failed.isEmpty)
+            capturesChanged()
         }
-        var text = "Přesunuto: \(moved)"
-        if skipped > 0 { text += ", přeskočeno \(skipped) (už u zakázky)" }
-        if let first = failed.first { text += ", nepodařilo se \(failed.count) (\(first.source.lastPathComponent))" }
-        message = StatusMessage(text: text + ".", isError: !failed.isEmpty)
-        capturesChanged()
     }
 }

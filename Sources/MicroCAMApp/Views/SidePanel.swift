@@ -35,7 +35,7 @@ struct SidePanel: View {
                 Spacer()
                 if model.settings.jobsEnabled {
                     Button("Přesunout…") { model.filesToMove = Array(library.selection) }
-                        .disabled(library.selection.isEmpty)
+                        .disabled(library.selection.isEmpty || model.isMovingFiles)
                 }
                 Button("Porovnat") { compare = comparePair }
                     .disabled(comparePair == nil)
