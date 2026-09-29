@@ -26,8 +26,10 @@ AVFoundation video device must work.
 3. A 60-minute 1080p60 recording with microphone audio has no dropped frames
    (verified with `ffprobe` frame count vs. duration × fps), both without and
    with image adjustments enabled.
-4. Every photo and video is filed under a repair-order folder (or
-   `_Nezařazeno`) so that a later CRM upload needs no manual file picking.
+4. With jobs enabled (default), every photo and video is filed under a
+   repair-order folder (or `_Nezařazeno`) so that a later CRM upload needs no
+   manual file picking. With jobs disabled, files go directly into the root
+   folder.
 5. The app stays small: no third-party dependencies in v1, a focused feature
    set, and nothing running when it is not needed.
 
@@ -99,8 +101,12 @@ into the active job folder. Secondary control, off by default.
 - Active job: a free-text order code (e.g. `PR-260042`, `260042`) or "no job".
   Codes are validated/sanitized for use as folder names.
 - Layout: `<root>/<code>/` and `<root>/_Nezařazeno/`.
-- File names: `<code>_<yyyy-MM-dd_HH-mm-ss>[_n].jpg|.mov`
-  (`bez-zakazky_…` when no job). A numeric suffix resolves collisions.
+- File names: `<code>_<yyyy-MM-dd_HH-mm-ss>[_n].jpg|.mov`. Files without a
+  job live in `_Nezařazeno/` and use the `bez-zakazky_` prefix (the folder
+  name is for the user, the prefix keeps file names ASCII). A numeric suffix
+  resolves collisions.
+- Jobs disabled (setting): no job folders; files are written directly to
+  `<root>/microcam_<yyyy-MM-dd_HH-mm-ss>[_n].jpg|.mov`.
 - Reassign: moving selected files to another job physically moves and renames
   them. Moves are atomic per file; failures are reported, never silently lost.
 - Root folder is chosen in Settings; the default is the current Digital Viewer
@@ -172,6 +178,10 @@ the CRM already supports this without new server features:
   verify how `source` maps to `customerVisible` before implementing.
 
 v1 prepares for this only through the per-job folder layout and file naming.
+
+CRM upload requires jobs to be enabled; files without a job code
+(`_Nezařazeno/`, `microcam_…`) are never uploaded. The CRM toggle is disabled
+while jobs are off.
 
 The integration is optional and **off by default**, so microCAM stays a plain
 camera app for anyone without the CRM. The upload button appears only
