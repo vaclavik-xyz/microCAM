@@ -230,8 +230,21 @@ final class CaptureEngine: NSObject, ObservableObject {
             if gone != nil, gone == self.currentCameraID {
                 self.currentCameraID = nil
                 self.latestFrame.value = nil
+                self.removeVideoInput()
                 self.onCameraDisconnected?()
             }
+        }
+    }
+
+    /// Drops the dead input of an unplugged camera; the camera is added
+    /// again by `selectCamera` when it comes back.
+    private func removeVideoInput() {
+        sessionQueue.async {
+            guard let input = self.videoInput else { return }
+            self.session.beginConfiguration()
+            self.session.removeInput(input)
+            self.videoInput = nil
+            self.session.commitConfiguration()
         }
     }
 

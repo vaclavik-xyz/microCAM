@@ -84,8 +84,10 @@ final class AppModel: ObservableObject {
             self?.message = StatusMessage(text: "Kamera byla odpojena. Po připojení se obraz obnoví.", isError: true)
         }
         engine.onCamerasChanged = { [weak self] in
-            guard let self, self.cameraAuthorized == true, self.engine.currentCameraID == nil,
-                  !self.engine.cameras.isEmpty else { return }
+            guard let self, self.cameraAuthorized == true,
+                  CameraReselectPolicy.shouldSelect(currentID: self.engine.currentCameraID,
+                                                    rememberedID: self.settings.lastDeviceID,
+                                                    available: self.engine.cameras.map(\.id)) else { return }
             self.selectCamera(self.settings.lastDeviceID)
             self.message = nil
             self.applyLifecycle()
