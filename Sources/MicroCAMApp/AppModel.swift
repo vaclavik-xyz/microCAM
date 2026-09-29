@@ -12,7 +12,7 @@ final class AppModel: ObservableObject {
     @Published var settings: AppSettings {
         didSet {
             guard settings != oldValue else { return }
-            store.save(settings)
+            scheduleSave()
             if settings.pauseWhenHidden != oldValue.pauseWhenHidden {
                 lifecycle.update { $0.pauseWhenHidden = settings.pauseWhenHidden }
             }
@@ -27,6 +27,24 @@ final class AppModel: ObservableObject {
     let lifecycle = LifecycleMonitor()
     weak var mainWindow: NSWindow?
     private let store = SettingsStore()
+    private var pendingSave: DispatchWorkItem?
+
+    /// Slider drags change settings dozens of times per second; write them
+    /// once they settle (and always on quit).
+    private func scheduleSave() {
+        pendingSave?.cancel()
+        let item = DispatchWorkItem { [weak self] in
+            MainActor.assumeIsolated { self?.flushSettings() }
+        }
+        pendingSave = item
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: item)
+    }
+
+    func flushSettings() {
+        pendingSave?.cancel()
+        pendingSave = nil
+        store.save(settings)
+    }
 
     let adjustmentsBox = LockedValue(ImageAdjustments.neutral)
     let adjustedMode = LockedValue(false)
@@ -116,6 +134,10 @@ final class AppModel: ObservableObject {
         }, handler: { [weak self] action in self?.handle(action) })
         checkUnfinishedRecordings()
         capturesChanged()
+        NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification,
+                                               object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.flushSettings() }
+        }
         // Files may change in Finder while microCAM is in the background.
         NotificationCenter.default.addObserver(forName: NSApplication.didBecomeActiveNotification,
                                                object: nil, queue: .main) { [weak self] _ in
