@@ -1,0 +1,2 @@
+import MicroCAMCore
+print("microCAM")
