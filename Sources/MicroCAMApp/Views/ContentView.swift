@@ -8,6 +8,12 @@ struct ContentView: View {
         ZStack {
             PreviewView()
             CameraStateOverlay(engine: model.engine)
+            if model.zoomScale > 1.01 {
+                Text(String(format: "%.1f×", model.zoomScale))
+                    .font(.caption.monospacedDigit()).padding(6)
+                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 6))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing).padding(10)
+            }
         }
         .background(Color.black)
         .background(WindowAccessor { model.attachMainWindow($0) })

@@ -1,5 +1,6 @@
 import AVFoundation
 import AppKit
+import MicroCAMCore
 import SwiftUI
 
 /// Hosts the preview. Task 8: passthrough only (AVCaptureVideoPreviewLayer,
@@ -11,6 +12,14 @@ final class PreviewContainerView: NSView {
     /// Parent of the preview layer; zoom transforms are applied to it.
     let contentLayer = CALayer()
     let renderer: MetalPreviewRenderer?
+    let gridView = GridOverlayView()
+    var onZoomChange: ((CGFloat) -> Void)?
+    private(set) var zoom = ZoomState() {
+        didSet {
+            applyZoom()
+            if zoom.scale != oldValue.scale { onZoomChange?(zoom.scale) }
+        }
+    }
 
     init(session: AVCaptureSession, renderer: MetalPreviewRenderer?) {
         self.renderer = renderer
@@ -32,6 +41,44 @@ final class PreviewContainerView: NSView {
             renderer.view.autoresizingMask = [.width, .height]
             addSubview(renderer.view)
         }
+        gridView.isHidden = true
+        gridView.autoresizingMask = [.width, .height]
+        addSubview(gridView)
+    }
+
+    func resetZoom() { zoom.reset() }
+
+    private func applyZoom() {
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        contentLayer.setAffineTransform(zoom.layerTransform(viewSize: bounds.size))
+        CATransaction.commit()
+        renderer?.zoom = zoom
+    }
+
+    override func scrollWheel(with event: NSEvent) {
+        let step = event.hasPreciseScrollingDeltas ? event.scrollingDeltaY * 0.01 : event.scrollingDeltaY * 0.1
+        zoom(at: event, factor: exp(step))
+    }
+
+    override func magnify(with event: NSEvent) {
+        zoom(at: event, factor: 1 + event.magnification)
+    }
+
+    override func mouseDragged(with event: NSEvent) {
+        guard bounds.width > 0, bounds.height > 0 else { return }
+        // AppKit deltaY is positive downwards; our coordinates are bottom-left.
+        zoom.pan(byNormalized: CGPoint(x: event.deltaX / bounds.width, y: -event.deltaY / bounds.height))
+    }
+
+    override func mouseDown(with event: NSEvent) {
+        if event.clickCount == 2 { zoom.reset() }
+    }
+
+    private func zoom(at event: NSEvent, factor: CGFloat) {
+        guard bounds.width > 0, bounds.height > 0 else { return }
+        let p = convert(event.locationInWindow, from: nil)
+        zoom.zoom(by: factor, anchor: CGPoint(x: p.x / bounds.width, y: p.y / bounds.height))
     }
 
     func setMode(_ mode: RenderMode) {
@@ -50,6 +97,7 @@ final class PreviewContainerView: NSView {
         super.layout()
         passthroughHost.frame = bounds
         renderer?.view.frame = bounds
+        gridView.frame = bounds
         CATransaction.begin()
         CATransaction.setDisableActions(true)
         // With a non-identity transform, set bounds/position, never frame.
@@ -57,6 +105,7 @@ final class PreviewContainerView: NSView {
         contentLayer.position = CGPoint(x: bounds.midX, y: bounds.midY)
         previewLayer.frame = contentLayer.bounds
         CATransaction.commit()
+        applyZoom()
     }
 }
 
@@ -66,11 +115,16 @@ struct PreviewView: NSViewRepresentable {
     func makeNSView(context: Context) -> PreviewContainerView {
         let view = PreviewContainerView(session: model.engine.session, renderer: model.previewRenderer)
         model.previewView = view
+        view.onZoomChange = { [weak model] in model?.zoomChanged($0) }
         view.setMode(model.renderMode)
         return view
     }
 
     func updateNSView(_ view: PreviewContainerView, context: Context) {
         view.setMode(model.renderMode)
+        view.gridView.isHidden = !model.gridVisible
+        view.gridView.gridType = model.settings.gridType
+        view.gridView.gridColor = model.settings.gridColor
+        view.gridView.contentSize = model.engine.activeFormat.map { CGSize(width: $0.width, height: $0.height) }
     }
 }

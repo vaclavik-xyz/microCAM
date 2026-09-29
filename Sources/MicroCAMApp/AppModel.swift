@@ -31,6 +31,19 @@ final class AppModel: ObservableObject {
     let previewRenderer: MetalPreviewRenderer?
     weak var previewView: PreviewContainerView?
     @Published private(set) var renderMode = RenderMode.passthrough
+    @Published var gridVisible = false
+    @Published private(set) var zoomScale: CGFloat = 1
+    private var keyboard: KeyboardMonitor?
+
+    func handle(_ action: ShortcutAction) {
+        switch action {
+        case .toggleGrid: gridVisible.toggle()
+        case .resetZoom: previewView?.resetZoom()
+        case .photo, .toggleRecording: break // wired in Tasks 12 and 13
+        }
+    }
+
+    func zoomChanged(_ scale: CGFloat) { zoomScale = scale }
 
     /// Adjustments of the current camera; neutral values are not stored.
     var currentAdjustments: ImageAdjustments {
@@ -73,6 +86,9 @@ final class AppModel: ObservableObject {
             self.message = nil
             self.applyLifecycle()
         }
+        keyboard = KeyboardMonitor(isMainWindow: { [weak self] window in
+            window != nil && window === self?.mainWindow
+        }, handler: { [weak self] action in self?.handle(action) })
         Task { await start() }
     }
 

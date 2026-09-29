@@ -11,6 +11,15 @@ struct MicroCAMApp: App {
                 .environmentObject(model)
                 .frame(minWidth: 640, minHeight: 420)
         }
+        .commands {
+            CommandMenu("Kamera") {
+                Button("Vyfotit (mezerník)") { model.handle(.photo) }
+                Button("Nahrávat / zastavit (R)") { model.handle(.toggleRecording) }
+                Divider()
+                Button("Mřížka (G)") { model.handle(.toggleGrid) }
+                Button("Zrušit zoom (0)") { model.handle(.resetZoom) }
+            }
+        }
         Settings {
             SettingsView()
                 .environmentObject(model)
