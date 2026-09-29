@@ -47,6 +47,27 @@ may ask for camera/microphone access again after an update.
   "Posílat i videa" is on. Works with an own server, n8n, Make, Zapier, or a
   receiving endpoint in the CRM.
 
+## Live stream and viewer
+
+Settings → Přenos: stream the live image to other devices on the shop
+network or tailnet (off by default). Open `http://<bench-ip>:8090/` in any
+browser, or run microCAM in **Prohlížeč** mode on another Mac (Settings →
+Režim appky) — it finds the bench via Bonjour.
+
+- *Jen obraz* — just the picture (for a customer-facing screen).
+- *S ovládáním* — job, full screen, drawing over the live image, and
+  **Vyfotit**: the photo is taken on the bench into the active job; draw on
+  it and **Uložit k zakázce** saves an annotated copy (`…_2.jpg`), the
+  original stays untouched. Remote photos (and reading them back) need the
+  PIN set on the bench.
+
+Only local-network and Tailscale clients are accepted. Nothing listens while
+the toggle is off, and nothing is encoded while nobody watches.
+`scripts/stream-smoke.sh <host> [port] [pin]` checks a running stream.
+Without a camera, run the demo mode with `MICROCAM_DEMO_STREAM_PORT` (and
+`MICROCAM_DEMO_STREAM_PIN`) set: it serves the still frames on 127.0.0.1 only.
+`scripts/deploy.sh <ssh-host> [dir]` installs the app on any Mac.
+
 ## Where files go
 
 You choose the root folder on first launch; microCAM never picks one itself.
