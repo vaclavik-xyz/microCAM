@@ -2,3 +2,6 @@
 build/
 .swiftpm/
 *.xcodeproj
+
+# Screenshots contain photos of customer boards; generate locally with scripts/make-screenshots.sh
+docs/screenshots/
