@@ -32,6 +32,26 @@ may ask for camera/microphone access again after an update.
 - Toolbar: photo, record, timelapse, image adjustments (saved per camera)
 - Side panel: captures of the active job; double-click opens, "Přesunout…" moves to another job, "Porovnat" compares two photos
 
+## Integrations
+
+- **Sdílet** (side panel, always available): the macOS share sheet — AirDrop,
+  Mail, Messages, Notes and any app that accepts files.
+- **Webhook** (Settings → Integrace, off by default): selected captures are
+  sent one by one as `multipart/form-data` `POST` to your URL:
+
+  | field | value |
+  |---|---|
+  | `file` | the JPEG / MOV (`image/jpeg`, `video/quicktime`) |
+  | `job` | repair-order code from the file name (omitted without a job) |
+  | `kind` | `photo`, `video` or `timelapse` |
+  | `capturedAt` | ISO 8601 from the file name |
+  | `idempotencyKey` | SHA-256 of the file (also the `Idempotency-Key` header) |
+
+  An optional token is sent as `Authorization: Bearer <token>` and stored in
+  the Keychain. Any 2xx counts as success. Videos are sent only when
+  "Posílat i videa" is on. Works with an own server, n8n, Make, Zapier, or a
+  receiving endpoint in the CRM.
+
 ## Where files go
 
 You choose the root folder on first launch; microCAM never picks one itself.

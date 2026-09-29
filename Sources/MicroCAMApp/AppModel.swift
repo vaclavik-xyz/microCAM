@@ -576,4 +576,59 @@ final class AppModel: ObservableObject {
             capturesChanged()
         }
     }
+
+    // MARK: Integrations
+
+    @Published private(set) var isSending = false
+
+    /// Webhook is usable when enabled and the URL is valid http(s).
+    var webhookEndpoint: URL? {
+        guard settings.webhookEnabled, let raw = settings.webhookURL,
+              let url = URL(string: raw.trimmingCharacters(in: .whitespaces)),
+              ["http", "https"].contains(url.scheme?.lowercased() ?? "") else { return nil }
+        return url
+    }
+
+    /// Sends the given captures one by one; videos only when enabled in Settings.
+    func sendToWebhook(_ urls: [URL]) {
+        guard let endpoint = webhookEndpoint else {
+            message = StatusMessage(text: "Webhook není nastavený (Nastavení → Integrace).", isError: true)
+            return
+        }
+        guard !isSending else {
+            message = StatusMessage(text: "Počkej, předchozí odesílání ještě běží.", isError: false)
+            return
+        }
+        let files = urls.filter { settings.webhookSendVideos || $0.pathExtension.lowercased() != "mov" }
+            .sorted { $0.lastPathComponent < $1.lastPathComponent }
+        guard !files.isEmpty else {
+            message = StatusMessage(text: "Nic k odeslání (videa jsou v Nastavení vypnutá).", isError: false)
+            return
+        }
+        isSending = true
+        let client = WebhookClient(endpoint: endpoint, token: KeychainToken.read())
+        Task {
+            var sent = 0
+            var failure: String?
+            for (index, file) in files.enumerated() {
+                message = StatusMessage(text: "Odesílám \(index + 1)/\(files.count)…", isError: false)
+                do {
+                    try await client.upload(file: file)
+                    sent += 1
+                } catch WebhookError.httpStatus(let code) {
+                    failure = "server vrátil \(code)"
+                    break
+                } catch {
+                    failure = error.localizedDescription
+                    break
+                }
+            }
+            isSending = false
+            if let failure {
+                message = StatusMessage(text: "Odesláno \(sent)/\(files.count), chyba: \(failure)", isError: true)
+            } else {
+                message = StatusMessage(text: "Odesláno: \(sent) soubor(ů).", isError: false)
+            }
+        }
+    }
 }
