@@ -114,6 +114,12 @@ final class AppModel: ObservableObject {
             window != nil && window === self?.mainWindow
         }, handler: { [weak self] action in self?.handle(action) })
         checkUnfinishedRecordings()
+        capturesChanged()
+        // Files may change in Finder while microCAM is in the background.
+        NotificationCenter.default.addObserver(forName: NSApplication.didBecomeActiveNotification,
+                                               object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.capturesChanged() }
+        }
         Task { await start() }
     }
 
@@ -196,7 +202,10 @@ final class AppModel: ObservableObject {
 
     func releaseURL(_ url: URL) { pendingURLs.remove(url) }
 
-    func capturesChanged() { captureRevision += 1 }
+    func capturesChanged() {
+        captureRevision += 1
+        library.reload(folders: settings.layout?.listedFolders(for: settings.jobContext) ?? [])
+    }
 
     func takePhoto(kind: CaptureKind = .photo) {
         guard let frame = engine.latestFrame.value, Date().timeIntervalSince(frame.receivedAt) < 1 else {
@@ -439,4 +448,28 @@ final class AppModel: ObservableObject {
     }
 
     func stopTimelapse() { timelapse.stop() }
+
+    // MARK: Library
+
+    let library = LibraryModel()
+    @Published var filesToMove: [URL]?
+
+    func moveFiles(_ urls: [URL], to target: JobContext) {
+        guard let layout = settings.layout else { showFirstRun = true; return }
+        let outcomes = JobFileMover(layout: layout).move(urls, to: target)
+        var moved = 0, skipped = 0
+        var failed: [MoveOutcome] = []
+        for outcome in outcomes {
+            switch outcome.result {
+            case .success: moved += 1
+            case .failure(.alreadyThere): skipped += 1
+            case .failure: failed.append(outcome)
+            }
+        }
+        var text = "Přesunuto: \(moved)"
+        if skipped > 0 { text += ", přeskočeno \(skipped) (už u zakázky)" }
+        if let first = failed.first { text += ", nepodařilo se \(failed.count) (\(first.source.lastPathComponent))" }
+        message = StatusMessage(text: text + ".", isError: !failed.isEmpty)
+        capturesChanged()
+    }
 }

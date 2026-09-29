@@ -3,6 +3,7 @@ import SwiftUI
 struct ContentView: View {
     @EnvironmentObject private var model: AppModel
     @State private var showAdjustments = false
+    @State private var compare: ComparePair?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -10,6 +11,9 @@ struct ContentView: View {
                 JobBar()
                 Divider()
             }
+            HSplitView {
+                SidePanel(library: model.library, compare: $compare)
+                    .frame(minWidth: 200, idealWidth: 240, maxWidth: 360)
             ZStack {
                 PreviewView()
                 CameraStateOverlay(engine: model.engine)
@@ -21,6 +25,8 @@ struct ContentView: View {
                 }
             }
             .background(Color.black)
+            .frame(minWidth: 400)
+            }
             .background(WindowAccessor { model.attachMainWindow($0) })
             Divider()
             StatusBar()
@@ -48,6 +54,15 @@ struct ContentView: View {
         }
         .sheet(isPresented: $model.showFirstRun) {
             FirstRunView().interactiveDismissDisabled()
+        }
+        .sheet(item: Binding(
+            get: { model.filesToMove.map { MoveRequest(files: $0) } },
+            set: { if $0 == nil { model.filesToMove = nil } }
+        )) { request in
+            MoveToJobSheet(files: request.files)
+        }
+        .sheet(item: $compare) { pair in
+            Text("Porovnání \(pair.before.lastPathComponent) / \(pair.after.lastPathComponent)").padding()
         }
     }
 }
@@ -88,4 +103,9 @@ struct TimelapseToolbarButton: View {
             TimelapseForm(runner: runner).padding().frame(width: 340)
         }
     }
+}
+
+struct MoveRequest: Identifiable {
+    let files: [URL]
+    var id: String { files.map(\.path).joined(separator: "|") }
 }
