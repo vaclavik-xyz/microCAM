@@ -65,4 +65,11 @@ final class SettingsStoreTests: XCTestCase {
     func testFormatLabel() {
         XCTAssertEqual(FormatChoice(width: 1920, height: 1080, fps: 59.94).label, "1920×1080 @ 60 fps")
     }
+
+    func testWebhookDefaultsOff() {
+        let s = SettingsStore(defaults: defaults).load()
+        XCTAssertFalse(s.webhookEnabled)
+        XCTAssertNil(s.webhookURL)
+        XCTAssertFalse(s.webhookSendVideos)
+    }
 }
