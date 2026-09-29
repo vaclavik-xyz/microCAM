@@ -2,14 +2,16 @@ import MicroCAMCore
 import SwiftUI
 
 struct SettingsView: View {
+    @EnvironmentObject private var model: AppModel
+
     var body: some View {
-        TabView {
-            DeviceSettingsTab().tabItem { Label("Zařízení", systemImage: "camera") }
-            AdjustmentsForm().padding(.horizontal).tabItem { Label("Obraz", systemImage: "slider.horizontal.3") }
-            StorageSettingsTab().tabItem { Label("Ukládání", systemImage: "folder") }
-            TimelapseSettingsTab().tabItem { Label("Časosběr", systemImage: "timer") }
-            PreviewSettingsTab().tabItem { Label("Náhled", systemImage: "grid") }
-            BehaviourSettingsTab().tabItem { Label("Chování", systemImage: "gearshape") }
+        TabView(selection: $model.settingsTab) {
+            DeviceSettingsTab().tabItem { Label("Zařízení", systemImage: "camera") }.tag("device")
+            AdjustmentsForm().padding(.horizontal).tabItem { Label("Obraz", systemImage: "slider.horizontal.3") }.tag("image")
+            StorageSettingsTab().tabItem { Label("Ukládání", systemImage: "folder") }.tag("storage")
+            TimelapseSettingsTab().tabItem { Label("Časosběr", systemImage: "timer") }.tag("timelapse")
+            PreviewSettingsTab().tabItem { Label("Náhled", systemImage: "grid") }.tag("preview")
+            BehaviourSettingsTab().tabItem { Label("Chování", systemImage: "gearshape") }.tag("behaviour")
         }
         .frame(width: 540)
         .padding(20)
@@ -23,8 +25,9 @@ struct StorageSettingsTab: View {
         Form {
             LabeledContent("Složka") {
                 HStack {
-                    Text(model.settings.storageRootPath ?? "není vybraná")
+                    Text(model.settings.storageRootPath.map { DisplayPath.string(for: $0) } ?? "není vybraná")
                         .lineLimit(1).truncationMode(.middle).textSelection(.enabled)
+                        .help(model.settings.storageRootPath ?? "")
                     Button("Změnit…") { model.chooseStorageRoot() }
                     Button("Otevřít ve Finderu") { model.revealCaptureFolder() }
                         .disabled(model.settings.storageRootPath == nil)

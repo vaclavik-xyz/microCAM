@@ -5,6 +5,18 @@ preview, photos, long recordings with narration, timelapse, and files sorted
 per repair order. Works with any camera macOS sees (USB/UVC, HDMI capture
 cards such as Elgato Cam Link).
 
+## Screenshots
+
+| | |
+|---|---|
+| ![Hlavní okno](docs/screenshots/01-hlavni-okno.jpg) Živý obraz, zakázka a boční panel | ![Úpravy obrazu](docs/screenshots/02-upravy-obrazu.jpg) Úpravy obrazu (ukládají se pro kameru) |
+| ![Zoom a mřížka](docs/screenshots/03-zoom-a-mrizka.jpg) Digitální zoom 2,5× a mřížka | ![Nahrávání](docs/screenshots/04-nahravani.jpg) Nahrávání (čas ve spodní liště) |
+| ![Časosběr](docs/screenshots/05-casosber.jpg) Časosběr | ![Porovnání](docs/screenshots/06-porovnani-posuvnik.jpg) Před/po s posuvníkem |
+| ![Vedle sebe](docs/screenshots/07-porovnani-vedle-sebe.jpg) Před/po vedle sebe | ![Nastavení](docs/screenshots/08-nastaveni-ukladani.jpg) Nastavení ukládání |
+
+Regenerate with `scripts/make-screenshots.sh <photos>` (demo mode: still
+photos stand in for the camera, no camera or permissions needed).
+
 ## Build and install
 
     scripts/make-app.sh              # build/microCAM.app (Apple Silicon, ad-hoc signed)

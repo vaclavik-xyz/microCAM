@@ -23,10 +23,16 @@ struct CompareView: View {
     let before: URL
     let after: URL
     @Environment(\.dismiss) private var dismiss
-    @State private var mode = 0
+    @State private var mode: Int
     @State private var split: CGFloat = 0.5
     @State private var beforeImage = LoadedImage.loading
     @State private var afterImage = LoadedImage.loading
+
+    init(before: URL, after: URL, initialMode: Int = 0) {
+        self.before = before
+        self.after = after
+        _mode = State(initialValue: initialMode)
+    }
 
     var body: some View {
         VStack(spacing: 12) {

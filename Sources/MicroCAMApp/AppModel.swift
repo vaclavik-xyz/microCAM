@@ -26,11 +26,23 @@ final class AppModel: ObservableObject {
     let engine = CaptureEngine()
     let lifecycle = LifecycleMonitor()
     weak var mainWindow: NSWindow?
-    private let store = SettingsStore()
+    private let store: SettingsStore
+    /// Set only when launched by `scripts/make-screenshots.sh`.
+    let demo = DemoConfig.fromEnvironment()
+    private var demoDriver: DemoDriver?
+
+    // Presentation state, owned here so the demo script can drive it.
+    @Published var showAdjustments = false
+    @Published var showTimelapse = false
+    @Published var comparePair: ComparePair?
+    @Published var compareInitialMode = 0
+    @Published var settingsTab = "device"
+    /// Incremented to ask the main window to open Settings (SwiftUI `openSettings`).
+    @Published var openSettingsRequest = 0
     private var pendingSave: DispatchWorkItem?
 
     /// Slider drags change settings dozens of times per second; write them
-    /// once they settle (and always on quit).
+    /// once they settle (and on a normal quit).
     private func scheduleSave() {
         pendingSave?.cancel()
         let item = DispatchWorkItem { [weak self] in
@@ -81,12 +93,14 @@ final class AppModel: ObservableObject {
         let a = currentAdjustments
         adjustmentsBox.value = a
         adjustedMode.value = !a.isNeutral
-        renderMode = a.isNeutral ? .passthrough : .adjusted
+        // Demo mode has no capture session, so it always uses the Metal view.
+        renderMode = a.isNeutral && demo == nil ? .passthrough : .adjusted
         previewRenderer?.invalidate()
     }
 
     init() {
         previewRenderer = MetalPreviewRenderer(adjustments: adjustmentsBox)
+        store = demo?.settingsStore() ?? SettingsStore()
         settings = store.load()
         showFirstRun = settings.storageRoot == nil
         let renderer = previewRenderer
@@ -143,17 +157,37 @@ final class AppModel: ObservableObject {
                                                object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.capturesChanged() }
         }
-        Task { await start() }
+        if let demo {
+            demoDriver = DemoDriver(model: self, config: demo)
+            demoDriver?.start()
+        } else {
+            Task { await start() }
+        }
+    }
+
+    /// Demo mode: a fake camera fed with still photos, no permission prompts.
+    func activateDemo(root: URL, job: String?) {
+        cameraAuthorized = true
+        engine.activateDemo()
+        settings.storageRootPath = root.path
+        settings.activeJob = job.flatMap(JobCode.init)
+        settings.recordAudio = false
+        showFirstRun = false
+        syncAdjustments()
+        capturesChanged()
     }
 
     func attachMainWindow(_ window: NSWindow) {
         mainWindow = window
+        // AppKit focuses the job field on launch, which would swallow Space/R/G.
+        // Start with no text field focused so the shortcuts work right away.
+        DispatchQueue.main.async { window.makeFirstResponder(nil) }
         lifecycle.attach(window: window)
     }
 
     /// Single place that decides whether the camera runs.
     func applyLifecycle() {
-        guard cameraAuthorized == true else { return }
+        guard cameraAuthorized == true, demo == nil else { return }
         engine.setRunning(CaptureLifecyclePolicy.shouldRun(lifecycle.state))
     }
 

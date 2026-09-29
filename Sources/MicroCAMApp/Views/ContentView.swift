@@ -2,8 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject private var model: AppModel
-    @State private var showAdjustments = false
-    @State private var compare: ComparePair?
+    @Environment(\.openSettings) private var openSettings
 
     var body: some View {
         VStack(spacing: 0) {
@@ -12,7 +11,7 @@ struct ContentView: View {
                 Divider()
             }
             HSplitView {
-                SidePanel(library: model.library, compare: $compare)
+                SidePanel(library: model.library, compare: $model.comparePair)
                     .frame(minWidth: 200, idealWidth: 240, maxWidth: 360)
             ZStack {
                 PreviewView()
@@ -38,15 +37,16 @@ struct ContentView: View {
                 RecordButton()
                 Button { model.revealCaptureFolder() } label: { Label("Složka", systemImage: "folder") }
                     .help("Otevřít složku, kam se teď ukládá")
-                TimelapseToolbarButton(runner: model.timelapse)
-                Button { showAdjustments.toggle() } label: {
+                TimelapseToolbarButton(runner: model.timelapse, show: $model.showTimelapse)
+                Button { model.showAdjustments.toggle() } label: {
                     Label("Úpravy obrazu", systemImage: "slider.horizontal.3")
                 }
-                .popover(isPresented: $showAdjustments) {
+                .popover(isPresented: $model.showAdjustments) {
                     AdjustmentsForm().padding().frame(width: 360)
                 }
             }
         }
+        .onChange(of: model.openSettingsRequest) { openSettings() }
         .sheet(isPresented: $model.showFirstRun) {
             FirstRunView().interactiveDismissDisabled()
         }
@@ -56,8 +56,8 @@ struct ContentView: View {
         )) { request in
             MoveToJobSheet(files: request.files)
         }
-        .sheet(item: $compare) { pair in
-            CompareView(before: pair.before, after: pair.after)
+        .sheet(item: $model.comparePair) { pair in
+            CompareView(before: pair.before, after: pair.after, initialMode: model.compareInitialMode)
         }
     }
 }
@@ -87,7 +87,7 @@ struct CameraStateOverlay: View {
 
 struct TimelapseToolbarButton: View {
     @ObservedObject var runner: TimelapseRunner
-    @State private var show = false
+    @Binding var show: Bool
 
     var body: some View {
         Button { show.toggle() } label: {

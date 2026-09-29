@@ -48,6 +48,9 @@ final class PreviewContainerView: NSView {
 
     func resetZoom() { zoom.reset() }
 
+    /// Programmatic zoom (demo screenshots); `anchor` is a normalized view point.
+    func zoom(by factor: CGFloat, anchor: CGPoint) { zoom.zoom(by: factor, anchor: anchor) }
+
     private func applyZoom() {
         CATransaction.begin()
         CATransaction.setDisableActions(true)
