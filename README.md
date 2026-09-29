@@ -7,15 +7,10 @@ cards such as Elgato Cam Link).
 
 ## Screenshots
 
-| | |
-|---|---|
-| ![Hlavní okno](docs/screenshots/01-hlavni-okno.jpg) Živý obraz, zakázka a boční panel | ![Úpravy obrazu](docs/screenshots/02-upravy-obrazu.jpg) Úpravy obrazu (ukládají se pro kameru) |
-| ![Zoom a mřížka](docs/screenshots/03-zoom-a-mrizka.jpg) Digitální zoom 2,5× a mřížka | ![Nahrávání](docs/screenshots/04-nahravani.jpg) Nahrávání (čas ve spodní liště) |
-| ![Časosběr](docs/screenshots/05-casosber.jpg) Časosběr | ![Porovnání](docs/screenshots/06-porovnani-posuvnik.jpg) Před/po s posuvníkem |
-| ![Vedle sebe](docs/screenshots/07-porovnani-vedle-sebe.jpg) Před/po vedle sebe | ![Nastavení](docs/screenshots/08-nastaveni-ukladani.jpg) Nastavení ukládání |
-
-Regenerate with `scripts/make-screenshots.sh <photos>` (demo mode: still
-photos stand in for the camera, no camera or permissions needed).
+Screenshots are not committed (they show photos of customer boards). Generate
+them locally into `docs/screenshots/` (git-ignored) with
+`scripts/make-screenshots.sh <photos>` — demo mode, no camera or permissions
+needed; see the script header for the expected photo folder layout.
 
 ## Build and install
 
