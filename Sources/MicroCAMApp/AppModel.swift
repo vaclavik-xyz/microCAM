@@ -515,7 +515,10 @@ final class AppModel: ObservableObject {
     /// Runs off the main thread: a move to another volume copies whole videos.
     func moveFiles(_ urls: [URL], to target: JobContext) {
         guard let layout = settings.layout else { showFirstRun = true; return }
-        guard !isMovingFiles else { return }
+        guard !isMovingFiles else {
+            message = StatusMessage(text: "Počkej, předchozí přesun ještě běží.", isError: false)
+            return
+        }
         isMovingFiles = true
         message = StatusMessage(text: "Přesouvám \(urls.count) soubor(ů)…", isError: false)
         Task {
