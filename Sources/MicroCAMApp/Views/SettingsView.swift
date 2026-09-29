@@ -32,12 +32,23 @@ struct DeviceSettingsForm: View {
             )) {
                 ForEach(engine.cameras) { Text($0.name).tag($0.id) }
             }
+            .disabled(model.isRecording)
             Picker("Formát", selection: Binding(
                 get: { engine.activeFormat },
                 set: { if let f = $0 { model.selectFormat(f) } }
             )) {
                 ForEach(engine.formats, id: \.self) { Text($0.label).tag(Optional($0)) }
             }
+            .disabled(model.isRecording)
+            Toggle("Nahrávat zvuk z mikrofonu", isOn: $model.settings.recordAudio)
+            Picker("Mikrofon", selection: Binding(
+                get: { model.settings.lastMicrophoneID ?? "" },
+                set: { model.settings.lastMicrophoneID = $0.isEmpty ? nil : $0 }
+            )) {
+                Text("Výchozí systémový").tag("")
+                ForEach(engine.microphones) { Text($0.name).tag($0.id) }
+            }
+            .disabled(!model.settings.recordAudio)
         }
     }
 }

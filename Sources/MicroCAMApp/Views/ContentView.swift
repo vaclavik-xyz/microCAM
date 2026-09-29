@@ -29,6 +29,12 @@ struct ContentView: View {
             ToolbarItemGroup {
                 Button { model.takePhoto() } label: { Label("Vyfotit", systemImage: "camera") }
                     .help("Vyfotit (mezerník)")
+                Button { model.toggleRecording() } label: {
+                    Label(model.isRecording ? "Zastavit" : "Nahrávat",
+                          systemImage: model.isRecording ? "stop.circle.fill" : "record.circle")
+                }
+                .tint(model.isRecording ? .red : nil)
+                .help("Nahrávat / zastavit (R)")
                 Button { model.revealCaptureFolder() } label: { Label("Složka", systemImage: "folder") }
                     .help("Otevřít složku, kam se teď ukládá")
                 Button { showAdjustments.toggle() } label: {

@@ -42,7 +42,7 @@ final class AppModel: ObservableObject {
         case .toggleGrid: gridVisible.toggle()
         case .resetZoom: previewView?.resetZoom()
         case .photo: takePhoto()
-        case .toggleRecording: break // wired in Task 13
+        case .toggleRecording: toggleRecording()
         }
     }
 
@@ -73,14 +73,23 @@ final class AppModel: ObservableObject {
         showFirstRun = settings.storageRoot == nil
         let renderer = previewRenderer
         let adjusted = adjustedMode
+        let recorder = self.recorder
+        let adjustments = adjustmentsBox
         engine.onVideoSample = { sampleBuffer in
             if adjusted.value, let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) {
                 renderer?.push(pixelBuffer)
             }
+            recorder.appendVideo(sampleBuffer, adjustments: adjustments.value)
         }
+        engine.onAudioSample = { recorder.appendAudio($0) }
+        recorder.onFailure = { [weak self] error in
+            self?.stopRecording(reason: error.localizedDescription)
+        }
+        lifecycle.onWillSleep = { [weak self] in self?.stopRecording(reason: "Mac usnul") }
         lifecycle.update { $0.pauseWhenHidden = settings.pauseWhenHidden }
         lifecycle.onChange = { [weak self] _ in self?.applyLifecycle() }
         engine.onCameraDisconnected = { [weak self] in
+            self?.stopRecording(reason: "kamera byla odpojena")
             self?.message = StatusMessage(text: "Kamera byla odpojena. Po připojení se obraz obnoví.", isError: true)
         }
         engine.onCamerasChanged = { [weak self] in
@@ -95,6 +104,7 @@ final class AppModel: ObservableObject {
         keyboard = KeyboardMonitor(isMainWindow: { [weak self] window in
             window != nil && window === self?.mainWindow
         }, handler: { [weak self] action in self?.handle(action) })
+        checkUnfinishedRecordings()
         Task { await start() }
     }
 
@@ -269,5 +279,136 @@ final class AppModel: ObservableObject {
             return
         }
         NSWorkspace.shared.open(target)
+    }
+
+    // MARK: Recording
+
+    @Published private(set) var isRecording = false
+    @Published private(set) var recordingStartedAt: Date?
+    @Published private(set) var droppedFrames = 0
+    let recorder = Recorder()
+    private var recordingFinalURL: URL?
+    private var sleepAssertion: SleepAssertion?
+    private var recordingTimer: Timer?
+
+    func toggleRecording() {
+        isRecording ? stopRecording(reason: nil) : startRecording()
+    }
+
+    private func diskStatus() -> DiskSpaceStatus? {
+        guard let root = settings.storageRoot,
+              let bytes = try? root.resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey])
+                .volumeAvailableCapacityForImportantUsage else { return nil }
+        return DiskSpacePolicy.status(availableBytes: bytes)
+    }
+
+    func startRecording() {
+        guard !isRecording else { return }
+        guard settings.storageRoot != nil else { showFirstRun = true; return }
+        guard let format = engine.activeFormat, engine.latestFrame.value != nil else {
+            report(CaptureError.noFrame, prefix: "Nahrávání nezačalo")
+            return
+        }
+        if diskStatus() == .critical {
+            message = StatusMessage(text: "Nahrávání nezačalo: na disku je méně než 500 MB.", isError: true)
+            return
+        }
+        let finalURL: URL
+        let stagingURL: URL
+        do {
+            finalURL = try reserveURL(kind: .video)
+            stagingURL = try Recorder.stagingDirectory().appendingPathComponent("\(UUID().uuidString).mov")
+        } catch {
+            report(error, prefix: "Nahrávání nezačalo")
+            return
+        }
+        let begin: (Bool) -> Void = { [weak self] withAudio in
+            guard let self else { return }
+            // The camera may have stopped while waiting for the microphone.
+            guard self.engine.latestFrame.value != nil else {
+                self.releaseURL(finalURL)
+                self.engine.setAudioCapture(microphoneID: nil) { _ in }
+                self.report(CaptureError.noFrame, prefix: "Nahrávání nezačalo")
+                return
+            }
+            do {
+                try self.recorder.start(stagingURL: stagingURL, finalURL: finalURL, format: format,
+                                        codec: self.settings.videoCodec, quality: self.settings.videoQuality,
+                                        withAudio: withAudio)
+            } catch {
+                self.releaseURL(finalURL)
+                self.engine.setAudioCapture(microphoneID: nil) { _ in }
+                self.report(error, prefix: "Nahrávání nezačalo")
+                return
+            }
+            self.isRecording = true
+            self.recordingStartedAt = Date()
+            self.recordingFinalURL = finalURL
+            self.droppedFrames = 0
+            self.lifecycle.update { $0.recording = true }
+            if self.settings.preventSleepWhileRecording {
+                self.sleepAssertion = SleepAssertion(reason: "microCAM nahrává video")
+            }
+            if self.diskStatus() == .low {
+                self.message = StatusMessage(text: "Pozor: na disku dochází místo.", isError: true)
+            }
+            self.recordingTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in
+                MainActor.assumeIsolated { self?.recordingTick() }
+            }
+        }
+        guard settings.recordAudio else { begin(false); return }
+        Task {
+            guard await AVCaptureDevice.requestAccess(for: .audio) else {
+                message = StatusMessage(text: "Bez přístupu k mikrofonu – nahrávám bez zvuku.", isError: true)
+                begin(false)
+                return
+            }
+            engine.setAudioCapture(microphoneID: settings.lastMicrophoneID) { [weak self] attached in
+                if !attached {
+                    self?.message = StatusMessage(text: "Mikrofon nelze použít – nahrávám bez zvuku.", isError: true)
+                }
+                begin(attached)
+            }
+        }
+    }
+
+    private func recordingTick() {
+        droppedFrames = recorder.stats.value.framesDropped
+        if diskStatus() == .critical { stopRecording(reason: "došlo místo na disku") }
+    }
+
+    func stopRecording(reason: String?) {
+        guard isRecording else { return }
+        isRecording = false
+        recordingTimer?.invalidate()
+        recordingTimer = nil
+        sleepAssertion = nil
+        let finalURL = recordingFinalURL
+        recordingFinalURL = nil
+        recorder.stop { [weak self] result in
+            guard let self else { return }
+            if let finalURL { self.releaseURL(finalURL) }
+            self.engine.setAudioCapture(microphoneID: nil) { _ in }
+            self.recordingStartedAt = nil
+            self.droppedFrames = self.recorder.stats.value.framesDropped
+            self.lifecycle.update { $0.recording = false }
+            switch result {
+            case .success(let url):
+                let suffix = reason.map { " (\($0))" } ?? ""
+                self.message = StatusMessage(text: "Video uloženo: \(url.lastPathComponent)\(suffix)", isError: reason != nil)
+                self.capturesChanged()
+            case .failure(let error):
+                self.report(error, prefix: "Video")
+            }
+        }
+    }
+
+    /// Leftovers in the staging folder mean a previous run crashed mid-recording.
+    private func checkUnfinishedRecordings() {
+        guard let dir = try? Recorder.stagingDirectory(),
+              let files = try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil),
+              !files.isEmpty else { return }
+        message = StatusMessage(text: "Nalezen nedokončený záznam – otevírám jeho složku.", isError: true)
+        NSWorkspace.shared.open(dir)
     }
 }

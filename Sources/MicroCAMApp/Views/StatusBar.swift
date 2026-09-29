@@ -7,6 +7,17 @@ struct StatusBar: View {
 
     var body: some View {
         HStack(spacing: 12) {
+            if let started = model.recordingStartedAt {
+                TimelineView(.periodic(from: started, by: 1)) { context in
+                    let seconds = max(0, Int(context.date.timeIntervalSince(started)))
+                    Label(String(format: "%d:%02d:%02d", seconds / 3600, seconds / 60 % 60, seconds % 60),
+                          systemImage: "record.circle.fill")
+                        .foregroundStyle(.red).monospacedDigit()
+                }
+                if model.droppedFrames > 0 {
+                    Text("vypadlé snímky: \(model.droppedFrames)").foregroundStyle(.orange)
+                }
+            }
             Spacer()
             if let message = model.message {
                 Text(message.text)
