@@ -61,6 +61,10 @@ final class CaptureEngine: NSObject, ObservableObject {
 
     override init() {
         super.init()
+        // Center Stage runs face detection on every frame and reframes the
+        // image; a microscope never wants either. Take control and turn it off.
+        AVCaptureDevice.centerStageControlMode = .app
+        AVCaptureDevice.isCenterStageEnabled = false
         videoOutput.alwaysDiscardsLateVideoFrames = true
         // Native Cam Link format: no conversion on the way in.
         videoOutput.videoSettings = [
