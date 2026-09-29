@@ -72,4 +72,18 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertNil(s.webhookURL)
         XCTAssertFalse(s.webhookSendVideos)
     }
+    func testStreamingAndViewerDefaultsAndRoundTrip() {
+        let store = SettingsStore(defaults: defaults)
+        var s = store.load()
+        XCTAssertFalse(s.streamingEnabled)
+        XCTAssertEqual(s.streamingPort, 8090)
+        XCTAssertEqual(s.streamingMode, .controls)
+        XCTAssertEqual(s.appMode, .camera)
+        s.streamingEnabled = true
+        s.streamingMode = .imageOnly
+        s.appMode = .viewer
+        s.viewerSourceName = "bench Mac"
+        store.save(s)
+        XCTAssertEqual(SettingsStore(defaults: defaults).load(), s)
+    }
 }

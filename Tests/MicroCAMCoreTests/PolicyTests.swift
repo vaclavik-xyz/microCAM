@@ -81,4 +81,13 @@ final class PolicyTests: XCTestCase {
         DispatchQueue.concurrentPerform(iterations: 1000) { _ in counter.update { $0 += 1 } }
         XCTAssertEqual(counter.value, 1000)
     }
+    func testStreamViewersKeepCameraRunningExceptSleep() {
+        var s = CaptureLifecycleState()
+        s.windowVisible = false
+        s.screenLocked = true
+        s.streamViewers = true
+        XCTAssertTrue(CaptureLifecyclePolicy.shouldRun(s))
+        s.systemSleeping = true
+        XCTAssertFalse(CaptureLifecyclePolicy.shouldRun(s))
+    }
 }

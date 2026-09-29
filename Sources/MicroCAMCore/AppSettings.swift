@@ -4,6 +4,8 @@ public enum VideoCodec: String, Codable, CaseIterable, Sendable { case hevc, h26
 public enum VideoQuality: String, Codable, CaseIterable, Sendable { case standard, high }
 public enum GridType: String, Codable, CaseIterable, Sendable { case thirds, fine }
 public enum GridColor: String, Codable, CaseIterable, Sendable { case white, yellow, green, red }
+public enum StreamMode: String, Codable, CaseIterable, Sendable { case imageOnly, controls }
+public enum AppMode: String, Codable, CaseIterable, Sendable { case camera, viewer }
 
 public struct FormatChoice: Codable, Hashable, Sendable {
     public var width: Int
@@ -42,6 +44,14 @@ public struct AppSettings: Equatable, Sendable {
     public var webhookEnabled = false
     public var webhookURL: String? = nil
     public var webhookSendVideos = false
+    /// Live stream to other devices (off by default). The photo PIN lives in the Keychain.
+    public var streamingEnabled = false
+    public var streamingPort = 8090
+    public var streamingMode = StreamMode.controls
+    /// `viewer` turns this Mac into a screen for another microCAM's stream.
+    public var appMode = AppMode.camera
+    public var viewerSourceName: String? = nil
+    public var viewerManualURL: String? = nil
 
     public init() {}
 
@@ -68,7 +78,8 @@ extension AppSettings: Codable {
         case storageRootPath, sortByType, jobsEnabled, activeJob, jpegQuality, videoCodec, videoQuality,
              timelapseInterval, timelapseDuration, gridType, gridColor, pauseWhenHidden,
              preventSleepWhileRecording, lastDeviceID, lastFormatByDevice, lastMicrophoneID,
-             recordAudio, adjustmentsByDevice, webhookEnabled, webhookURL, webhookSendVideos
+             recordAudio, adjustmentsByDevice, webhookEnabled, webhookURL, webhookSendVideos,
+             streamingEnabled, streamingPort, streamingMode, appMode, viewerSourceName, viewerManualURL
     }
 
     /// Every key is optional so settings from older builds keep working. A
@@ -101,5 +112,11 @@ extension AppSettings: Codable {
         webhookEnabled = value(.webhookEnabled, d.webhookEnabled)
         webhookURL = value(.webhookURL, d.webhookURL)
         webhookSendVideos = value(.webhookSendVideos, d.webhookSendVideos)
+        streamingEnabled = value(.streamingEnabled, d.streamingEnabled)
+        streamingPort = value(.streamingPort, d.streamingPort)
+        streamingMode = value(.streamingMode, d.streamingMode)
+        appMode = value(.appMode, d.appMode)
+        viewerSourceName = value(.viewerSourceName, d.viewerSourceName)
+        viewerManualURL = value(.viewerManualURL, d.viewerManualURL)
     }
 }
