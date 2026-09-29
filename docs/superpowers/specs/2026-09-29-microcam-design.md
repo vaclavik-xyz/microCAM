@@ -125,7 +125,9 @@ selected.
 | Storage | root folder, JPEG quality, video codec (HEVC / H.264), video quality |
 | Timelapse | interval, total duration |
 | Preview | grid type, grid color |
+| Jobs | use jobs (on); when off, the job field and "Move to job…" are hidden and all files go straight into the root folder with the `microcam_` prefix |
 | Behaviour | pause camera when window is hidden (on), prevent sleep while recording (on) |
+| CRM (phase 2) | enable CRM integration (**off by default**); CRM URL, device pairing. When off, no CRM button, menu item or setting beyond this toggle is shown |
 
 Settings persist in `UserDefaults`. Fixed shortcuts in v1: `Space` photo,
 `R` record, `G` grid, `0` reset zoom; listed in the Help menu.
@@ -170,3 +172,7 @@ the CRM already supports this without new server features:
   verify how `source` maps to `customerVisible` before implementing.
 
 v1 prepares for this only through the per-job folder layout and file naming.
+
+The integration is optional and **off by default**, so microCAM stays a plain
+camera app for anyone without the CRM. The upload button appears only
+when it is enabled and paired.
