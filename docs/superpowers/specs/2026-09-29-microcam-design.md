@@ -109,9 +109,13 @@ into the active job folder. Secondary control, off by default.
   `<root>/microcam_<yyyy-MM-dd_HH-mm-ss>[_n].jpg|.mov`.
 - Reassign: moving selected files to another job physically moves and renames
   them. Moves are atomic per file; failures are reported, never silently lost.
-- **No folders by media type.** Photos, videos and timelapse shots of one job
-  share one folder. The only subfolders microCAM ever creates are job folders
-  (and `_Nezařazeno/`); with jobs disabled it creates no folders at all.
+- **Folders by media type are the user's choice.** By default photos, videos
+  and timelapse shots of one job share one folder; the only subfolders microCAM
+  creates are job folders (and `_Nezařazeno/`), and with jobs disabled none at
+  all. The setting "Sort by type" (off by default) adds `Fotky/`, `Videa/`,
+  `Časosběr/` inside the job folder (or inside the root when jobs are
+  disabled). The side panel and "Move to job…" work the same in both modes;
+  a moved file keeps its type folder.
 - The root folder is **chosen by the user on first launch** (folder picker,
   pre-filled with `~/Pictures/microCAM`) and can be changed in Settings. The
   app never picks a location silently. On bench Mac the user points it into
@@ -135,7 +139,7 @@ selected.
 |---|---|
 | Device | camera, format (resolution, fps), microphone |
 | Image | adjustments, per-camera preset, reset |
-| Storage | root folder, JPEG quality, video codec (HEVC / H.264), video quality |
+| Storage | root folder, sort by type (off), JPEG quality, video codec (HEVC / H.264), video quality |
 | Timelapse | interval, total duration |
 | Preview | grid type, grid color |
 | Jobs | use jobs (on); when off, the job field and "Move to job…" are hidden and all files go straight into the root folder with the `microcam_` prefix |
