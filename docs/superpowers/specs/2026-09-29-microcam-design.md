@@ -120,8 +120,9 @@ into the active job folder. Secondary control, off by default.
   pre-filled with `~/Pictures/microCAM`) and can be changed in Settings. The
   app never picks a location silently. On bench Mac the user points it into
   iCloud Drive (`Repairs/Fotodokumentace/…`) so photos keep being backed up.
-- The current save folder is always visible as a full path in the status bar;
-  clicking it reveals the folder in Finder.
+- The main window does not show the save path (it only takes space). A
+  toolbar folder button opens the current save folder in Finder; the full path
+  is shown in Settings → Storage next to "Change…" and "Show in Finder".
 
 **Side panel** — thumbnails of the active job's photos and videos, newest
 first, generated lazily and cached in memory with a small limit. Multi-select →
