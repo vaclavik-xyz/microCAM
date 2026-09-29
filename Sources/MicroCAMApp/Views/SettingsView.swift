@@ -163,7 +163,8 @@ struct IntegrationSettingsTab: View {
                     .onDisappear { KeychainToken.write(token) }
                 Toggle("Posílat i videa", isOn: $model.settings.webhookSendVideos)
                 if model.webhookEndpoint == nil {
-                    Text("Zadej platnou adresu http(s).").font(.caption).foregroundStyle(.red)
+                    Text("Zadej platnou adresu https://… (http:// funguje jen v místní síti nebo na IP adrese).")
+                        .font(.caption).foregroundStyle(.red)
                 }
                 Text("Každý soubor se pošle jako multipart/form-data POST s poli file, job, kind, capturedAt a idempotencyKey; token jako Authorization: Bearer.")
                     .font(.caption).foregroundStyle(.secondary)

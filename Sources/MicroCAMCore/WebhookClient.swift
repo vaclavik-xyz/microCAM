@@ -29,6 +29,24 @@ public struct MultipartBody {
     public func finalized() -> Data {
         data + Data("--\(boundary)--\r\n".utf8)
     }
+
+    /// Writes the fields, then the file streamed in chunks, then the closing
+    /// boundary to `destination`. Keeps memory flat for hour-long videos.
+    public func writeWithFile(name: String, fileURL: URL, mimeType: String, to destination: URL,
+                              chunkSize: Int = 1 << 20) throws -> URL {
+        FileManager.default.createFile(atPath: destination.path, contents: nil)
+        let out = try FileHandle(forWritingTo: destination)
+        defer { try? out.close() }
+        try out.write(contentsOf: data)
+        try out.write(contentsOf: Data("--\(boundary)\r\nContent-Disposition: form-data; name=\"\(name)\"; filename=\"\(fileURL.lastPathComponent)\"\r\nContent-Type: \(mimeType)\r\n\r\n".utf8))
+        let input = try FileHandle(forReadingFrom: fileURL)
+        defer { try? input.close() }
+        while let chunk = try input.read(upToCount: chunkSize), !chunk.isEmpty {
+            try out.write(contentsOf: chunk)
+        }
+        try out.write(contentsOf: Data("\r\n--\(boundary)--\r\n".utf8))
+        return destination
+    }
 }
 
 public enum WebhookError: Error, Equatable {
@@ -63,9 +81,23 @@ public struct WebhookClient {
         return JobCode(name.prefix)?.value
     }
 
+    public static func sha256Hex(of data: Data) -> String {
+        SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+    }
+
+    /// Hashes a file in chunks (videos can be several GB).
+    public static func sha256Hex(of file: URL, chunkSize: Int = 1 << 20) throws -> String {
+        let handle = try FileHandle(forReadingFrom: file)
+        defer { try? handle.close() }
+        var hasher = SHA256()
+        while let chunk = try handle.read(upToCount: chunkSize), !chunk.isEmpty {
+            hasher.update(data: chunk)
+        }
+        return hasher.finalize().map { String(format: "%02x", $0) }.joined()
+    }
+
     public func upload(file: URL) async throws {
-        let data = try Data(contentsOf: file)
-        let key = SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+        let key = try Self.sha256Hex(of: file)
         let kind = CaptureKind.fromTypeFolder(file.deletingLastPathComponent().lastPathComponent)
             ?? CaptureKind.fromExtension(file.pathExtension)
         var body = MultipartBody()
@@ -73,15 +105,18 @@ public struct WebhookClient {
         body = body.field("kind", kind.webhookName)
         if let captured = Self.capturedAt(file) { body = body.field("capturedAt", captured) }
         body = body.field("idempotencyKey", key)
-            .file("file", filename: file.lastPathComponent,
-                  mimeType: kind == .video ? "video/quicktime" : "image/jpeg", data: data)
+        let bodyFile = FileManager.default.temporaryDirectory
+            .appendingPathComponent("microcam-upload-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: bodyFile) }
+        _ = try body.writeWithFile(name: "file", fileURL: file,
+                                   mimeType: kind == .video ? "video/quicktime" : "image/jpeg", to: bodyFile)
 
         var request = URLRequest(url: endpoint)
         request.httpMethod = "POST"
         request.setValue(body.contentType, forHTTPHeaderField: "Content-Type")
         request.setValue(key, forHTTPHeaderField: "Idempotency-Key")
         if let token, !token.isEmpty { request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization") }
-        let (_, response) = try await session.upload(for: request, from: body.finalized())
+        let (_, response) = try await session.upload(for: request, fromFile: bodyFile)
         guard let http = response as? HTTPURLResponse else { throw WebhookError.notHTTP }
         guard (200..<300).contains(http.statusCode) else { throw WebhookError.httpStatus(http.statusCode) }
     }

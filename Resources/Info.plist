@@ -13,6 +13,8 @@
     <key>LSApplicationCategoryType</key><string>public.app-category.utilities</string>
     <key>NSHighResolutionCapable</key><true/>
     <key>NSCameraUsageDescription</key><string>microCAM zobrazuje a nahrává obraz z mikroskopové kamery.</string>
+    <!-- Webhook over plain http only to local hosts/IPs (LAN, Tailscale IP); everything else needs https. -->
+    <key>NSAppTransportSecurity</key><dict><key>NSAllowsLocalNetworking</key><true/></dict>
     <key>NSMicrophoneUsageDescription</key><string>microCAM nahrává váš komentář k videu.</string>
 </dict>
 </plist>

@@ -107,4 +107,25 @@ final class WebhookClientTests: XCTestCase {
         XCTAssertNil(WebhookClient.jobCode(for: URL(fileURLWithPath: "/r/microcam_2026-09-21_10-00-00.jpg")))
         XCTAssertNil(WebhookClient.jobCode(for: URL(fileURLWithPath: "/r/_Nezařazeno/bez-zakazky_2026-09-21_10-00-00.jpg")))
     }
+
+    func testStreamingHashMatchesInMemoryHash() throws {
+        let tmp = TempDir()
+        let file = tmp.url.appendingPathComponent("big.bin")
+        let data = Data((0..<3_000_000).map { UInt8($0 % 251) })
+        try data.write(to: file)
+        XCTAssertEqual(try WebhookClient.sha256Hex(of: file, chunkSize: 64 * 1024),
+                       WebhookClient.sha256Hex(of: data))
+    }
+
+    func testMultipartFileIsWrittenToDiskIdentically() throws {
+        let tmp = TempDir()
+        let source = tmp.url.appendingPathComponent("a.jpg")
+        try Data("JPEG".utf8).write(to: source)
+        let inMemory = MultipartBody(boundary: "B").field("job", "PR-1")
+            .file("file", filename: "a.jpg", mimeType: "image/jpeg", data: Data("JPEG".utf8)).finalized()
+        let onDisk = try MultipartBody(boundary: "B").field("job", "PR-1")
+            .writeWithFile(name: "file", fileURL: source, mimeType: "image/jpeg",
+                           to: tmp.url.appendingPathComponent("body"), chunkSize: 2)
+        XCTAssertEqual(try Data(contentsOf: onDisk), inMemory)
+    }
 }
