@@ -1,5 +1,23 @@
 import AppKit
+import ImageIO
 import SwiftUI
+
+/// Loading state of one compared photo.
+private enum LoadedImage {
+    case loading
+    case loaded(NSImage)
+    case failed
+
+    /// Decodes fully off the main thread so opening the sheet never stalls the UI.
+    static func load(_ url: URL) async -> LoadedImage {
+        let cgImage = await Task.detached(priority: .userInitiated) { () -> CGImage? in
+            guard let source = CGImageSourceCreateWithURL(url as CFURL, nil) else { return nil }
+            return CGImageSourceCreateImageAtIndex(source, 0, [kCGImageSourceShouldCacheImmediately: true] as CFDictionary)
+        }.value
+        guard let cgImage else { return .failed }
+        return .loaded(NSImage(cgImage: cgImage, size: NSSize(width: cgImage.width, height: cgImage.height)))
+    }
+}
 
 struct CompareView: View {
     let before: URL
@@ -7,8 +25,8 @@ struct CompareView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var mode = 0
     @State private var split: CGFloat = 0.5
-    @State private var beforeImage: NSImage?
-    @State private var afterImage: NSImage?
+    @State private var beforeImage = LoadedImage.loading
+    @State private var afterImage = LoadedImage.loading
 
     var body: some View {
         VStack(spacing: 12) {
@@ -46,19 +64,26 @@ struct CompareView: View {
         .padding(16)
         .frame(minWidth: 900, minHeight: 600)
         .task {
-            beforeImage = NSImage(contentsOf: before)
-            afterImage = NSImage(contentsOf: after)
+            async let b = LoadedImage.load(before)
+            async let a = LoadedImage.load(after)
+            (beforeImage, afterImage) = await (b, a)
         }
     }
 
-    private func picture(_ image: NSImage?) -> some View {
+    private func picture(_ image: LoadedImage) -> some View {
         Group {
-            if let image { Image(nsImage: image).resizable().scaledToFit() } else { ProgressView() }
+            switch image {
+            case .loading: ProgressView()
+            case .loaded(let nsImage): Image(nsImage: nsImage).resizable().scaledToFit()
+            case .failed:
+                Label("Soubor nelze načíst (přesunutý nebo smazaný?)", systemImage: "exclamationmark.triangle")
+                    .foregroundStyle(.secondary)
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
-    private func labeled(_ image: NSImage?, _ title: String, _ url: URL) -> some View {
+    private func labeled(_ image: LoadedImage, _ title: String, _ url: URL) -> some View {
         VStack(spacing: 4) {
             picture(image)
             Text("\(title): \(url.lastPathComponent)").font(.caption).foregroundStyle(.secondary)
