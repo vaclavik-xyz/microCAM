@@ -1568,7 +1568,12 @@ Add to `AppModel` (new `// MARK: Streaming` section):
             server.onError = { [weak self] in self?.streamError = $0 }
             streamServer = server
         }
-        streamServer?.start(port: UInt16(clamping: settings.streamingPort),
+        guard (1024...65535).contains(settings.streamingPort) else {
+            streamServer?.stop()
+            streamError = "Port musí být 1024–65535."
+            return
+        }
+        streamServer?.start(port: UInt16(settings.streamingPort),
                             serviceName: Host.current().localizedName ?? "microCAM")
     }
 
