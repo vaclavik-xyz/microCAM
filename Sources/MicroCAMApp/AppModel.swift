@@ -10,17 +10,48 @@ struct StatusMessage: Equatable {
 @MainActor
 final class AppModel: ObservableObject {
     @Published var settings: AppSettings {
-        didSet { if settings != oldValue { store.save(settings) } }
+        didSet {
+            guard settings != oldValue else { return }
+            store.save(settings)
+            if settings.pauseWhenHidden != oldValue.pauseWhenHidden {
+                lifecycle.update { $0.pauseWhenHidden = settings.pauseWhenHidden }
+            }
+        }
     }
     @Published private(set) var cameraAuthorized: Bool?
     @Published var message: StatusMessage?
 
     let engine = CaptureEngine()
+    let lifecycle = LifecycleMonitor()
+    weak var mainWindow: NSWindow?
     private let store = SettingsStore()
 
     init() {
         settings = store.load()
+        lifecycle.update { $0.pauseWhenHidden = settings.pauseWhenHidden }
+        lifecycle.onChange = { [weak self] _ in self?.applyLifecycle() }
+        engine.onCameraDisconnected = { [weak self] in
+            self?.message = StatusMessage(text: "Kamera byla odpojena. Po připojení se obraz obnoví.", isError: true)
+        }
+        engine.onCamerasChanged = { [weak self] in
+            guard let self, self.cameraAuthorized == true, self.engine.currentCameraID == nil,
+                  !self.engine.cameras.isEmpty else { return }
+            self.selectCamera(self.settings.lastDeviceID)
+            self.message = nil
+            self.applyLifecycle()
+        }
         Task { await start() }
+    }
+
+    func attachMainWindow(_ window: NSWindow) {
+        mainWindow = window
+        lifecycle.attach(window: window)
+    }
+
+    /// Single place that decides whether the camera runs.
+    func applyLifecycle() {
+        guard cameraAuthorized == true else { return }
+        engine.setRunning(CaptureLifecyclePolicy.shouldRun(lifecycle.state))
     }
 
     func start() async {
@@ -28,7 +59,7 @@ final class AppModel: ObservableObject {
         cameraAuthorized = granted
         guard granted else { return }
         selectCamera(settings.lastDeviceID)
-        engine.setRunning(true)
+        applyLifecycle()
     }
 
     func selectCamera(_ id: String?) {

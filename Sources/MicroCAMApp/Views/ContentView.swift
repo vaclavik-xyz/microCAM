@@ -9,6 +9,7 @@ struct ContentView: View {
             CameraStateOverlay(engine: model.engine)
         }
         .background(Color.black)
+        .background(WindowAccessor { model.attachMainWindow($0) })
     }
 }
 
