@@ -1,3 +1,4 @@
+import AppKit
 import MicroCAMCore
 import SwiftUI
 
@@ -12,6 +13,7 @@ struct SettingsView: View {
             TimelapseSettingsTab().tabItem { Label("Časosběr", systemImage: "timer") }.tag("timelapse")
             PreviewSettingsTab().tabItem { Label("Náhled", systemImage: "grid") }.tag("preview")
             IntegrationSettingsTab().tabItem { Label("Integrace", systemImage: "arrow.up.forward.app") }.tag("integrations")
+            StreamSettingsTab().tabItem { Label("Přenos", systemImage: "dot.radiowaves.left.and.right") }.tag("stream")
             BehaviourSettingsTab().tabItem { Label("Chování", systemImage: "gearshape") }.tag("behaviour")
         }
         .frame(width: 540)
@@ -171,5 +173,53 @@ struct IntegrationSettingsTab: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
+    }
+}
+
+struct StreamSettingsTab: View {
+    @EnvironmentObject private var model: AppModel
+    @State private var pin = ""
+    @State private var pinInvalid = false
+
+    var body: some View {
+        Form {
+            Toggle("Živý přenos obrazu do sítě", isOn: $model.settings.streamingEnabled)
+            if model.settings.streamingEnabled {
+                Picker("Stránka", selection: $model.settings.streamingMode) {
+                    Text("S ovládáním (focení, kreslení)").tag(StreamMode.controls)
+                    Text("Jen obraz").tag(StreamMode.imageOnly)
+                }
+                TextField("Port", value: $model.settings.streamingPort, format: .number.grouping(.never))
+                SecureField("PIN pro focení (4–8 číslic)", text: $pin)
+                    .onSubmit(savePIN)
+                    .onDisappear(perform: savePIN)
+                if pinInvalid { Text("PIN musí mít 4–8 číslic.").font(.caption).foregroundStyle(.red) }
+                if model.streamPIN == nil, model.settings.streamingMode == .controls {
+                    Text("Bez PINu je focení z jiného zařízení vypnuté.").font(.caption).foregroundStyle(.secondary)
+                }
+                if let error = model.streamError { Text(error).font(.caption).foregroundStyle(.red) }
+                LabeledContent("Otevřít na jiném zařízení") {
+                    VStack(alignment: .leading, spacing: 4) {
+                        ForEach(NetworkAddresses.streamIPv4(), id: \.self) { address in
+                            let url = "http://\(address):\(model.settings.streamingPort)/"
+                            HStack {
+                                Text(url).textSelection(.enabled).monospaced()
+                                Button("Kopírovat") {
+                                    NSPasteboard.general.clearContents()
+                                    NSPasteboard.general.setString(url, forType: .string)
+                                }
+                            }
+                        }
+                    }
+                }
+                Text("Sleduje: \(model.streamViewers)").font(.caption).foregroundStyle(.secondary)
+            }
+        }
+        .onAppear { pin = model.streamPIN ?? "" }
+    }
+
+    private func savePIN() {
+        pinInvalid = !pin.isEmpty && !PinGuard.isValidPIN(pin)
+        if !pinInvalid, pin != (model.streamPIN ?? "") { model.setStreamPIN(pin.isEmpty ? nil : pin) }
     }
 }
