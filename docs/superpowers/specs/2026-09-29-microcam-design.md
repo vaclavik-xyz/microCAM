@@ -109,8 +109,15 @@ into the active job folder. Secondary control, off by default.
   `<root>/microcam_<yyyy-MM-dd_HH-mm-ss>[_n].jpg|.mov`.
 - Reassign: moving selected files to another job physically moves and renames
   them. Moves are atomic per file; failures are reported, never silently lost.
-- Root folder is chosen in Settings; the default is the current Digital Viewer
-  folder in iCloud Drive (so photos keep being backed up).
+- **No folders by media type.** Photos, videos and timelapse shots of one job
+  share one folder. The only subfolders microCAM ever creates are job folders
+  (and `_Nezařazeno/`); with jobs disabled it creates no folders at all.
+- The root folder is **chosen by the user on first launch** (folder picker,
+  pre-filled with `~/Pictures/microCAM`) and can be changed in Settings. The
+  app never picks a location silently. On bench Mac the user points it into
+  iCloud Drive (`Repairs/Fotodokumentace/…`) so photos keep being backed up.
+- The current save folder is always visible as a full path in the status bar;
+  clicking it reveals the folder in Finder.
 
 **Side panel** — thumbnails of the active job's photos and videos, newest
 first, generated lazily and cached in memory with a small limit. Multi-select →
