@@ -99,6 +99,7 @@ final class AppModel: ObservableObject {
         lifecycle.onChange = { [weak self] _ in self?.applyLifecycle() }
         engine.onCameraDisconnected = { [weak self] in
             self?.stopRecording(reason: "kamera byla odpojena")
+            self?.stopTimelapse()
             self?.message = StatusMessage(text: "Kamera byla odpojena. Po připojení se obraz obnoví.", isError: true)
         }
         engine.onCamerasChanged = { [weak self] in
@@ -302,6 +303,10 @@ final class AppModel: ObservableObject {
     // MARK: Recording
 
     @Published private(set) var isRecording = false
+    /// Waiting for the microphone before the writer starts.
+    private var isStartingRecording = false
+    /// The previous file is still being finalized; a new recording must wait.
+    @Published private(set) var isFinalizingRecording = false
     @Published private(set) var recordingStartedAt: Date?
     @Published private(set) var droppedFrames = 0
     let recorder = Recorder()
@@ -310,18 +315,31 @@ final class AppModel: ObservableObject {
     private var recordingTimer: Timer?
 
     func toggleRecording() {
-        isRecording ? stopRecording(reason: nil) : startRecording()
+        if isRecording {
+            stopRecording(reason: nil)
+        } else if !isStartingRecording {
+            startRecording()
+        }
     }
 
+    /// Worst status of the staging volume (where the file grows) and the
+    /// storage root (where it is moved at the end).
     private func diskStatus() -> DiskSpaceStatus? {
-        guard let root = settings.storageRoot,
-              let bytes = try? root.resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey])
-                .volumeAvailableCapacityForImportantUsage else { return nil }
-        return DiskSpacePolicy.status(availableBytes: bytes)
+        let volumes = [try? Recorder.stagingDirectory(), settings.storageRoot].compactMap { $0 }
+        let bytes = volumes.compactMap {
+            try? $0.resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey])
+                .volumeAvailableCapacityForImportantUsage
+        }
+        guard let lowest = bytes.min() else { return nil }
+        return DiskSpacePolicy.status(availableBytes: lowest)
     }
 
     func startRecording() {
-        guard !isRecording else { return }
+        guard !isRecording, !isStartingRecording else { return }
+        guard !isFinalizingRecording else {
+            message = StatusMessage(text: "Počkej, dokončuji ukládání předchozího videa…", isError: false)
+            return
+        }
         guard settings.storageRoot != nil else { showFirstRun = true; return }
         guard let format = engine.activeFormat, engine.latestFrame.value != nil else {
             report(CaptureError.noFrame, prefix: "Nahrávání nezačalo")
@@ -340,8 +358,10 @@ final class AppModel: ObservableObject {
             report(error, prefix: "Nahrávání nezačalo")
             return
         }
+        isStartingRecording = true
         let begin: (Bool) -> Void = { [weak self] withAudio in
             guard let self else { return }
+            self.isStartingRecording = false
             // The camera may have stopped while waiting for the microphone.
             guard self.engine.latestFrame.value != nil else {
                 self.releaseURL(finalURL)
@@ -398,6 +418,7 @@ final class AppModel: ObservableObject {
     func stopRecording(reason: String?) {
         guard isRecording else { return }
         isRecording = false
+        isFinalizingRecording = true
         recordingTimer?.invalidate()
         recordingTimer = nil
         sleepAssertion = nil
@@ -405,6 +426,7 @@ final class AppModel: ObservableObject {
         recordingFinalURL = nil
         recorder.stop { [weak self] result in
             guard let self else { return }
+            self.isFinalizingRecording = false
             if let finalURL { self.releaseURL(finalURL) }
             self.engine.setAudioCapture(microphoneID: nil) { _ in }
             self.recordingStartedAt = nil

@@ -45,8 +45,8 @@ struct TimelapseForm: View {
             } else {
                 Button("Spustit časosběr") { model.startTimelapse() }
                     .keyboardShortcut(.defaultAction)
+                    .disabled(model.engine.currentCameraID == nil)
             }
         }
-        .disabled(model.engine.currentCameraID == nil)
     }
 }
