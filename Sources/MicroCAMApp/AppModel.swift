@@ -304,7 +304,9 @@ final class AppModel: ObservableObject {
 
     @Published private(set) var isRecording = false
     /// Waiting for the microphone before the writer starts.
-    private var isStartingRecording = false
+    @Published private(set) var isStartingRecording = false
+    /// Set when the user presses stop while the start is still pending.
+    private var pendingStartCancelled = false
     /// The previous file is still being finalized; a new recording must wait.
     @Published private(set) var isFinalizingRecording = false
     @Published private(set) var recordingStartedAt: Date?
@@ -317,7 +319,9 @@ final class AppModel: ObservableObject {
     func toggleRecording() {
         if isRecording {
             stopRecording(reason: nil)
-        } else if !isStartingRecording {
+        } else if isStartingRecording {
+            pendingStartCancelled = true
+        } else {
             startRecording()
         }
     }
@@ -359,9 +363,17 @@ final class AppModel: ObservableObject {
             return
         }
         isStartingRecording = true
+        pendingStartCancelled = false
         let begin: (Bool) -> Void = { [weak self] withAudio in
             guard let self else { return }
             self.isStartingRecording = false
+            guard !self.pendingStartCancelled else {
+                self.pendingStartCancelled = false
+                self.releaseURL(finalURL)
+                self.engine.setAudioCapture(microphoneID: nil) { _ in }
+                self.message = StatusMessage(text: "Nahrávání zrušeno.", isError: false)
+                return
+            }
             // The camera may have stopped while waiting for the microphone.
             guard self.engine.latestFrame.value != nil else {
                 self.releaseURL(finalURL)

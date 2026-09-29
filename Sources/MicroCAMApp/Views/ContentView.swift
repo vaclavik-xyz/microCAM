@@ -35,12 +35,7 @@ struct ContentView: View {
             ToolbarItemGroup {
                 Button { model.takePhoto() } label: { Label("Vyfotit", systemImage: "camera") }
                     .help("Vyfotit (mezerník)")
-                Button { model.toggleRecording() } label: {
-                    Label(model.isRecording ? "Zastavit" : "Nahrávat",
-                          systemImage: model.isRecording ? "stop.circle.fill" : "record.circle")
-                }
-                .tint(model.isRecording ? .red : nil)
-                .help("Nahrávat / zastavit (R)")
+                RecordButton()
                 Button { model.revealCaptureFolder() } label: { Label("Složka", systemImage: "folder") }
                     .help("Otevřít složku, kam se teď ukládá")
                 TimelapseToolbarButton(runner: model.timelapse)
@@ -108,4 +103,28 @@ struct TimelapseToolbarButton: View {
 struct MoveRequest: Identifiable {
     let files: [URL]
     var id: String { files.map(\.path).joined(separator: "|") }
+}
+
+/// Record/stop, with visible "starting" (waiting for the microphone; pressing
+/// again cancels) and "saving" (previous file still finalizing) states.
+struct RecordButton: View {
+    @EnvironmentObject private var model: AppModel
+
+    var body: some View {
+        if model.isFinalizingRecording {
+            Label("Ukládám video…", systemImage: "hourglass")
+                .help("Dokončuji ukládání předchozího videa")
+        } else {
+            Button { model.toggleRecording() } label: {
+                if model.isStartingRecording {
+                    Label("Zrušit spuštění", systemImage: "xmark.circle")
+                } else {
+                    Label(model.isRecording ? "Zastavit" : "Nahrávat",
+                          systemImage: model.isRecording ? "stop.circle.fill" : "record.circle")
+                }
+            }
+            .tint(model.isRecording ? .red : nil)
+            .help(model.isStartingRecording ? "Čekám na mikrofon – kliknutím nahrávání zrušíš" : "Nahrávat / zastavit (R)")
+        }
+    }
 }
