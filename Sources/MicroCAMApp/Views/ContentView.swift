@@ -5,6 +5,15 @@ struct ContentView: View {
     @Environment(\.openSettings) private var openSettings
 
     var body: some View {
+        if model.launchMode == .viewer {
+            ViewerView(viewer: model.viewer)
+                .background(WindowAccessor { model.attachMainWindow($0) })
+        } else {
+            cameraBody
+        }
+    }
+
+    private var cameraBody: some View {
         VStack(spacing: 0) {
             if model.settings.jobsEnabled {
                 JobBar()

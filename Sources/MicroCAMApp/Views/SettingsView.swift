@@ -6,7 +6,20 @@ struct SettingsView: View {
     @EnvironmentObject private var model: AppModel
 
     var body: some View {
+        Group {
+            if model.launchMode == .viewer {
+                ModeSettingsTab()
+            } else {
+                cameraTabs
+            }
+        }
+        .frame(width: 540)
+        .padding(20)
+    }
+
+    private var cameraTabs: some View {
         TabView(selection: $model.settingsTab) {
+            ModeSettingsTab().tabItem { Label("Režim", systemImage: "rectangle.on.rectangle") }.tag("mode")
             DeviceSettingsTab().tabItem { Label("Zařízení", systemImage: "camera") }.tag("device")
             AdjustmentsForm().padding(.horizontal).tabItem { Label("Obraz", systemImage: "slider.horizontal.3") }.tag("image")
             StorageSettingsTab().tabItem { Label("Ukládání", systemImage: "folder") }.tag("storage")
@@ -16,8 +29,26 @@ struct SettingsView: View {
             StreamSettingsTab().tabItem { Label("Přenos", systemImage: "dot.radiowaves.left.and.right") }.tag("stream")
             BehaviourSettingsTab().tabItem { Label("Chování", systemImage: "gearshape") }.tag("behaviour")
         }
-        .frame(width: 540)
-        .padding(20)
+    }
+}
+
+struct ModeSettingsTab: View {
+    @EnvironmentObject private var model: AppModel
+
+    var body: some View {
+        Form {
+            Picker("Režim appky", selection: $model.settings.appMode) {
+                Text("Kamera – mikroskop je připojený k tomuto Macu").tag(AppMode.camera)
+                Text("Prohlížeč – zobrazuje přenos z jiného Macu").tag(AppMode.viewer)
+            }
+            .pickerStyle(.radioGroup)
+            if model.settings.appMode != model.launchMode {
+                HStack {
+                    Text("Změna se projeví po restartu.").foregroundStyle(.secondary)
+                    Button("Restartovat") { model.relaunch() }
+                }
+            }
+        }
     }
 }
 

@@ -19,14 +19,19 @@ final class AppModel: ObservableObject {
             }
             if settings.jobContext != oldValue.jobContext || settings.storageRootPath != oldValue.storageRootPath
                 || settings.sortByType != oldValue.sortByType { capturesChanged() }
-            if settings.streamingEnabled != oldValue.streamingEnabled || settings.streamingPort != oldValue.streamingPort
-                || settings.appMode != oldValue.appMode { applyStreaming() }
+            if settings.streamingEnabled != oldValue.streamingEnabled
+                || settings.streamingPort != oldValue.streamingPort { applyStreaming() }
         }
     }
     @Published private(set) var cameraAuthorized: Bool?
     @Published var message: StatusMessage?
 
     let engine = CaptureEngine()
+    /// Camera or viewer, fixed for the life of the process; a change in
+    /// Settings takes effect after `relaunch()`.
+    let launchMode: AppMode
+    lazy var viewer = ViewerModel(settings: { [unowned self] in self.settings },
+                                  update: { [unowned self] body in body(&self.settings) })
     let lifecycle = LifecycleMonitor()
     weak var mainWindow: NSWindow?
     private let store: SettingsStore
@@ -71,6 +76,7 @@ final class AppModel: ObservableObject {
     private var keyboard: KeyboardMonitor?
 
     func handle(_ action: ShortcutAction) {
+        guard launchMode == .camera else { return }
         switch action {
         case .toggleGrid: gridVisible.toggle()
         case .resetZoom: previewView?.resetZoom()
@@ -104,8 +110,10 @@ final class AppModel: ObservableObject {
     init() {
         previewRenderer = MetalPreviewRenderer(adjustments: adjustmentsBox)
         store = demo?.settingsStore() ?? SettingsStore()
-        settings = store.load()
-        showFirstRun = settings.storageRoot == nil
+        let loaded = store.load()
+        settings = loaded
+        launchMode = loaded.appMode
+        showFirstRun = settings.storageRoot == nil && launchMode == .camera
         let renderer = previewRenderer
         let adjusted = adjustedMode
         let recorder = self.recorder
@@ -170,6 +178,8 @@ final class AppModel: ObservableObject {
         if let demo {
             demoDriver = DemoDriver(model: self, config: demo)
             demoDriver?.start()
+        } else if launchMode == .viewer {
+            viewer.start()
         } else {
             Task { await start() }
         }
@@ -209,6 +219,7 @@ final class AppModel: ObservableObject {
     }
 
     func start() async {
+        guard launchMode == .camera else { return }
         let granted = await AVCaptureDevice.requestAccess(for: .video)
         cameraAuthorized = granted
         guard granted else { return }
@@ -664,9 +675,10 @@ final class AppModel: ObservableObject {
         cachedStreamPIN = .some(value)
     }
 
-    /// Starts, restarts or stops the server to match settings (camera mode only).
+    /// Starts, restarts or stops the server to match settings (camera mode only;
+    /// a pending switch to viewer mode keeps streaming until the relaunch).
     func applyStreaming() {
-        guard settings.appMode == .camera, settings.streamingEnabled else {
+        guard launchMode == .camera, settings.streamingEnabled else {
             streamServer?.stop()
             streamServer = nil
             streamError = nil
@@ -692,6 +704,25 @@ final class AppModel: ObservableObject {
         streamServer?.start(port: UInt16(settings.streamingPort),
                             serviceName: demo == nil ? (Host.current().localizedName ?? "microCAM") : nil,
                             loopbackOnly: demo != nil)
+    }
+
+    // MARK: Viewer mode
+
+    /// Mode changes take effect on a fresh process.
+    func relaunch() {
+        flushSettings()
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/sh")
+        process.arguments = ["-c", "sleep 1; /usr/bin/open -n \"$0\"", Bundle.main.bundlePath]
+        try? process.run()
+        NSApp.terminate(nil)
+    }
+
+    func showFullScreen(on screen: NSScreen) {
+        guard let window = mainWindow else { return }
+        if window.styleMask.contains(.fullScreen) { window.toggleFullScreen(nil) }
+        window.setFrame(screen.visibleFrame, display: true)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { window.toggleFullScreen(nil) }
     }
 
     // MARK: Integrations

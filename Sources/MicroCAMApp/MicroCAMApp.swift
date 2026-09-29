@@ -20,6 +20,11 @@ struct MicroCAMApp: App {
                 Button("Mřížka (G)") { model.handle(.toggleGrid) }
                 Button("Zrušit zoom (0)") { model.handle(.resetZoom) }
             }
+            CommandMenu("Zobrazení") {
+                ForEach(Array(NSScreen.screens.enumerated()), id: \.offset) { _, screen in
+                    Button("Na celou obrazovku: \(screen.localizedName)") { model.showFullScreen(on: screen) }
+                }
+            }
             CommandGroup(replacing: .help) {
                 Button("Klávesové zkratky") {
                     let alert = NSAlert()
