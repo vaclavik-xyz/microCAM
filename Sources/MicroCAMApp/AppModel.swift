@@ -16,6 +16,8 @@ final class AppModel: ObservableObject {
             if settings.pauseWhenHidden != oldValue.pauseWhenHidden {
                 lifecycle.update { $0.pauseWhenHidden = settings.pauseWhenHidden }
             }
+            if settings.jobContext != oldValue.jobContext || settings.storageRootPath != oldValue.storageRootPath
+                || settings.sortByType != oldValue.sortByType { capturesChanged() }
         }
     }
     @Published private(set) var cameraAuthorized: Bool?
@@ -39,7 +41,8 @@ final class AppModel: ObservableObject {
         switch action {
         case .toggleGrid: gridVisible.toggle()
         case .resetZoom: previewView?.resetZoom()
-        case .photo, .toggleRecording: break // wired in Tasks 12 and 13
+        case .photo: takePhoto()
+        case .toggleRecording: break // wired in Task 13
         }
     }
 
@@ -67,6 +70,7 @@ final class AppModel: ObservableObject {
     init() {
         previewRenderer = MetalPreviewRenderer(adjustments: adjustmentsBox)
         settings = store.load()
+        showFirstRun = settings.storageRoot == nil
         let renderer = previewRenderer
         let adjusted = adjustedMode
         engine.onVideoSample = { sampleBuffer in
@@ -133,5 +137,135 @@ final class AppModel: ObservableObject {
         if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?\(pane)") {
             NSWorkspace.shared.open(url)
         }
+    }
+
+    // MARK: Storage and photos
+
+    enum CaptureError: LocalizedError {
+        case noStorageRoot, noFrame
+        var errorDescription: String? {
+            switch self {
+            case .noStorageRoot: "Není vybraná složka pro ukládání."
+            case .noFrame: "Kamera právě nedává obraz."
+            }
+        }
+    }
+
+    @Published var showFirstRun = false
+    @Published private(set) var captureRevision = 0
+    private let photoCapturer = PhotoCapturer()
+    /// Names handed out but not yet on disk, so two captures in one second never collide.
+    private var pendingURLs = Set<URL>()
+
+    var captureFolder: URL? {
+        settings.layout?.baseFolder(for: settings.jobContext)
+    }
+
+    func reserveURL(kind: CaptureKind) throws -> URL {
+        guard let layout = settings.layout else { throw CaptureError.noStorageRoot }
+        let folder = try layout.prepareFolder(for: settings.jobContext, kind: kind)
+        let pending = pendingURLs
+        let namer = CaptureFileNamer(fileExists: {
+            pending.contains($0) || FileManager.default.fileExists(atPath: $0.path)
+        })
+        let url = namer.nextURL(in: folder, context: settings.jobContext, kind: kind, date: Date())
+        pendingURLs.insert(url)
+        return url
+    }
+
+    func releaseURL(_ url: URL) { pendingURLs.remove(url) }
+
+    func capturesChanged() { captureRevision += 1 }
+
+    func takePhoto(kind: CaptureKind = .photo) {
+        guard let frame = engine.latestFrame.value, Date().timeIntervalSince(frame.receivedAt) < 1 else {
+            report(CaptureError.noFrame, prefix: "Fotka neuložena")
+            return
+        }
+        let url: URL
+        do {
+            url = try reserveURL(kind: kind)
+        } catch {
+            report(error, prefix: "Fotka neuložena")
+            return
+        }
+        photoCapturer.capture(frame.pixelBuffer, adjustments: adjustmentsBox.value,
+                              quality: settings.jpegQuality, to: url) { [weak self] result in
+            guard let self else { return }
+            self.releaseURL(url)
+            switch result {
+            case .success:
+                self.message = StatusMessage(text: "Uloženo: \(url.lastPathComponent)", isError: false)
+                self.capturesChanged()
+            case .failure(let error):
+                self.report(error, prefix: "Fotka neuložena")
+            }
+        }
+    }
+
+    func report(_ error: Error, prefix: String) {
+        let detail: String
+        switch error {
+        case StorageError.rootUnavailable(let url):
+            detail = "složka \(url.path) není dostupná. Zkontroluj ji v Nastavení."
+        case StorageError.cannotCreateFolder(let url):
+            detail = "nelze vytvořit složku \(url.path)."
+        default:
+            detail = error.localizedDescription
+        }
+        message = StatusMessage(text: "\(prefix): \(detail)", isError: true)
+    }
+
+    /// Empty input clears the job. Returns false for an invalid code.
+    func setActiveJob(_ raw: String) -> Bool {
+        if raw.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            settings.activeJob = nil
+            return true
+        }
+        guard let code = JobCode(raw) else { return false }
+        settings.activeJob = code
+        return true
+    }
+
+    func chooseStorageRoot() {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.canCreateDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.prompt = "Vybrat"
+        panel.message = "Složka, do které bude microCAM ukládat fotky a videa"
+        panel.directoryURL = settings.storageRoot
+            ?? FileManager.default.urls(for: .picturesDirectory, in: .userDomainMask).first
+        if panel.runModal() == .OK, let url = panel.url {
+            settings.storageRootPath = url.path
+            showFirstRun = false
+            capturesChanged()
+        }
+    }
+
+    /// Explicit user choice from the first-run sheet, so creating it is fine.
+    func useDefaultStorageRoot() {
+        guard let pictures = FileManager.default.urls(for: .picturesDirectory, in: .userDomainMask).first else { return }
+        let url = pictures.appendingPathComponent("microCAM", isDirectory: true)
+        do {
+            try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+            settings.storageRootPath = url.path
+            showFirstRun = false
+            capturesChanged()
+        } catch {
+            report(error, prefix: "Složku nelze vytvořit")
+        }
+    }
+
+    func revealCaptureFolder() {
+        guard let root = settings.storageRoot else { showFirstRun = true; return }
+        let folder = captureFolder ?? root
+        let target = FileManager.default.fileExists(atPath: folder.path) ? folder : root
+        guard FileManager.default.fileExists(atPath: target.path) else {
+            report(StorageError.rootUnavailable(root), prefix: "Nelze otevřít")
+            return
+        }
+        NSWorkspace.shared.open(target)
     }
 }
