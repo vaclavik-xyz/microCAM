@@ -10,8 +10,10 @@ final class PreviewContainerView: NSView {
     private let passthroughHost = NSView()
     /// Parent of the preview layer; zoom transforms are applied to it.
     let contentLayer = CALayer()
+    let renderer: MetalPreviewRenderer?
 
-    init(session: AVCaptureSession) {
+    init(session: AVCaptureSession, renderer: MetalPreviewRenderer?) {
+        self.renderer = renderer
         previewLayer = AVCaptureVideoPreviewLayer(session: session)
         previewLayer.videoGravity = .resizeAspect
         super.init(frame: .zero)
@@ -25,6 +27,20 @@ final class PreviewContainerView: NSView {
         contentLayer.addSublayer(previewLayer)
         passthroughHost.layer?.addSublayer(contentLayer)
         addSubview(passthroughHost)
+        if let renderer {
+            renderer.view.isHidden = true
+            renderer.view.autoresizingMask = [.width, .height]
+            addSubview(renderer.view)
+        }
+    }
+
+    func setMode(_ mode: RenderMode) {
+        let adjusted = mode == .adjusted && renderer != nil
+        renderer?.view.isHidden = !adjusted
+        renderer?.setActive(adjusted)
+        passthroughHost.isHidden = adjusted
+        // A hidden preview layer would still be fed frames; disable its connection.
+        previewLayer.connection?.isEnabled = !adjusted
     }
 
     @available(*, unavailable)
@@ -33,6 +49,7 @@ final class PreviewContainerView: NSView {
     override func layout() {
         super.layout()
         passthroughHost.frame = bounds
+        renderer?.view.frame = bounds
         CATransaction.begin()
         CATransaction.setDisableActions(true)
         // With a non-identity transform, set bounds/position, never frame.
@@ -44,11 +61,16 @@ final class PreviewContainerView: NSView {
 }
 
 struct PreviewView: NSViewRepresentable {
-    let session: AVCaptureSession
+    @EnvironmentObject private var model: AppModel
 
     func makeNSView(context: Context) -> PreviewContainerView {
-        PreviewContainerView(session: session)
+        let view = PreviewContainerView(session: model.engine.session, renderer: model.previewRenderer)
+        model.previewView = view
+        view.setMode(model.renderMode)
+        return view
     }
 
-    func updateNSView(_ view: PreviewContainerView, context: Context) {}
+    func updateNSView(_ view: PreviewContainerView, context: Context) {
+        view.setMode(model.renderMode)
+    }
 }

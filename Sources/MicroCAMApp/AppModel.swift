@@ -26,8 +26,41 @@ final class AppModel: ObservableObject {
     weak var mainWindow: NSWindow?
     private let store = SettingsStore()
 
+    let adjustmentsBox = LockedValue(ImageAdjustments.neutral)
+    let adjustedMode = LockedValue(false)
+    let previewRenderer: MetalPreviewRenderer?
+    weak var previewView: PreviewContainerView?
+    @Published private(set) var renderMode = RenderMode.passthrough
+
+    /// Adjustments of the current camera; neutral values are not stored.
+    var currentAdjustments: ImageAdjustments {
+        get { settings.adjustments(forDevice: engine.currentCameraID) }
+        set {
+            guard let id = engine.currentCameraID else { return }
+            let value = newValue.clamped()
+            settings.adjustmentsByDevice[id] = value.isNeutral ? nil : value
+            syncAdjustments()
+        }
+    }
+
+    func syncAdjustments() {
+        let a = currentAdjustments
+        adjustmentsBox.value = a
+        adjustedMode.value = !a.isNeutral
+        renderMode = a.isNeutral ? .passthrough : .adjusted
+        previewRenderer?.invalidate()
+    }
+
     init() {
+        previewRenderer = MetalPreviewRenderer(adjustments: adjustmentsBox)
         settings = store.load()
+        let renderer = previewRenderer
+        let adjusted = adjustedMode
+        engine.onVideoSample = { sampleBuffer in
+            if adjusted.value, let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) {
+                renderer?.push(pixelBuffer)
+            }
+        }
         lifecycle.update { $0.pauseWhenHidden = settings.pauseWhenHidden }
         lifecycle.onChange = { [weak self] _ in self?.applyLifecycle() }
         engine.onCameraDisconnected = { [weak self] in
@@ -68,6 +101,7 @@ final class AppModel: ObservableObject {
             guard let self, let device = self.engine.currentCameraID else { return }
             self.settings.lastDeviceID = device
             if let applied { self.settings.lastFormatByDevice[device] = applied }
+            self.syncAdjustments()
         }
     }
 
@@ -75,6 +109,7 @@ final class AppModel: ObservableObject {
         engine.selectCamera(id: engine.currentCameraID, format: format) { [weak self] applied in
             guard let self, let device = self.engine.currentCameraID, let applied else { return }
             self.settings.lastFormatByDevice[device] = applied
+            self.syncAdjustments()
         }
     }
 

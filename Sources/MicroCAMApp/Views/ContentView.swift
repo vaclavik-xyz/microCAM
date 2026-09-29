@@ -2,14 +2,25 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject private var model: AppModel
+    @State private var showAdjustments = false
 
     var body: some View {
         ZStack {
-            PreviewView(session: model.engine.session)
+            PreviewView()
             CameraStateOverlay(engine: model.engine)
         }
         .background(Color.black)
         .background(WindowAccessor { model.attachMainWindow($0) })
+        .toolbar {
+            ToolbarItem {
+                Button { showAdjustments.toggle() } label: {
+                    Label("Úpravy obrazu", systemImage: "slider.horizontal.3")
+                }
+                .popover(isPresented: $showAdjustments) {
+                    AdjustmentsForm().padding().frame(width: 360)
+                }
+            }
+        }
     }
 }
 
