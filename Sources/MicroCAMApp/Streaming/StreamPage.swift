@@ -8,6 +8,11 @@ import MicroCAMCore
 /// panels as a vertical rail on the right, beside the 16:9 image. Every
 /// control is at least 44 px and the safe-area insets are respected.
 /// `scripts/stream-page-shots.py` renders it on phone, tablet and desktop.
+///
+/// Texts live in the `STRINGS` dictionary of the script, one entry per
+/// language (the same languages as the app). The page picks `?lang=` (the
+/// viewer app passes its own), then the browser's languages, else English.
+/// `LocalizationTests` checks that every language has every key.
 enum StreamPage {
     static func html(mode: StreamMode, embedded: Bool) -> String {
         template
@@ -17,14 +22,14 @@ enum StreamPage {
 
     private static let template = #"""
 <!doctype html>
-<html lang="cs">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#07080a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>microCAM – živě</title>
+<title>microCAM</title>
 <style>
 :root{
   --bg:#07080a;--panel:rgba(22,24,29,.84);--raised:rgba(255,255,255,.07);--raised-hi:rgba(255,255,255,.14);
@@ -166,55 +171,117 @@ body.image-only #dock,body.image-only #status,body.image-only #ink{display:none!
 <body>
 <div id="stage"><img id="live" alt=""><img id="shot" class="hidden" alt=""></div>
 <canvas id="ink"></canvas>
-<div id="offline" class="hidden">Připojuji se k mikroskopu…</div>
-<div id="status"><span class="dot"></span><span id="stateLabel">Živě</span><span id="job" class="job hidden"></span></div>
+<div id="offline" class="hidden" data-i18n="offline"></div>
+<div id="status"><span class="dot"></span><span id="stateLabel"></span><span id="job" class="job hidden"></span></div>
 <div id="dock">
   <div id="toast" role="status" aria-live="polite"></div>
-  <div id="swatches" class="panel hidden" aria-label="Barva">
-    <button class="swatch on" data-color="#ff3b30" style="--c:#ff3b30" aria-label="Červená"><i></i></button>
-    <button class="swatch" data-color="#ffd60a" style="--c:#ffd60a" aria-label="Žlutá"><i></i></button>
-    <button class="swatch" data-color="#30d158" style="--c:#30d158" aria-label="Zelená"><i></i></button>
-    <button class="swatch" data-color="#0a84ff" style="--c:#0a84ff" aria-label="Modrá"><i></i></button>
+  <div id="swatches" class="panel hidden" data-i18n-aria="color">
+    <button class="swatch on" data-color="#ff3b30" style="--c:#ff3b30" data-i18n-aria="red"><i></i></button>
+    <button class="swatch" data-color="#ffd60a" style="--c:#ffd60a" data-i18n-aria="yellow"><i></i></button>
+    <button class="swatch" data-color="#30d158" style="--c:#30d158" data-i18n-aria="green"><i></i></button>
+    <button class="swatch" data-color="#0a84ff" style="--c:#0a84ff" data-i18n-aria="blue"><i></i></button>
   </div>
-  <div id="palette" class="panel hidden" aria-label="Kreslení">
-    <button class="icon on" data-tool="arrow" aria-label="Šipka" title="Šipka"><svg viewBox="0 0 24 24"><path d="M5 19 19 5M9 5h10v10"/></svg></button>
-    <button class="icon" data-tool="ellipse" aria-label="Kruh" title="Kruh"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="8.5" ry="7"/></svg></button>
-    <button class="icon" data-tool="pen" aria-label="Pero" title="Pero"><svg viewBox="0 0 24 24"><path d="M3 15c2.5-5 4.5-7 6-5s1 6 3.5 6S17 9 21 8"/></svg></button>
+  <div id="palette" class="panel hidden" data-i18n-aria="drawing">
+    <button class="icon on" data-tool="arrow" data-i18n-aria="arrow" data-i18n-title="arrow"><svg viewBox="0 0 24 24"><path d="M5 19 19 5M9 5h10v10"/></svg></button>
+    <button class="icon" data-tool="ellipse" data-i18n-aria="circle" data-i18n-title="circle"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="8.5" ry="7"/></svg></button>
+    <button class="icon" data-tool="pen" data-i18n-aria="pen" data-i18n-title="pen"><svg viewBox="0 0 24 24"><path d="M3 15c2.5-5 4.5-7 6-5s1 6 3.5 6S17 9 21 8"/></svg></button>
     <span class="sep"></span>
-    <button id="colorBtn" class="icon" aria-label="Barva" title="Barva"><span class="chip-color"></span></button>
+    <button id="colorBtn" class="icon" data-i18n-aria="color" data-i18n-title="color"><span class="chip-color"></span></button>
     <span class="sep"></span>
-    <button id="undo" class="icon" aria-label="Vrátit poslední tah" title="Vrátit poslední tah"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
-    <button id="clear" class="icon" aria-label="Smazat kresbu" title="Smazat kresbu"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg></button>
+    <button id="undo" class="icon" data-i18n-aria="undo" data-i18n-title="undo"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
+    <button id="clear" class="icon" data-i18n-aria="clear" data-i18n-title="clear"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg></button>
   </div>
   <div id="controls" class="panel">
     <span id="liveTools" class="group">
-      <button id="draw" aria-label="Kreslit" title="Kreslit do obrazu"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4Z"/><path d="m13.5 6.5 4 4"/></svg><span class="lbl">Kreslit</span></button>
-      <button id="photo" class="primary" title="Vyfotit do zakázky"><svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13" r="3.5"/></svg><span>Vyfotit</span></button>
+      <button id="draw" data-i18n-aria="draw" data-i18n-title="drawTitle"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4Z"/><path d="m13.5 6.5 4 4"/></svg><span class="lbl" data-i18n="draw"></span></button>
+      <button id="photo" class="primary" data-i18n-title="photoTitle"><svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13" r="3.5"/></svg><span data-i18n="photo"></span></button>
     </span>
     <span id="shotTools" class="group hidden">
-      <button id="back" aria-label="Zpět na živý obraz" title="Zpět na živý obraz"><svg viewBox="0 0 24 24"><path d="M15 5 8 12l7 7"/></svg><span class="lbl">Živý obraz</span></button>
-      <button id="save" class="primary" title="Uložit kresbu do nové fotky u zakázky"><svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg><span>Uložit<span class="lbl"> k zakázce</span></span></button>
-      <a id="download" class="btn" download aria-label="Stáhnout" title="Stáhnout"><svg viewBox="0 0 24 24"><path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/></svg><span class="lbl">Stáhnout</span></a>
+      <button id="back" data-i18n-aria="backTitle" data-i18n-title="backTitle"><svg viewBox="0 0 24 24"><path d="M15 5 8 12l7 7"/></svg><span class="lbl" data-i18n="back"></span></button>
+      <button id="save" class="primary" data-i18n-title="saveTitle"><svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg><span><span data-i18n="save"></span><span class="lbl" data-i18n="saveSuffix"></span></span></button>
+      <a id="download" class="btn" download data-i18n-aria="download" data-i18n-title="download"><svg viewBox="0 0 24 24"><path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/></svg><span class="lbl" data-i18n="download"></span></a>
     </span>
-    <button id="fs" class="icon" aria-label="Celá obrazovka" title="Celá obrazovka"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+    <button id="fs" class="icon" data-i18n-aria="fullScreen" data-i18n-title="fullScreen"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
   </div>
 </div>
 <div id="pinDialog" class="hidden" role="dialog" aria-modal="true" aria-labelledby="pinTitle">
   <form id="pinForm" class="card" autocomplete="off">
-    <h2 id="pinTitle">PIN pro focení</h2>
-    <p>Zadej PIN z microCAMu na počítači s kamerou (Nastavení → Přenos).</p>
+    <h2 id="pinTitle" data-i18n="pinTitle"></h2>
+    <p data-i18n="pinText"></p>
     <input id="pinInput" name="pin" type="password" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code"
            minlength="4" maxlength="8" placeholder="••••" aria-describedby="pinNote">
     <div id="pinNote" aria-live="polite"></div>
     <div class="row">
-      <button id="pinCancel" type="button">Zrušit</button>
-      <button id="pinOk" type="submit" class="primary" disabled>Potvrdit</button>
+      <button id="pinCancel" type="button" data-i18n="cancel"></button>
+      <button id="pinOk" type="submit" class="primary" disabled data-i18n="ok"></button>
     </div>
   </form>
 </div>
 <script>
 const MODE = "__MODE__", EMBEDDED = __EMBEDDED__;
 const $ = id => document.getElementById(id);
+
+// ---- texts: one entry per language, the same keys in each ----
+const STRINGS = {
+  "en": {
+    "offline": "Connecting to the camera computer…",
+    "stateLive": "Live", "statePhoto": "Photo", "stateOffline": "Offline",
+    "color": "Color", "red": "Red", "yellow": "Yellow", "green": "Green", "blue": "Blue",
+    "drawing": "Drawing", "arrow": "Arrow", "circle": "Circle", "pen": "Pen",
+    "undo": "Undo last stroke", "clear": "Clear drawing",
+    "draw": "Draw", "drawTitle": "Draw on the picture",
+    "photo": "Take photo", "photoTitle": "Take a photo into the active job",
+    "photoOff": "Taking photos is off: no PIN is set in microCAM on the camera computer (Settings → Stream).",
+    "back": "Live view", "backTitle": "Back to the live picture",
+    "save": "Save", "saveSuffix": " to job", "saveTitle": "Save the drawing as a new photo in the job",
+    "download": "Download", "fullScreen": "Full screen",
+    "pinTitle": "PIN for photos",
+    "pinText": "Enter the PIN from microCAM on the camera computer (Settings → Stream).",
+    "cancel": "Cancel", "ok": "OK",
+    "pinWrong": "Wrong PIN. Try again.", "pinRetry": "You can try again now.",
+    "pinLocked": "Too many wrong tries. Try again in {seconds}\u00a0s.",
+    "unreachable": "The camera computer isn't reachable.",
+    "actionOff": "This is turned off in microCAM on the camera computer.",
+    "error": "Something went wrong (error {code}).",
+    "photoLoadFailed": "Couldn't load the photo.",
+    "photoTaken": "Photo taken", "drawFirst": "Draw something first", "savedToJob": "Saved to the job"
+  },
+  "cs": {
+    "offline": "Připojuji se k počítači s kamerou…",
+    "stateLive": "Živě", "statePhoto": "Fotka", "stateOffline": "Nepřipojeno",
+    "color": "Barva", "red": "Červená", "yellow": "Žlutá", "green": "Zelená", "blue": "Modrá",
+    "drawing": "Kreslení", "arrow": "Šipka", "circle": "Kruh", "pen": "Pero",
+    "undo": "Vrátit poslední tah", "clear": "Smazat kresbu",
+    "draw": "Kreslit", "drawTitle": "Kreslit do obrazu",
+    "photo": "Vyfotit", "photoTitle": "Vyfotit do aktivní zakázky",
+    "photoOff": "Focení je vypnuté: v microCAMu na počítači s kamerou není nastavený PIN (Nastavení → Přenos).",
+    "back": "Živý obraz", "backTitle": "Zpět na živý obraz",
+    "save": "Uložit", "saveSuffix": " k zakázce", "saveTitle": "Uložit kresbu jako novou fotku k zakázce",
+    "download": "Stáhnout", "fullScreen": "Celá obrazovka",
+    "pinTitle": "PIN pro focení",
+    "pinText": "Zadej PIN z microCAMu na počítači s kamerou (Nastavení → Přenos).",
+    "cancel": "Zrušit", "ok": "Potvrdit",
+    "pinWrong": "Špatný PIN. Zkus to znovu.", "pinRetry": "Teď to můžeš zkusit znovu.",
+    "pinLocked": "Příliš mnoho špatných pokusů. Znovu za {seconds}\u00a0s.",
+    "unreachable": "Počítač s kamerou není dostupný.",
+    "actionOff": "Tohle je v microCAMu na počítači s kamerou vypnuté.",
+    "error": "Něco se pokazilo (chyba {code}).",
+    "photoLoadFailed": "Fotku se nepodařilo načíst.",
+    "photoTaken": "Vyfoceno", "drawFirst": "Nejdřív něco nakresli", "savedToJob": "Uloženo k zakázce"
+  }
+}; // end STRINGS
+// ?lang= (the viewer app passes its own), then the browser's languages, else English.
+const LANG = [new URLSearchParams(location.search).get("lang"), ...(navigator.languages || [navigator.language])]
+  .map(l => (l || "").toLowerCase().split("-")[0]).find(l => STRINGS[l]) || "en";
+function t(key, vars) {
+  let text = STRINGS[LANG][key] ?? STRINGS.en[key] ?? key;
+  for (const [k, v] of Object.entries(vars || {})) text = text.replace("{" + k + "}", v);
+  return text;
+}
+document.documentElement.lang = LANG;
+document.querySelectorAll("[data-i18n]").forEach(e => e.textContent = t(e.dataset.i18n));
+document.querySelectorAll("[data-i18n-title]").forEach(e => e.title = t(e.dataset.i18nTitle));
+document.querySelectorAll("[data-i18n-aria]").forEach(e => e.setAttribute("aria-label", t(e.dataset.i18nAria)));
 const live = $("live"), shot = $("shot"), ink = $("ink"), ctx = ink.getContext("2d");
 let tool = "arrow", color = "#ff3b30", drawing = false, shapes = [], current = null, frozen = null, offline = false;
 
@@ -238,7 +305,7 @@ function setOffline(v) {
   setState();
 }
 function setState() {
-  $("stateLabel").textContent = frozen ? "Fotka" : offline ? "Nepřipojeno" : "Živě";
+  $("stateLabel").textContent = frozen ? t("statePhoto") : offline ? t("stateOffline") : t("stateLive");
   document.body.classList.toggle("frozen", !!frozen);
 }
 
@@ -249,8 +316,7 @@ async function poll() {
     $("job").textContent = s.job || "";
     $("job").classList.toggle("hidden", !s.job);
     $("photo").disabled = !s.photoEnabled;
-    $("photo").title = s.photoEnabled ? "Vyfotit do zakázky"
-      : "Focení je vypnuté – v microCAMu na počítači s kamerou není nastavený PIN (Nastavení → Přenos)";
+    $("photo").title = s.photoEnabled ? t("photoTitle") : t("photoOff");
     if (offline && !frozen) startStream();
   } catch (e) { if (!frozen) setOffline(true); }
   setTimeout(poll, 3000);
@@ -402,16 +468,16 @@ function askPin(state) {
   clearInterval(pinTimer);
   input.disabled = false;
   input.value = state && state.pin || "";
-  pinNote(state && state.wrong ? "Špatný PIN. Zkus to znovu." : "", state && state.wrong);
+  pinNote(state && state.wrong ? t("pinWrong") : "", state && state.wrong);
   if (state && state.locked) {
     let left = state.locked;
     input.disabled = true;
     const tick = () => {
       if (left <= 0) {
         clearInterval(pinTimer); input.disabled = false;
-        pinNote("Můžeš to zkusit znovu.", false); pinChanged(); input.focus(); return;
+        pinNote(t("pinRetry"), false); pinChanged(); input.focus(); return;
       }
-      pinNote("Příliš mnoho špatných pokusů. Znovu za " + left + " s.", true);
+      pinNote(t("pinLocked", { seconds: left }), true);
       left -= 1;
     };
     tick(); pinTimer = setInterval(tick, 1000);
@@ -451,15 +517,15 @@ async function withPin(send) {
   for (;;) {
     if (!p || state) { p = await askPin(state); if (!p) return null; }
     let r;
-    try { r = await send(p); } catch (e) { toast("Počítač s kamerou není dostupný"); return null; }
+    try { r = await send(p); } catch (e) { toast(t("unreachable")); return null; }
     if (r.status === 401) { localStorage.removeItem(PIN_KEY); state = { wrong: true }; continue; }
     if (r.status === 429) {
       const j = await r.json().catch(() => ({}));
       state = { locked: Math.max(1, j.retryAfter || 60), pin: p }; continue;
     }
     localStorage.setItem(PIN_KEY, p);
-    if (r.status === 403) { toast("Tahle akce je v microCAMu na počítači s kamerou vypnutá"); return null; }
-    if (!r.ok) { toast("Chyba " + r.status); return null; }
+    if (r.status === 403) { toast(t("actionOff")); return null; }
+    if (!r.ok) { toast(t("error", { code: r.status })); return null; }
     return r;
   }
 }
@@ -474,7 +540,7 @@ async function fetchCapture(ref) {
   const r = await withPin(p => fetch(ref.url, { headers: { "X-MicroCAM-PIN": p }, cache: "no-store" }));
   if (!r) return null;
   try { return URL.createObjectURL(await r.blob()); }
-  catch (e) { toast("Fotku se nepodařilo načíst"); return null; }
+  catch (e) { toast(t("photoLoadFailed")); return null; }
 }
 async function setDownload(ref) {
   const url = await fetchCapture(ref); if (!url) return;
@@ -497,17 +563,17 @@ $("photo").onclick = async () => {
   $("liveTools").classList.add("hidden"); $("shotTools").classList.remove("hidden");
   $("download").href = url; $("download").download = ref.name;
   setState(); setDrawing(true);
-  toast("Vyfoceno", ref.name);
+  toast(t("photoTaken"), ref.name);
 };
 $("save").onclick = async () => {
-  if (!shapes.length) { toast("Nejdřív něco nakresli"); return; }
+  if (!shapes.length) { toast(t("drawFirst")); return; }
   if ($("save").disabled) return;   // one annotated copy per click, even on a double click
   $("save").disabled = true;
   try {
     const ref = await post("/annotated", { source: frozen.name, shapes });
     if (!ref) return;
     await setDownload(ref);
-    toast("Uloženo k zakázce", ref.name);
+    toast(t("savedToJob"), ref.name);
   } finally { $("save").disabled = false; }
 };
 $("back").onclick = () => {

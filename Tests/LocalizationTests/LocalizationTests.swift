@@ -9,10 +9,14 @@ final class LocalizationTests: XCTestCase {
     static let sameAsEnglish: [String: Set<String>] = [
         "cs": ["microCAM", "URL", "Port", "Token", "Video"],
     ]
+    /// Stream page keys meant to be identical to English, per language.
+    static let streamSameAsEnglish: [String: Set<String>] = [
+        "cs": [],
+    ]
     /// Files allowed to contain Czech text (folder names on disk, translations).
     static let czechAllowed: Set<String> = [
         "Sources/MicroCAMCore/FolderLanguage.swift",
-        "Sources/MicroCAMApp/Streaming/StreamPage.swift", // until the stream page gets its dictionary
+        "Sources/MicroCAMApp/Streaming/StreamPage.swift", // its STRINGS dictionary
     ]
 
     let repo = URL(fileURLWithPath: #filePath)
@@ -161,6 +165,39 @@ final class LocalizationTests: XCTestCase {
             let table = try strings("InfoPlist", lang)
             for key in usage { XCTAssertNotNil(table[key], "\(lang).lproj/InfoPlist.strings: missing \(key)") }
         }
+    }
+
+    func testStreamPageDictionaryCoversEveryLanguageAndKey() throws {
+        let page = try String(contentsOf: repo.appendingPathComponent("Sources/MicroCAMApp/Streaming/StreamPage.swift"), encoding: .utf8)
+        let start = try XCTUnwrap(page.range(of: "const STRINGS = "), "STRINGS dictionary not found in StreamPage.swift")
+        let end = try XCTUnwrap(page.range(of: "; // end STRINGS", range: start.upperBound..<page.endIndex))
+        let json = Data(page[start.upperBound..<end.lowerBound].utf8)
+        let dict = try XCTUnwrap(try JSONSerialization.jsonObject(with: json) as? [String: [String: String]],
+                                 "STRINGS must be strict JSON: {\"en\": {…}, \"cs\": {…}}")
+        XCTAssertEqual(dict.keys.sorted(), try languages(), "the stream page must offer the same languages as the app")
+        let english = try XCTUnwrap(dict[development])
+        var problems: [String] = []
+        for (lang, table) in dict.sorted(by: { $0.key < $1.key }) {
+            for key in english.keys.sorted() where table[key] == nil { problems.append("stream page \(lang): missing \"\(key)\"") }
+            for key in table.keys.sorted() where english[key] == nil { problems.append("stream page \(lang): \"\(key)\" is not in \(development)") }
+            for (key, value) in table where value.trimmingCharacters(in: .whitespaces).isEmpty {
+                problems.append("stream page \(lang): empty value for \"\(key)\"")
+            }
+            if lang != development {
+                for (key, value) in table where value == english[key] && !(Self.streamSameAsEnglish[lang] ?? []).contains(key) {
+                    problems.append("stream page \(lang): \"\(key)\" is not translated (same as English)")
+                }
+            }
+        }
+        // Every key the markup and script ask for must exist.
+        let used = try NSRegularExpression(pattern: #"data-i18n(?:-title|-aria)?="([A-Za-z0-9]+)"|\bt\("([A-Za-z0-9]+)""#)
+        let html = String(page[end.upperBound...]) + String(page[..<start.lowerBound])
+        for match in used.matches(in: html, range: NSRange(html.startIndex..., in: html)) {
+            let range = match.range(at: 1).location != NSNotFound ? match.range(at: 1) : match.range(at: 2)
+            let key = String(html[Range(range, in: html)!])
+            if english[key] == nil { problems.append("stream page uses \"\(key)\", which is not in STRINGS.\(development)") }
+        }
+        XCTAssertTrue(problems.isEmpty, "\n" + problems.joined(separator: "\n"))
     }
 
     /// All text lives in the strings tables; code and comments are English.

@@ -13,6 +13,9 @@ final class ViewerModel: ObservableObject {
         var id: String { name }
     }
 
+    /// The stream page follows the app's language rather than the web view's.
+    static let pageLanguage = Bundle.main.preferredLocalizations.first ?? "en"
+
     @Published private(set) var sources: [Source] = []
     @Published private(set) var url: URL?
     @Published private(set) var status = String(localized: "Looking for microCAM on the network…")
@@ -70,7 +73,7 @@ final class ViewerModel: ObservableObject {
                 case .ready:
                     if case .hostPort(let host, let port)? = connection.currentPath?.remoteEndpoint,
                        case .ipv4(let address) = host {
-                        self.url = URL(string: "http://\(address):\(port.rawValue)/?embedded=1")
+                        self.url = URL(string: "http://\(address):\(port.rawValue)/?embedded=1&lang=\(Self.pageLanguage)")
                         self.status = source.name
                         self.update { $0.viewerSourceName = source.name; $0.viewerManualURL = nil }
                     }
@@ -101,7 +104,7 @@ final class ViewerModel: ObservableObject {
               ["http", "https"].contains(components.scheme ?? "") else { return false }
         if components.port == nil { components.port = 8090 }
         components.path = "/"
-        components.queryItems = [URLQueryItem(name: "embedded", value: "1")]
+        components.queryItems = [URLQueryItem(name: "embedded", value: "1"), URLQueryItem(name: "lang", value: Self.pageLanguage)]
         guard let url = components.url else { return false }
         self.url = url
         status = components.host ?? ""
