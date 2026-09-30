@@ -43,6 +43,7 @@
 "Couldn't restart microCAM" = "microCAM se nepodařilo restartovat";
 "Device" = "Zařízení";
 "Disconnect and choose another" = "Odpojit a vybrat jiný";
+"Done around %@" = "Hotovo kolem %@";
 "Drawing from another device saved: %@" = "Uložena kresba z jiného zařízení: %@";
 "Drawing not saved" = "Kresba se neuložila";
 "Dropped frames: %lld" = "Vypadlé snímky: %lld";
@@ -103,6 +104,7 @@
 "Moved: %lld" = "Přesunuto: %lld";
 "Moving files: %lld…" = "Přesouvám soubory: %lld…";
 "Name" = "Název";
+"Next photo in %@" = "Další fotka za %@";
 "No camera connected." = "Není připojená žádná kamera.";
 "No camera" = "Bez kamery";
 "No folder is chosen for saving. Choose one in Settings → Storage." = "Není vybraná složka pro ukládání. Vyber ji v Nastavení → Ukládání.";
@@ -111,6 +113,7 @@
 "Not chosen" = "Není vybraná";
 "Not set" = "Nenastaveno";
 "Nothing to send. Sending videos is off in Settings → Integrations." = "Není co odeslat. Odesílání videí je vypnuté v Nastavení → Integrace.";
+"of %lld" = "z %lld";
 "Only watch" = "Jen sledovat";
 "Open folder" = "Otevřít složku";
 "Open on another device" = "Otevřít na jiném zařízení";
@@ -125,7 +128,7 @@
 "Photo quality" = "Kvalita fotek";
 "Photos and videos you take appear here." = "Tady se objeví fotky a videa, která pořídíš.";
 "Photos taken from another device go to the active job on this Mac." = "Fotky z jiného zařízení se ukládají do aktivní zakázky na tomto Macu.";
-"Photos: %lld of %lld" = "Snímky: %lld z %lld";
+"Photos: %lld · done around %@" = "Fotek: %lld · hotovo kolem %@";
 "Pick one that stands out against the board." = "Vyber barvu, která je na desce dobře vidět.";
 "Picture size and frames per second." = "Rozlišení obrazu a počet snímků za sekundu.";
 "PIN for photos" = "PIN pro focení";
@@ -211,6 +214,7 @@
 "the disk is full" = "došlo místo na disku";
 "the file was left in %@ (%@)" = "soubor zůstal ve složce %@ (%@)";
 "the folder %@ isn't available. Check it in Settings → Storage." = "složka %@ není dostupná. Zkontroluj ji v Nastavení → Ukládání.";
+"The interval must be at least 1 second, the duration at least one interval and at most 7 days." = "Interval musí být aspoň 1 sekunda, délka aspoň jeden interval a nejvýš 7 dní.";
 "the Mac went to sleep" = "Mac usnul";
 "The PIN must have 4–8 digits." = "PIN musí mít 4–8 číslic.";
 "The port must be a number from 1024 to 65535. Press Return to apply it." = "Port musí být číslo od 1024 do 65535. Potvrď ho Enterem.";

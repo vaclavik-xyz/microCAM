@@ -44,6 +44,7 @@
 "Couldn't restart microCAM" = "Couldn't restart microCAM";
 "Device" = "Device";
 "Disconnect and choose another" = "Disconnect and choose another";
+"Done around %@" = "Done around %@";
 "Drawing from another device saved: %@" = "Drawing from another device saved: %@";
 "Drawing not saved" = "Drawing not saved";
 "Dropped frames: %lld" = "Dropped frames: %lld";
@@ -104,6 +105,7 @@
 "Moved: %lld" = "Moved: %lld";
 "Moving files: %lld…" = "Moving files: %lld…";
 "Name" = "Name";
+"Next photo in %@" = "Next photo in %@";
 "No camera connected." = "No camera connected.";
 "No camera" = "No camera";
 "No folder is chosen for saving. Choose one in Settings → Storage." = "No folder is chosen for saving. Choose one in Settings → Storage.";
@@ -112,6 +114,7 @@
 "Not chosen" = "Not chosen";
 "Not set" = "Not set";
 "Nothing to send. Sending videos is off in Settings → Integrations." = "Nothing to send. Sending videos is off in Settings → Integrations.";
+"of %lld" = "of %lld";
 "Only watch" = "Only watch";
 "Open folder" = "Open folder";
 "Open on another device" = "Open on another device";
@@ -126,7 +129,7 @@
 "Photo quality" = "Photo quality";
 "Photos and videos you take appear here." = "Photos and videos you take appear here.";
 "Photos taken from another device go to the active job on this Mac." = "Photos taken from another device go to the active job on this Mac.";
-"Photos: %lld of %lld" = "Photos: %lld of %lld";
+"Photos: %lld · done around %@" = "Photos: %lld · done around %@";
 "Pick one that stands out against the board." = "Pick one that stands out against the board.";
 "Picture size and frames per second." = "Picture size and frames per second.";
 "PIN for photos" = "PIN for photos";
@@ -212,6 +215,7 @@
 "the disk is full" = "the disk is full";
 "the file was left in %@ (%@)" = "the file was left in %@ (%@)";
 "the folder %@ isn't available. Check it in Settings → Storage." = "the folder %@ isn't available. Check it in Settings → Storage.";
+"The interval must be at least 1 second, the duration at least one interval and at most 7 days." = "The interval must be at least 1 second, the duration at least one interval and at most 7 days.";
 "the Mac went to sleep" = "the Mac went to sleep";
 "The PIN must have 4–8 digits." = "The PIN must have 4–8 digits.";
 "The port must be a number from 1024 to 65535. Press Return to apply it." = "The port must be a number from 1024 to 65535. Press Return to apply it.";

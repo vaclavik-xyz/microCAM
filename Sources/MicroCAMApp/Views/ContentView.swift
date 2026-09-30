@@ -182,7 +182,7 @@ struct TimelapseToolbarButton: View {
         }
         .help("Timelapse")
         .popover(isPresented: $show, arrowEdge: .bottom) {
-            TimelapseForm(runner: runner).padding().frame(width: 340)
+            TimelapseForm(runner: runner).padding(16).frame(width: 320)
         }
     }
 }
