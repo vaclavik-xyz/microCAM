@@ -37,7 +37,8 @@ final class PolicyTests: XCTestCase {
         XCTAssertFalse(CaptureLifecyclePolicy.needsAppAwake(s), "plain preview may nap")
         for set in [{ (s: inout CaptureLifecycleState) in s.recording = true },
                     { (s: inout CaptureLifecycleState) in s.timelapseRunning = true },
-                    { (s: inout CaptureLifecycleState) in s.streamViewers = true }] {
+                    { (s: inout CaptureLifecycleState) in s.streamViewers = true },
+                    { (s: inout CaptureLifecycleState) in s.agentWatching = true }] {
             s = CaptureLifecycleState(); s.windowVisible = false
             set(&s)
             XCTAssertTrue(CaptureLifecyclePolicy.needsAppAwake(s))
@@ -100,6 +101,18 @@ final class PolicyTests: XCTestCase {
         s.windowVisible = false
         s.screenLocked = true
         s.streamViewers = true
+        XCTAssertTrue(CaptureLifecyclePolicy.shouldRun(s))
+        s.systemSleeping = true
+        XCTAssertFalse(CaptureLifecyclePolicy.shouldRun(s))
+    }
+    /// An agent pulling frames over MCP keeps the camera on like a stream viewer.
+    func testWatchingAgentKeepsCameraRunningExceptSleep() {
+        var s = CaptureLifecycleState()
+        s.windowVisible = false
+        XCTAssertFalse(CaptureLifecyclePolicy.shouldRun(s))
+        s.agentWatching = true
+        XCTAssertTrue(CaptureLifecyclePolicy.shouldRun(s))
+        s.screenLocked = true
         XCTAssertTrue(CaptureLifecyclePolicy.shouldRun(s))
         s.systemSleeping = true
         XCTAssertFalse(CaptureLifecyclePolicy.shouldRun(s))

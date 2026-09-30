@@ -105,4 +105,15 @@ final class SettingsStoreTests: XCTestCase {
         store.save(s)
         XCTAssertEqual(SettingsStore(defaults: defaults).load(), s)
     }
+    /// The MCP server is off until turned on; the token lives in the Keychain, not here.
+    func testMCPDefaultsOffAndRoundTrips() {
+        let store = SettingsStore(defaults: defaults)
+        var s = store.load()
+        XCTAssertFalse(s.mcpEnabled)
+        XCTAssertEqual(s.mcpPort, 8091)
+        s.mcpEnabled = true
+        s.mcpPort = 9001
+        store.save(s)
+        XCTAssertEqual(SettingsStore(defaults: defaults).load(), s)
+    }
 }
