@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.1 — 2026-09-30
+
+- The camera format chosen in Settings is kept. Before, the capture session
+  switched back to its own format (1920×1080 @ 60 fps on a Cam Link) after
+  the first pause, so a lower resolution never saved any CPU.
+- Opts out of Reactions hand-gesture detection too; macOS ran it on every
+  frame although Reactions were off (~12 % → ~8 % CPU at 1080p60).
+- MIT license.
+
 ## 0.1.0 — 2026-09-30
 
 First release.
