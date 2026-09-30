@@ -73,6 +73,7 @@ final class CaptureEngine: NSObject, ObservableObject {
             kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange,
         ]
         videoOutput.setSampleBufferDelegate(self, queue: videoQueue)
+        audioOutput.audioSettings = VideoEncoding.captureAudioSettings
         audioOutput.setSampleBufferDelegate(self, queue: audioQueue)
         sessionQueue.async {
             self.session.beginConfiguration()

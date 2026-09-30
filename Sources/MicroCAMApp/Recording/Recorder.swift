@@ -2,6 +2,9 @@ import AVFoundation
 import CoreImage
 import Metal
 import MicroCAMCore
+import os
+
+private let log = Logger(subsystem: "xyz.vaclavik.microcam", category: "recorder")
 
 enum RecorderError: LocalizedError {
     case cannotStart(String)
@@ -56,7 +59,7 @@ final class Recorder {
         do {
             writer = try AVAssetWriter(outputURL: stagingURL, fileType: .mov)
         } catch {
-            throw RecorderError.cannotStart(error.localizedDescription)
+            throw RecorderError.cannotStart(ErrorDetails.describe(error))
         }
         writer.movieFragmentInterval = CMTime(seconds: 10, preferredTimescale: 600)
 
@@ -82,7 +85,7 @@ final class Recorder {
             }
         }
         guard writer.startWriting() else {
-            throw RecorderError.cannotStart(writer.error?.localizedDescription ?? "writer")
+            throw RecorderError.cannotStart(ErrorDetails.describe(writer.error, fallback: "writer"))
         }
 
         lock.lock()
@@ -151,7 +154,9 @@ final class Recorder {
         guard let writer, writer.status == .writing, let audioInput, let startTime,
               CMSampleBufferGetPresentationTimeStamp(sampleBuffer) >= startTime,
               audioInput.isReadyForMoreMediaData else { return }
-        audioInput.append(sampleBuffer)
+        if !audioInput.append(sampleBuffer) {
+            reportFailureLocked(writer)
+        }
     }
 
     func stop(completion: @escaping (Result<URL, Error>) -> Void) {
@@ -163,9 +168,18 @@ final class Recorder {
 
         guard let writer, let staging, let final else { return }
         guard started, writer.status == .writing else {
-            writer.cancelWriting()
-            try? FileManager.default.removeItem(at: staging)
-            let error: Error = started ? RecorderError.failed(writer.error?.localizedDescription ?? "?") : RecorderError.noFrames
+            let error: Error
+            if started {
+                // No cancelWriting(): it may delete the output file.
+                // The writer failed mid-recording. Keep the file: movie
+                // fragments make it playable up to the last one written.
+                log.error("writer not writing at stop: \(ErrorDetails.describe(writer.error), privacy: .public)")
+                error = RecorderError.failed(String(localized: "the file was left in \(staging.path) (\(ErrorDetails.describe(writer.error)))"))
+            } else {
+                writer.cancelWriting()
+                try? FileManager.default.removeItem(at: staging)
+                error = RecorderError.noFrames
+            }
             DispatchQueue.main.async { completion(.failure(error)) }
             return
         }
@@ -181,7 +195,8 @@ final class Recorder {
                     result = .failure(RecorderError.failed(String(localized: "the file was left in \(staging.path) (\(error.localizedDescription))")))
                 }
             } else {
-                result = .failure(RecorderError.failed(writer.error?.localizedDescription ?? "?"))
+                log.error("finishWriting failed: \(ErrorDetails.describe(writer.error), privacy: .public)")
+                result = .failure(RecorderError.failed(ErrorDetails.describe(writer.error)))
             }
             DispatchQueue.main.async { completion(result) }
         }
@@ -190,7 +205,8 @@ final class Recorder {
     private func reportFailureLocked(_ writer: AVAssetWriter) {
         guard !failureReported else { return }
         failureReported = true
-        let error = RecorderError.failed(writer.error?.localizedDescription ?? String(localized: "writing the file failed"))
+        log.error("writer failed while recording: \(ErrorDetails.describe(writer.error), privacy: .public)")
+        let error = RecorderError.failed(ErrorDetails.describe(writer.error, fallback: String(localized: "writing the file failed")))
         DispatchQueue.main.async { self.onFailure?(error) }
     }
 }

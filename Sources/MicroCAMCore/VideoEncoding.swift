@@ -37,4 +37,18 @@ public enum VideoEncoding {
         AVNumberOfChannelsKey: 1,
         AVEncoderBitRateKey: 96_000,
     ]
+
+    /// What the capture output delivers, whatever the microphone's native
+    /// format. A USB microphone (HyperX SoloCast 2) sent buffers the AAC
+    /// writer rejected with -12737 (kCMSampleBufferError_ArrayTooSmall) the
+    /// moment recording started; plain interleaved mono float avoids that.
+    public static let captureAudioSettings: [String: Any] = [
+        AVFormatIDKey: kAudioFormatLinearPCM,
+        AVSampleRateKey: 48_000,
+        AVNumberOfChannelsKey: 1,
+        AVLinearPCMBitDepthKey: 32,
+        AVLinearPCMIsFloatKey: true,
+        AVLinearPCMIsNonInterleaved: false,
+        AVLinearPCMIsBigEndianKey: false,
+    ]
 }
