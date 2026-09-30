@@ -40,15 +40,20 @@ public enum MCPToken {
     }
 }
 
-/// What the user pastes on the agent's computer to connect it.
-public enum MCPClientCommand {
+/// What the user gives the agent's MCP client to connect it.
+public enum MCPClientConfig {
     public static func url(address: String, port: Int) -> String {
         let host = address.contains(":") ? "[\(address)]" : address
         return "http://\(host):\(port)\(MCPRouter.path)"
     }
 
-    /// Claude Code. The token is URL-safe (see `MCPToken.isValid`), so it needs no shell quoting inside "…".
-    public static func claude(address: String, port: Int, token: String) -> String {
-        #"claude mcp add --transport http microcam \#(url(address: address, port: port)) --header "Authorization: Bearer \#(token)""#
+    /// The `mcpServers` JSON most MCP clients accept (Streamable HTTP URL and
+    /// the Authorization header), pretty-printed for pasting.
+    public static func json(address: String, port: Int, token: String) -> String {
+        let config: JSONValue = ["mcpServers": ["microcam": [
+            "type": "http", "url": .string(url(address: address, port: port)),
+            "headers": ["Authorization": .string("Bearer \(token)")],
+        ]]]
+        return String(decoding: config.serialized(pretty: true), as: UTF8.self)
     }
 }

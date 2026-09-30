@@ -3,10 +3,10 @@
 ## Unreleased
 
 - MCP server for AI agents (*Settings → Integrations*, off by default).
-  Agents on other computers on your network, such as Claude Code, can check
-  the camera, look at the live picture without saving it, take photos, list
-  and open recent captures, start and stop recording and set the job.
-  *Copy command* gives the ready `claude mcp add` line. Requests need the
+  Agents on other computers on your network can check the camera, look at
+  the live picture without saving it, take photos, list and open recent
+  captures, start and stop recording and set the job. *Copy configuration*
+  gives the address and token ready for any MCP client. Requests need the
   token from Settings; an address that sends a wrong token 5 times is locked
   out for 5 minutes. What an agent does shows over the preview, and the
   window subtitle says *Agent is watching* while it pulls frames.

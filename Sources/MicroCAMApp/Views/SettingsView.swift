@@ -360,7 +360,7 @@ struct IntegrationSettingsTab: View {
 }
 
 /// MCP server for AI agents on other computers: switch, port, token and the
-/// command that connects Claude Code.
+/// configuration that connects an agent's MCP client.
 struct MCPSettingsSection: View {
     @EnvironmentObject private var model: AppModel
     @ObservedObject var mcp: MCPController
@@ -372,7 +372,7 @@ struct MCPSettingsSection: View {
         Section {
             Toggle(isOn: $model.settings.mcpEnabled) {
                 Text("MCP server for AI agents")
-                Text("AI agents on other computers on your network, such as Claude Code, can see the camera, take photos and record. You see what they do.")
+                Text("AI agents on other computers on your network can see the camera, take photos and record. You see what they do.")
             }
             if model.settings.mcpEnabled {
                 VStack(alignment: .leading, spacing: 2) {
@@ -422,17 +422,17 @@ struct MCPSettingsSection: View {
                 if mcp.error == nil, let token = mcp.token, StreamPort.isValid(model.settings.mcpPort) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Connect an agent")
-                        Text("Run the command on the computer where the agent runs.")
+                        Text("Paste the configuration into the MCP settings of the agent's app. The address and the Authorization header work in any MCP client.")
                             .font(.subheadline).foregroundStyle(.secondary)
                         ForEach(mcp.addresses(), id: \.self) { address in
                             HStack {
-                                Text(verbatim: MCPClientCommand.url(address: address, port: model.settings.mcpPort))
+                                Text(verbatim: MCPClientConfig.url(address: address, port: model.settings.mcpPort))
                                     .textSelection(.enabled).monospaced()
                                 Spacer()
-                                Button("Copy command") {
-                                    copy(MCPClientCommand.claude(address: address, port: model.settings.mcpPort, token: token))
+                                Button("Copy configuration") {
+                                    copy(MCPClientConfig.json(address: address, port: model.settings.mcpPort, token: token))
                                 }
-                                .help("Copies the claude mcp add command with this address and the token.")
+                                .help("Copies the MCP client configuration with this address and the token.")
                             }
                             .padding(.top, 4)
                         }

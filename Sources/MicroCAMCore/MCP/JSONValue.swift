@@ -62,10 +62,11 @@ public enum JSONValue: Equatable, Sendable {
         }
     }
 
-    /// Compact JSON with sorted keys.
-    public func serialized() -> Data {
-        (try? JSONSerialization.data(withJSONObject: any, options: [.sortedKeys, .withoutEscapingSlashes,
-                                                                    .fragmentsAllowed])) ?? Data("null".utf8)
+    /// JSON with sorted keys; compact unless `pretty`.
+    public func serialized(pretty: Bool = false) -> Data {
+        var options: JSONSerialization.WritingOptions = [.sortedKeys, .withoutEscapingSlashes, .fragmentsAllowed]
+        if pretty { options.insert(.prettyPrinted) }
+        return (try? JSONSerialization.data(withJSONObject: any, options: options)) ?? Data("null".utf8)
     }
 
     public subscript(key: String) -> JSONValue? {

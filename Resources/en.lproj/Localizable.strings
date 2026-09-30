@@ -276,7 +276,7 @@
 "Can't save the token in the Keychain, so the MCP server stays off." = "Can't save the token in the Keychain, so the MCP server stays off.";
 "The MCP server can't start on port %lld: %@. Try another port." = "The MCP server can't start on port %lld: %@. Try another port.";
 "MCP server for AI agents" = "MCP server for AI agents";
-"AI agents on other computers on your network, such as Claude Code, can see the camera, take photos and record. You see what they do." = "AI agents on other computers on your network, such as Claude Code, can see the camera, take photos and record. You see what they do.";
+"AI agents on other computers on your network can see the camera, take photos and record. You see what they do." = "AI agents on other computers on your network can see the camera, take photos and record. You see what they do.";
 "Press Return to apply. Agents reconnect by themselves." = "Press Return to apply. Agents reconnect by themselves.";
 "Show" = "Show";
 "Hide" = "Hide";
@@ -285,7 +285,7 @@
 "Agents send it with every request." = "Agents send it with every request.";
 "Anyone with the token controls the camera. Give it only to your own agents." = "Anyone with the token controls the camera. Give it only to your own agents.";
 "Connect an agent" = "Connect an agent";
-"Run the command on the computer where the agent runs." = "Run the command on the computer where the agent runs.";
-"Copy command" = "Copy command";
-"Copies the claude mcp add command with this address and the token." = "Copies the claude mcp add command with this address and the token.";
+"Paste the configuration into the MCP settings of the agent's app. The address and the Authorization header work in any MCP client." = "Paste the configuration into the MCP settings of the agent's app. The address and the Authorization header work in any MCP client.";
+"Copy configuration" = "Copy configuration";
+"Copies the MCP client configuration with this address and the token." = "Copies the MCP client configuration with this address and the token.";
 "Tools: status, live picture, photo, recent captures, start and stop recording, and the job." = "Tools: status, live picture, photo, recent captures, start and stop recording, and the job.";

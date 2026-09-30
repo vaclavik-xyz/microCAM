@@ -172,19 +172,29 @@ The window:
 ### MCP server for AI agents
 
 *Settings → Integrations → MCP server for AI agents*, off by default. AI
-agents on other computers on your network (Claude Code, or any client that
-speaks [MCP](https://modelcontextprotocol.io) over Streamable HTTP) can then
-look through the microscope, take photos and record.
+agents on other computers on your network (any client that speaks
+[MCP](https://modelcontextprotocol.io) over Streamable HTTP) can then look
+through the microscope, take photos and record.
 
 1. Turn it on. microCAM creates a random token and keeps it in the Keychain.
    The port is 8091; change it only if another app uses it.
-2. Click **Copy command** next to one of this Mac's addresses and run it on
-   the agent's computer:
+2. Click **Copy configuration** next to one of this Mac's addresses and paste
+   it into the MCP settings of the agent's app:
 
-   ```sh
-   claude mcp add --transport http microcam http://<bench-ip>:8091/mcp \
-       --header "Authorization: Bearer <token>"
+   ```json
+   {
+     "mcpServers": {
+       "microcam": {
+         "headers": { "Authorization": "Bearer <token>" },
+         "type": "http",
+         "url": "http://<bench-ip>:8091/mcp"
+       }
+     }
+   }
    ```
+
+   A client that is set up differently needs just the same two things: the
+   URL and the `Authorization` header.
 
 | Tool | What it does |
 |---|---|
