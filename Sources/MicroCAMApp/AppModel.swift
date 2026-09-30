@@ -3,9 +3,12 @@ import AppKit
 import ImageIO
 import MicroCAMCore
 
-struct StatusMessage: Equatable {
+/// Shown as a toast over the preview. Each message is new (own `id`), so the
+/// same text twice restarts the auto-hide timer.
+struct StatusMessage: Equatable, Identifiable {
     let text: String
     let isError: Bool
+    let id = UUID()
 }
 
 @MainActor
@@ -195,6 +198,7 @@ final class AppModel: ObservableObject {
         cameraAuthorized = true
         engine.activateDemo()
         settings.storageRootPath = root.path
+        settings.jobsEnabled = job != nil
         settings.activeJob = job.flatMap(JobCode.init)
         settings.recordAudio = false
         showFirstRun = false

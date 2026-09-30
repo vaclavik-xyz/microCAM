@@ -12,7 +12,7 @@ Live preview, photos, hour-long recordings with narration, timelapse, and
 every capture filed under the job it belongs to. A *job* is a repair order:
 the ticket or order number you already use for the repair.
 
-![microCAM main window: live microscope image, job bar and the side panel with the job's photos and videos](docs/images/microcam-window.jpg)
+![microCAM main window: live microscope image, toolbar and the side panel with the job's photos and videos](docs/images/microcam-window.jpg)
 
 microCAM works with any camera macOS can see: USB/UVC microscopes and HDMI
 cameras behind a capture card such as the Elgato Cam Link 4K. It was built
@@ -89,19 +89,33 @@ Shortcuts are ignored while you type in a text field, so a job code like
 `PR-2600` never triggers anything. Zoom and grid affect only the preview:
 photos and videos are always full frame.
 
+The window:
+
+- **Toolbar.** Photo, video and timelapse sit together in the middle. Image
+  adjustments and Settings are on the right, and the active job is on the
+  left when jobs are on.
+- **Side panel.** The captures of the current folder as thumbnails, grouped
+  by day. Click selects, ⌘-click adds, ⇧-click selects a range, double-click
+  opens, and you can drag a file into another app. The panel remembers its
+  width. Hide it with the button next to the window buttons.
+- **Preview.** A red *REC* badge with the running time shows while recording.
+  Short messages like *Saved: …* show at the bottom and hide on their own.
+  Errors stay until you close them.
+
 ### Where files go
 
 ```
-<root>/PR-260412/PR-260412_2026-09-25_14-02-11.jpg
-<root>/PR-260412/PR-260412_2026-09-25_14-30-00.mov
-<root>/_Unsorted/no-job_2026-09-25_15-00-00.jpg       # no job set
+<root>/microcam_2026-09-25_14-02-11.jpg               # default: no jobs
+<root>/PR-260412/PR-260412_2026-09-25_14-30-00.mov    # jobs on, job PR-260412
+<root>/_Unsorted/no-job_2026-09-25_15-00-00.jpg       # jobs on, no job set
 ```
 
 - Two captures in the same second get `_2`, `_3`. Nothing is ever
   overwritten.
 - **Settings → Storage** has two switches:
-  - Turn off *Use jobs*, and everything goes straight into `<root>` as
-    `microcam_…`.
+  - *Use jobs* is off by default, and everything goes straight into
+    `<root>` as `microcam_…`. Turn it on to give each job (repair order)
+    its own folder; the job is then set from the toolbar.
   - Turn on *Sort by type*, and each job gets `Photos/`, `Videos/` and
     `Timelapse/` subfolders.
 - Folder names follow the app language (the Czech names are in

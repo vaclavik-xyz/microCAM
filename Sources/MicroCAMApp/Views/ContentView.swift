@@ -16,40 +16,68 @@ struct ContentView: View {
         .onChange(of: model.openSettingsRequest) { openSettings() }
     }
 
+    /// Sidebar width and visibility survive a relaunch.
+    @AppStorage("sidebarVisible") private var sidebarVisible = true
+    private let sidebarWidth = UserDefaults.standard.object(forKey: "sidebarWidth") as? Double ?? 200
+
     private var cameraBody: some View {
-        VStack(spacing: 0) {
-            if model.settings.jobsEnabled {
-                JobBar()
-                Divider()
-            }
-            HSplitView {
-                SidePanel(library: model.library, compare: $model.comparePair)
-                    .frame(minWidth: 200, idealWidth: 240, maxWidth: 360)
+        NavigationSplitView(columnVisibility: Binding(
+            get: { sidebarVisible ? .all : .detailOnly },
+            set: { sidebarVisible = $0 != .detailOnly }
+        )) {
+            SidePanel(library: model.library, compare: $model.comparePair)
+                .navigationSplitViewColumnWidth(min: 150, ideal: sidebarWidth, max: 420)
+                .background(GeometryReader { proxy in
+                    Color.clear.onChange(of: proxy.size.width) { _, width in
+                        if width >= 150 { UserDefaults.standard.set(Double(width), forKey: "sidebarWidth") }
+                    }
+                })
+        } detail: {
             ZStack {
                 PreviewView()
                 CameraStateOverlay(engine: model.engine)
+                RecordingBadge()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading).padding(12)
                 if model.zoomScale > 1.01 {
                     Text(String(format: "%.1f×", model.zoomScale))
                         .font(.caption.monospacedDigit()).padding(6)
                         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 6))
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing).padding(10)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing).padding(12)
+                }
+                MessageToast()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom).padding(16)
+            }
+            .animation(.easeOut(duration: 0.2), value: model.message)
+            .animation(.easeOut(duration: 0.2), value: model.recordingStartedAt)
+            .frame(minWidth: 400)
+            .background(WindowAccessor { model.attachMainWindow($0) })
+        }
+        .navigationTitle("microCAM")
+        .navigationSubtitle(model.isRecording ? String(localized: "● Recording") : "")
+        .toolbar {
+            if model.settings.jobsEnabled {
+                ToolbarItem(placement: .navigation) { JobToolbarButton() }
+            }
+            ToolbarItem(placement: .principal) {
+                ControlGroup {
+                    Button { model.takePhoto() } label: { Label("Take photo", systemImage: "camera") }
+                        .help("Take a photo (Space)")
+                    RecordButton()
+                    TimelapseToolbarButton(runner: model.timelapse, show: $model.showTimelapse)
+                }
+                .controlGroupStyle(.navigation)
+                // Anchored on the group: a popover on a button inside a toolbar
+                // ControlGroup never appears.
+                .popover(isPresented: $model.showTimelapse, arrowEdge: .bottom) {
+                    TimelapseForm(runner: model.timelapse).padding().frame(width: 340)
                 }
             }
-            .background(Color.black)
-            .frame(minWidth: 400)
-            }
-            .background(WindowAccessor { model.attachMainWindow($0) })
-            Divider()
-            StatusBar()
-        }
-        .toolbar {
-            ToolbarItemGroup {
-                Button { model.takePhoto() } label: { Label("Take photo", systemImage: "camera") }
-                    .help("Take a photo (Space)")
-                RecordButton()
-                Button { model.revealCaptureFolder() } label: { Label("Open folder", systemImage: "folder") }
-                    .help("Open the folder where captures are saved now")
-                TimelapseToolbarButton(runner: model.timelapse, show: $model.showTimelapse)
+            ToolbarItemGroup(placement: .primaryAction) {
+                if model.streamViewers > 0 {
+                    Label("Watching: \(model.streamViewers)", systemImage: "dot.radiowaves.left.and.right")
+                        .labelStyle(.titleAndIcon).foregroundStyle(.secondary)
+                        .help("Watching now")
+                }
                 Button { model.showAdjustments.toggle() } label: {
                     Label("Image adjustments", systemImage: "slider.horizontal.3")
                 }
@@ -57,6 +85,8 @@ struct ContentView: View {
                 .popover(isPresented: $model.showAdjustments) {
                     AdjustmentsForm().padding().frame(width: 360)
                 }
+                SettingsLink { Label("Settings", systemImage: "gearshape") }
+                    .help("Settings (⌘,)")
             }
         }
         .sheet(isPresented: $model.showFirstRun) {
@@ -110,9 +140,6 @@ struct TimelapseToolbarButton: View {
             Label("Timelapse", systemImage: runner.isRunning ? "timer.circle.fill" : "timer")
         }
         .help("Timelapse")
-        .popover(isPresented: $show) {
-            TimelapseForm(runner: runner).padding().frame(width: 340)
-        }
     }
 }
 
@@ -135,12 +162,16 @@ struct RecordButton: View {
                 if model.isStartingRecording {
                     Label("Cancel recording", systemImage: "xmark.circle")
                 } else if model.isRecording {
-                    Label("Stop recording", systemImage: "stop.circle.fill")
+                    Label {
+                        Text("Stop recording")
+                    } icon: {
+                        Image(systemName: "stop.circle.fill")
+                            .symbolRenderingMode(.palette).foregroundStyle(.white, .red)
+                    }
                 } else {
                     Label("Record", systemImage: "record.circle")
                 }
             }
-            .tint(model.isRecording ? .red : nil)
             .help(model.isStartingRecording ? String(localized: "Waiting for the microphone. Click to cancel.")
                                             : String(localized: "Start or stop recording (R)"))
         }

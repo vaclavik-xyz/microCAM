@@ -1,14 +1,11 @@
 /* microCAM – Czech. Same keys as en.lproj/Localizable.strings.
    Informal "ty", as in the rest of the app. */
-
 "%@ isn't reachable. Trying again…" = "%@ není dostupný. Zkouším to znovu…";
 "0 – reset zoom (or double-click the image)" = "0 – zrušit zoom (nebo dvojklik do obrazu)";
 "4–8 digits. Other devices need it to take photos." = "4–8 číslic. Jiná zařízení ho potřebují k focení.";
 "A long recording doesn't stop because the Mac went to sleep. Closing the lid still stops it." = "Dlouhé nahrávání se nezastaví kvůli usnutí Macu. Zavřením víka se ale zastaví.";
 "A USB microscope, or an HDMI camera behind a capture card." = "USB mikroskop nebo HDMI kamera připojená přes záznamovou kartu.";
 "A viewer only watches. It finds the camera computer on the network by itself." = "Prohlížeč jen sleduje. Počítač s kamerou si v síti najde sám.";
-"Active: %@" = "Aktivní: %@";
-"Active: no job" = "Aktivní: bez zakázky";
 "Adds sound from a microphone to videos, for example your narration." = "Přidá do videí zvuk z mikrofonu, třeba tvůj komentář.";
 "After" = "Po";
 "After: %@" = "Po: %@";
@@ -33,7 +30,6 @@
 "Choose the folder where microCAM saves photos and videos" = "Vyber složku, do které bude microCAM ukládat fotky a videa";
 "Choose" = "Vybrat";
 "Close" = "Zavřít";
-"Compare" = "Porovnat";
 "Connect a USB microscope or a capture card." = "Připoj USB mikroskop nebo záznamovou kartu.";
 "Connect to %@" = "Připojit k %@";
 "Connect" = "Připojit";
@@ -79,6 +75,7 @@
 "Integrations" = "Integrace";
 "Interval" = "Interval";
 "Invalid address. Enter it as host:port, e.g. 192.168.1.20:8090." = "Neplatná adresa. Zadej ji jako počítač:port, např. 192.168.1.20:8090.";
+"Job: files go into its folder" = "Zakázka: soubory se ukládají do její složky";
 "Job:" = "Zakázka:";
 "Keep the Mac awake while recording" = "Nenechat Mac usnout během nahrávání";
 "Keyboard shortcuts" = "Klávesové zkratky";
@@ -93,13 +90,12 @@
 "Microphone" = "Mikrofon";
 "min" = "min";
 "Mode" = "Režim";
-"Move the selected files to another job" = "Přesunout vybrané soubory k jiné zakázce";
+"More actions for the selected files" = "Další akce s vybranými soubory";
 "Move to job" = "Přesunout k zakázce";
 "Move to job…" = "Přesunout k zakázce…";
 "Move to Unsorted" = "Přesunout do nezařazených";
 "Move" = "Přesunout";
 "Moved: %lld" = "Přesunuto: %lld";
-"Move…" = "Přesunout…";
 "Moving files: %lld…" = "Přesouvám soubory: %lld…";
 "No camera connected." = "Není připojená žádná kamera.";
 "No folder is chosen for saving. Choose one in Settings → Storage." = "Není vybraná složka pro ukládání. Vyber ji v Nastavení → Ukládání.";
@@ -116,9 +112,11 @@
 "Open" = "Otevřít";
 "Optional. Sent with every file so the server knows it comes from you." = "Nepovinný. Posílá se s každým souborem, aby server poznal, že je od tebe.";
 "or an address, e.g. 192.168.1.20:8090" = "nebo adresa, např. 192.168.1.20:8090";
+"Other files" = "Ostatní soubory";
 "Photo from another device saved: %@" = "Uložena fotka z jiného zařízení: %@";
 "Photo not saved" = "Fotka se neuložila";
 "Photo quality" = "Kvalita fotek";
+"Photos and videos you take appear here." = "Tady se objeví fotky a videa, která pořídíš.";
 "Photos taken from another device go to the active job on this Mac." = "Fotky z jiného zařízení se ukládají do aktivní zakázky na tomto Macu.";
 "Photos: %lld of %lld" = "Snímky: %lld z %lld";
 "Pick one that stands out against the board." = "Vyber barvu, která je na desce dobře vidět.";
@@ -140,6 +138,7 @@
 "Recording stopped (%@). Video saved: %@" = "Nahrávání se zastavilo (%@). Video uloženo: %@";
 "Recording without sound: microCAM isn't allowed to use the microphone (System Settings → Privacy & Security)." = "Nahrávám bez zvuku: microCAM nemá povolený mikrofon (Nastavení systému → Soukromí a zabezpečení).";
 "Recording without sound: the microphone can't be used." = "Nahrávám bez zvuku: mikrofon nejde použít.";
+"Recording. Press R to stop." = "Nahrává se. Zastavíš klávesou R.";
 "Red" = "Červená";
 "Reset zoom (0)" = "Zrušit zoom (0)";
 "Reset" = "Obnovit výchozí";
@@ -153,16 +152,16 @@
 "Scroll or pinch – zoom, drag – move the image" = "Kolečko nebo sevření – zoom, tažení – posun obrazu";
 "Select two photos to compare them" = "Vyber dvě fotky, které chceš porovnat";
 "Selected files: %lld" = "Vybráno souborů: %lld";
-"Send the selected files to the webhook" = "Odeslat vybrané soubory přes webhook";
 "Send to a webhook" = "Odesílat přes webhook";
 "Send to webhook" = "Odeslat přes webhook";
 "Send videos too" = "Posílat i videa";
-"Send" = "Odeslat";
 "Sending %lld of %lld…" = "Odesílám %lld z %lld…";
 "Sends the files you select to your own server or automation tool, such as your CRM, n8n, Make or Zapier." = "Pošle vybrané soubory na tvůj server nebo do automatizace, třeba do tvého CRM, n8n, Make nebo Zapieru.";
 "Sent %lld of %lld. Error: %@" = "Odesláno %lld z %lld. Chyba: %@";
 "Separate subfolders for photos, videos and timelapse." = "Zvláštní podsložky pro fotky, videa a časosběr.";
 "Set" = "Nastavit";
+"Settings (⌘,)" = "Nastavení (⌘,)";
+"Settings" = "Nastavení";
 "Share (AirDrop, Mail, Messages…)" = "Sdílet (AirDrop, Mail, Zprávy…)";
 "Share…" = "Sdílet…";
 "Sharing (AirDrop, Mail, Messages…) is always available in the side panel." = "Sdílení (AirDrop, Mail, Zprávy…) je vždy k dispozici v bočním panelu.";
@@ -214,6 +213,7 @@
 "Timelapse finished. Photos taken: %lld." = "Časosběr skončil. Pořízeno snímků: %lld.";
 "Timelapse" = "Časosběr";
 "Tint" = "Odstín";
+"Today" = "Dnes";
 "Token" = "Token";
 "Turn off the camera when the window is hidden" = "Vypnout kameru, když okno není vidět";
 "Type the address into a browser on a device on the same network." = "Zadej adresu do prohlížeče na zařízení ve stejné síti.";
@@ -225,7 +225,6 @@
 "Video not saved" = "Video se neuložilo";
 "Video quality" = "Kvalita videa";
 "Video saved: %@" = "Video uloženo: %@";
-"Video" = "Video";
 "Videos can be large, so sending them may take a while." = "Videa bývají velká, takže odeslání může chvíli trvat.";
 "Viewer – shows the live stream from another Mac" = "Prohlížeč – zobrazuje živý přenos z jiného Macu";
 "Viewers can" = "Diváci můžou";
@@ -238,6 +237,8 @@
 "White" = "Bílá";
 "writing the file failed" = "zápis souboru selhal";
 "Yellow" = "Žlutá";
+"Yesterday" = "Včera";
 "You can also open these from the toolbar while you work." = "Při práci je otevřeš i z panelu nástrojů.";
 "You can change these after the recording ends." = "Změnit to půjde po skončení nahrávání.";
 "⌘, – settings" = "⌘, – nastavení";
+"● Recording" = "● Nahrává se";

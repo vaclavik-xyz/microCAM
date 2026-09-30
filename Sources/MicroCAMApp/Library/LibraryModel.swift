@@ -5,7 +5,10 @@ import QuickLookThumbnailing
 @MainActor
 final class LibraryModel: ObservableObject {
     @Published private(set) var files: [URL] = []
-    @Published var selection = Set<URL>()
+    @Published var grid = GridSelection<URL>()
+    var selection: Set<URL> { grid.selected }
+    /// Selected files in list order (newest first).
+    var selectedFiles: [URL] { files.filter(grid.selected.contains) }
 
     private let cache: NSCache<NSURL, NSImage> = {
         let cache = NSCache<NSURL, NSImage>()
@@ -20,13 +23,14 @@ final class LibraryModel: ObservableObject {
             let found = await Task.detached(priority: .utility) { CaptureLibrary.captureFiles(in: folders) }.value
             guard !Task.isCancelled else { return }
             files = found
-            selection.formIntersection(found)
+            grid.selected.formIntersection(found)
+            if let anchor = grid.anchor, !found.contains(anchor) { grid.anchor = nil }
         }
     }
 
     func thumbnail(for url: URL) async -> NSImage? {
         if let cached = cache.object(forKey: url as NSURL) { return cached }
-        let request = QLThumbnailGenerator.Request(fileAt: url, size: CGSize(width: 120, height: 90),
+        let request = QLThumbnailGenerator.Request(fileAt: url, size: CGSize(width: 180, height: 135),
                                                    scale: NSScreen.main?.backingScaleFactor ?? 2,
                                                    representationTypes: .thumbnail)
         guard let representation = try? await QLThumbnailGenerator.shared.generateBestRepresentation(for: request)

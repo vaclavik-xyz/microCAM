@@ -1,5 +1,22 @@
 # Changelog
 
+## Unreleased
+
+A tidier main window.
+
+- The side panel is a grid of thumbnails grouped by day and remembers its
+  width. Hide it with the sidebar button.
+- Photo, video and timelapse are one group in the middle of the toolbar.
+  Settings has its own button; the folder button moved to the side panel.
+- The area around the picture follows the window colour instead of black.
+  It stays black in full screen.
+- While recording, a red *REC* badge with the time shows over the picture,
+  the stop button turns red and the window title says so.
+- The status bar is gone. Messages show briefly over the picture, and errors
+  stay until closed.
+- Jobs are off by default. Turn them on in *Settings → Storage*; the active
+  job is then set from the toolbar. Existing settings keep their choice.
+
 ## 0.1.2 — 2026-09-30
 
 Fixes found in a one-hour test recording on a bench Mac.

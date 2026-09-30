@@ -1,15 +1,12 @@
 /* microCAM – English (source language). Keys are the English texts used in
    Sources/MicroCAMApp. Every key must also exist in every other *.lproj;
    `swift test` (LocalizationTests) checks it. */
-
 "%@ isn't reachable. Trying again…" = "%@ isn't reachable. Trying again…";
 "0 – reset zoom (or double-click the image)" = "0 – reset zoom (or double-click the image)";
 "4–8 digits. Other devices need it to take photos." = "4–8 digits. Other devices need it to take photos.";
 "A long recording doesn't stop because the Mac went to sleep. Closing the lid still stops it." = "A long recording doesn't stop because the Mac went to sleep. Closing the lid still stops it.";
 "A USB microscope, or an HDMI camera behind a capture card." = "A USB microscope, or an HDMI camera behind a capture card.";
 "A viewer only watches. It finds the camera computer on the network by itself." = "A viewer only watches. It finds the camera computer on the network by itself.";
-"Active: %@" = "Active: %@";
-"Active: no job" = "Active: no job";
 "Adds sound from a microphone to videos, for example your narration." = "Adds sound from a microphone to videos, for example your narration.";
 "After" = "After";
 "After: %@" = "After: %@";
@@ -34,7 +31,6 @@
 "Choose the folder where microCAM saves photos and videos" = "Choose the folder where microCAM saves photos and videos";
 "Choose" = "Choose";
 "Close" = "Close";
-"Compare" = "Compare";
 "Connect a USB microscope or a capture card." = "Connect a USB microscope or a capture card.";
 "Connect to %@" = "Connect to %@";
 "Connect" = "Connect";
@@ -80,6 +76,7 @@
 "Integrations" = "Integrations";
 "Interval" = "Interval";
 "Invalid address. Enter it as host:port, e.g. 192.168.1.20:8090." = "Invalid address. Enter it as host:port, e.g. 192.168.1.20:8090.";
+"Job: files go into its folder" = "Job: files go into its folder";
 "Job:" = "Job:";
 "Keep the Mac awake while recording" = "Keep the Mac awake while recording";
 "Keyboard shortcuts" = "Keyboard shortcuts";
@@ -94,13 +91,12 @@
 "Microphone" = "Microphone";
 "min" = "min";
 "Mode" = "Mode";
-"Move the selected files to another job" = "Move the selected files to another job";
+"More actions for the selected files" = "More actions for the selected files";
 "Move to job" = "Move to job";
 "Move to job…" = "Move to job…";
 "Move to Unsorted" = "Move to Unsorted";
 "Move" = "Move";
 "Moved: %lld" = "Moved: %lld";
-"Move…" = "Move…";
 "Moving files: %lld…" = "Moving files: %lld…";
 "No camera connected." = "No camera connected.";
 "No folder is chosen for saving. Choose one in Settings → Storage." = "No folder is chosen for saving. Choose one in Settings → Storage.";
@@ -117,9 +113,11 @@
 "Open" = "Open";
 "Optional. Sent with every file so the server knows it comes from you." = "Optional. Sent with every file so the server knows it comes from you.";
 "or an address, e.g. 192.168.1.20:8090" = "or an address, e.g. 192.168.1.20:8090";
+"Other files" = "Other files";
 "Photo from another device saved: %@" = "Photo from another device saved: %@";
 "Photo not saved" = "Photo not saved";
 "Photo quality" = "Photo quality";
+"Photos and videos you take appear here." = "Photos and videos you take appear here.";
 "Photos taken from another device go to the active job on this Mac." = "Photos taken from another device go to the active job on this Mac.";
 "Photos: %lld of %lld" = "Photos: %lld of %lld";
 "Pick one that stands out against the board." = "Pick one that stands out against the board.";
@@ -141,6 +139,7 @@
 "Recording stopped (%@). Video saved: %@" = "Recording stopped (%@). Video saved: %@";
 "Recording without sound: microCAM isn't allowed to use the microphone (System Settings → Privacy & Security)." = "Recording without sound: microCAM isn't allowed to use the microphone (System Settings → Privacy & Security).";
 "Recording without sound: the microphone can't be used." = "Recording without sound: the microphone can't be used.";
+"Recording. Press R to stop." = "Recording. Press R to stop.";
 "Red" = "Red";
 "Reset zoom (0)" = "Reset zoom (0)";
 "Reset" = "Reset";
@@ -154,16 +153,16 @@
 "Scroll or pinch – zoom, drag – move the image" = "Scroll or pinch – zoom, drag – move the image";
 "Select two photos to compare them" = "Select two photos to compare them";
 "Selected files: %lld" = "Selected files: %lld";
-"Send the selected files to the webhook" = "Send the selected files to the webhook";
 "Send to a webhook" = "Send to a webhook";
 "Send to webhook" = "Send to webhook";
 "Send videos too" = "Send videos too";
-"Send" = "Send";
 "Sending %lld of %lld…" = "Sending %lld of %lld…";
 "Sends the files you select to your own server or automation tool, such as your CRM, n8n, Make or Zapier." = "Sends the files you select to your own server or automation tool, such as your CRM, n8n, Make or Zapier.";
 "Sent %lld of %lld. Error: %@" = "Sent %lld of %lld. Error: %@";
 "Separate subfolders for photos, videos and timelapse." = "Separate subfolders for photos, videos and timelapse.";
 "Set" = "Set";
+"Settings (⌘,)" = "Settings (⌘,)";
+"Settings" = "Settings";
 "Share (AirDrop, Mail, Messages…)" = "Share (AirDrop, Mail, Messages…)";
 "Share…" = "Share…";
 "Sharing (AirDrop, Mail, Messages…) is always available in the side panel." = "Sharing (AirDrop, Mail, Messages…) is always available in the side panel.";
@@ -215,6 +214,7 @@
 "Timelapse finished. Photos taken: %lld." = "Timelapse finished. Photos taken: %lld.";
 "Timelapse" = "Timelapse";
 "Tint" = "Tint";
+"Today" = "Today";
 "Token" = "Token";
 "Turn off the camera when the window is hidden" = "Turn off the camera when the window is hidden";
 "Type the address into a browser on a device on the same network." = "Type the address into a browser on a device on the same network.";
@@ -226,7 +226,6 @@
 "Video not saved" = "Video not saved";
 "Video quality" = "Video quality";
 "Video saved: %@" = "Video saved: %@";
-"Video" = "Video";
 "Videos can be large, so sending them may take a while." = "Videos can be large, so sending them may take a while.";
 "Viewer – shows the live stream from another Mac" = "Viewer – shows the live stream from another Mac";
 "Viewers can" = "Viewers can";
@@ -239,6 +238,8 @@
 "White" = "White";
 "writing the file failed" = "writing the file failed";
 "Yellow" = "Yellow";
+"Yesterday" = "Yesterday";
 "You can also open these from the toolbar while you work." = "You can also open these from the toolbar while you work.";
 "You can change these after the recording ends." = "You can change these after the recording ends.";
 "⌘, – settings" = "⌘, – settings";
+"● Recording" = "● Recording";

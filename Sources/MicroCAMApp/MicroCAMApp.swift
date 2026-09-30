@@ -19,6 +19,8 @@ struct MicroCAMApp: App {
                 Divider()
                 Button("Show or hide grid (G)") { model.handle(.toggleGrid) }
                 Button("Reset zoom (0)") { model.handle(.resetZoom) }
+                Divider()
+                Button("Open folder") { model.revealCaptureFolder() }
             }
             // Into the system View menu, next to Enter Full Screen.
             CommandGroup(after: .toolbar) {
