@@ -11,6 +11,7 @@ struct SettingsView: View {
             StorageSettingsTab().tabItem { Label("Ukládání", systemImage: "folder") }.tag("storage")
             TimelapseSettingsTab().tabItem { Label("Časosběr", systemImage: "timer") }.tag("timelapse")
             PreviewSettingsTab().tabItem { Label("Náhled", systemImage: "grid") }.tag("preview")
+            IntegrationSettingsTab().tabItem { Label("Integrace", systemImage: "arrow.up.forward.app") }.tag("integrations")
             BehaviourSettingsTab().tabItem { Label("Chování", systemImage: "gearshape") }.tag("behaviour")
         }
         .frame(width: 540)
@@ -139,6 +140,36 @@ struct DeviceSettingsForm: View {
                 ForEach(engine.microphones) { Text($0.name).tag($0.id) }
             }
             .disabled(!model.settings.recordAudio)
+        }
+    }
+}
+
+struct IntegrationSettingsTab: View {
+    @EnvironmentObject private var model: AppModel
+    @State private var token = KeychainToken.read() ?? ""
+
+    var body: some View {
+        Form {
+            Text("Sdílení (AirDrop, Mail, Zprávy…) je vždy k dispozici v bočním panelu.")
+                .font(.caption).foregroundStyle(.secondary)
+            Toggle("Odesílat přes webhook", isOn: $model.settings.webhookEnabled)
+            if model.settings.webhookEnabled {
+                TextField("URL", text: Binding(
+                    get: { model.settings.webhookURL ?? "" },
+                    set: { model.settings.webhookURL = $0.isEmpty ? nil : $0 }
+                ), prompt: Text("https://…"))
+                SecureField("Token (volitelný)", text: $token)
+                    .onSubmit { KeychainToken.write(token) }
+                    .onDisappear { KeychainToken.write(token) }
+                Toggle("Posílat i videa", isOn: $model.settings.webhookSendVideos)
+                if model.webhookEndpoint == nil {
+                    Text("Zadej platnou adresu https://… (http:// funguje jen v místní síti nebo na IP adrese).")
+                        .font(.caption).foregroundStyle(.red)
+                }
+                Text("Každý soubor se pošle jako multipart/form-data POST s poli file, job, kind, capturedAt a idempotencyKey; token jako Authorization: Bearer.")
+                    .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
 }

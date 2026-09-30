@@ -23,6 +23,10 @@ struct SidePanel: View {
             .contextMenu(forSelectionType: URL.self) { urls in
                 Button("Otevřít") { urls.forEach { NSWorkspace.shared.open($0) } }
                 Button("Zobrazit ve Finderu") { NSWorkspace.shared.activateFileViewerSelecting(Array(urls)) }
+                ShareLink("Sdílet…", items: Array(urls))
+                if model.webhookEndpoint != nil {
+                    Button("Odeslat přes webhook") { model.sendToWebhook(Array(urls)) }
+                }
                 if model.settings.jobsEnabled {
                     Button("Přesunout k zakázce…") { model.filesToMove = Array(urls) }
                 }
@@ -36,6 +40,14 @@ struct SidePanel: View {
                 if model.settings.jobsEnabled {
                     Button("Přesunout…") { model.filesToMove = Array(library.selection) }
                         .disabled(library.selection.isEmpty || model.isMovingFiles)
+                }
+                ShareLink(items: Array(library.selection)) { Image(systemName: "square.and.arrow.up") }
+                    .disabled(library.selection.isEmpty)
+                    .help("Sdílet (AirDrop, Mail, Zprávy…)")
+                if model.webhookEndpoint != nil {
+                    Button("Odeslat") { model.sendToWebhook(Array(library.selection)) }
+                        .disabled(library.selection.isEmpty || model.isSending)
+                        .help("Odeslat vybrané soubory přes webhook")
                 }
                 Button("Porovnat") { compare = comparePair }
                     .disabled(comparePair == nil)

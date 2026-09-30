@@ -38,6 +38,10 @@ public struct AppSettings: Equatable, Sendable {
     public var lastMicrophoneID: String? = nil
     public var recordAudio = true
     public var adjustmentsByDevice: [String: ImageAdjustments] = [:]
+    /// Generic integration (off by default). The token lives in the Keychain.
+    public var webhookEnabled = false
+    public var webhookURL: String? = nil
+    public var webhookSendVideos = false
 
     public init() {}
 
@@ -64,7 +68,7 @@ extension AppSettings: Codable {
         case storageRootPath, sortByType, jobsEnabled, activeJob, jpegQuality, videoCodec, videoQuality,
              timelapseInterval, timelapseDuration, gridType, gridColor, pauseWhenHidden,
              preventSleepWhileRecording, lastDeviceID, lastFormatByDevice, lastMicrophoneID,
-             recordAudio, adjustmentsByDevice
+             recordAudio, adjustmentsByDevice, webhookEnabled, webhookURL, webhookSendVideos
     }
 
     /// Every key is optional so settings from older builds keep working. A
@@ -94,5 +98,8 @@ extension AppSettings: Codable {
         lastMicrophoneID = value(.lastMicrophoneID, d.lastMicrophoneID)
         recordAudio = value(.recordAudio, d.recordAudio)
         adjustmentsByDevice = value(.adjustmentsByDevice, d.adjustmentsByDevice)
+        webhookEnabled = value(.webhookEnabled, d.webhookEnabled)
+        webhookURL = value(.webhookURL, d.webhookURL)
+        webhookSendVideos = value(.webhookSendVideos, d.webhookSendVideos)
     }
 }
