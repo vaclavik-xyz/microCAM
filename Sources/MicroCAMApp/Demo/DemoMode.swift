@@ -2,6 +2,7 @@ import AVFoundation
 import AppKit
 import CoreImage
 import MicroCAMCore
+import Quartz
 
 /// Screenshot demo, enabled only by environment variables set by
 /// `scripts/make-screenshots.sh`. Still photos stand in for the camera and the
@@ -234,6 +235,25 @@ final class DemoDriver {
         capture(main, withChildren: true, as: "08-move-to-job", in: dir)
         model.filesToMove = nil
         await pause(1)
+
+        // 8b. Quick Look (Space in the side panel) and 8c. the Markup editor on a photo.
+        if let photo = model.library.files.first(where: { $0.pathExtension.lowercased() == "jpg" }) {
+            model.library.grid = GridSelection(selected: [photo], anchor: photo)
+            model.previewSelection()
+            await pause(2)
+            if let panel = NSApp.windows.first(where: { $0 is QLPreviewPanel && $0.isVisible }) {
+                capture(panel, withChildren: false, as: "08b-quick-look", in: dir)
+            }
+            model.quickLook.close()
+            await pause(1)
+            model.markUp(photo)
+            await pause(3)
+            capture(main, withChildren: true, as: "08c-markup", in: dir)
+            // Cancel: the demo never saves a copy.
+            if let sheet = main.attachedSheet { main.endSheet(sheet) }
+            model.library.grid = GridSelection()
+            await pause(1)
+        }
 
         // 9. First launch: where to save.
         model.showFirstRun = true
