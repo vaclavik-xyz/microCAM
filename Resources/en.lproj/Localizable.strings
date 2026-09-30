@@ -101,6 +101,7 @@
 "Moved: %lld" = "Moved: %lld";
 "Moving files: %lld…" = "Moving files: %lld…";
 "No camera connected." = "No camera connected.";
+"No camera" = "No camera";
 "No folder is chosen for saving. Choose one in Settings → Storage." = "No folder is chosen for saving. Choose one in Settings → Storage.";
 "No frames were recorded. Check that the camera sends a picture." = "No frames were recorded. Check that the camera sends a picture.";
 "No job" = "No job";

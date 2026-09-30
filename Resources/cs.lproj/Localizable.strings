@@ -100,6 +100,7 @@
 "Moved: %lld" = "Přesunuto: %lld";
 "Moving files: %lld…" = "Přesouvám soubory: %lld…";
 "No camera connected." = "Není připojená žádná kamera.";
+"No camera" = "Bez kamery";
 "No folder is chosen for saving. Choose one in Settings → Storage." = "Není vybraná složka pro ukládání. Vyber ji v Nastavení → Ukládání.";
 "No frames were recorded. Check that the camera sends a picture." = "Nezaznamenal se žádný snímek. Zkontroluj, že kamera posílá obraz.";
 "No job" = "Bez zakázky";

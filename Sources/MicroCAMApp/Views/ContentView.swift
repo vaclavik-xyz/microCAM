@@ -52,8 +52,7 @@ struct ContentView: View {
             .frame(minWidth: 400)
             .background(WindowAccessor { model.attachMainWindow($0) })
         }
-        .navigationTitle("microCAM")
-        .navigationSubtitle(model.isRecording ? String(localized: "● Recording") : "")
+        .modifier(WindowTitle(engine: model.engine))
         .toolbar {
             if model.settings.jobsEnabled {
                 ToolbarItem(placement: .navigation) { JobToolbarButton() }
@@ -101,6 +100,21 @@ struct ContentView: View {
         .sheet(item: $model.comparePair) { pair in
             CompareView(before: pair.before, after: pair.after, initialMode: model.compareInitialMode)
         }
+    }
+}
+
+/// Title: the camera the picture comes from; subtitle: its format, or the
+/// recording state while recording. The app name stays in the menu bar and Dock.
+private struct WindowTitle: ViewModifier {
+    @EnvironmentObject private var model: AppModel
+    @ObservedObject var engine: CaptureEngine
+
+    func body(content: Content) -> some View {
+        content
+            .navigationTitle(engine.cameras.first { $0.id == engine.currentCameraID }?.name
+                             ?? String(localized: "No camera"))
+            .navigationSubtitle(model.isRecording ? String(localized: "● Recording")
+                                                  : engine.activeFormat?.label ?? "")
     }
 }
 
