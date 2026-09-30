@@ -2,15 +2,19 @@
 
 **A small, native macOS app for the microscope camera at a repair bench.**
 Live preview, photos, hour-long recordings with narration, timelapse, and
-every capture filed under the repair order it belongs to.
+every capture filed under the job it belongs to. A *job* is a repair order:
+the ticket or order number you already use for the repair.
 
-![microCAM main window: live microscope image, repair order bar and the side panel with the order's photos and videos](docs/images/microcam-window.jpg)
+![microCAM main window: live microscope image, job bar and the side panel with the job's photos and videos](docs/images/microcam-window.jpg)
 
 microCAM works with any camera macOS can see: USB/UVC microscopes and HDMI
 cameras behind a capture card such as the Elgato Cam Link 4K. It was built
 to replace Plugable Digital Viewer on an Apple Silicon Mac. That app is
 Intel-only, left running all week it used ~20 % CPU, and its recordings
 started to stutter after a while.
+
+The app is in English and Czech and follows the system language; you can
+also pick one in *Settings → General → Language*.
 
 ## Highlights
 
@@ -21,18 +25,18 @@ started to stutter after a while.
 - **Recordings that don't stutter.** Hardware HEVC/H.264 encoding, narration
   from any microphone, no length limit. A crash-safe file is written while
   recording.
-- **Files sorted per repair order.** Type the order number (`PR-260412`) and
-  every photo and video lands in that order's folder. Misfiled shots can be
-  moved later without overwriting anything.
+- **Files sorted per job.** Type the job code (`PR-260412`) and every photo
+  and video lands in that job's folder. Misfiled shots can be moved later
+  without overwriting anything.
 - **Image adjustments per camera:** brightness, contrast, saturation, white
   balance, gamma and sharpening. They apply to the preview, photos and video
   alike, and cost nothing when switched off.
 - **Digital zoom, grid, timelapse and before/after compare** (side by side or
   with a slider).
 - **Live stream** to a browser or to microCAM on another Mac, with remote
-  photos and annotations for showing the customer their board.
+  photos and drawing for showing the customer their board.
 - **Integrations:** macOS share sheet, and an optional generic webhook for
-  sending captures to your own system (CRM, n8n, Make, Zapier…).
+  sending captures to your own system (your CRM, n8n, Make, Zapier…).
 - **No third-party dependencies.** Swift, SwiftUI/AppKit and Apple
   frameworks only.
 
@@ -54,16 +58,16 @@ microphone access again after an update.
 
 ## Using it
 
-On first launch microCAM asks where to store captures. It never picks a
+On first launch microCAM asks where to save captures. It never picks a
 folder on its own.
 
 | Key | Action |
 |---|---|
 | `Space` | take a photo |
-| `R` | start / stop recording |
-| `G` | toggle the grid |
+| `R` | start or stop recording |
+| `G` | show or hide the grid |
 | `0` | reset zoom (or double-click the image) |
-| scroll / pinch, drag | zoom the preview, pan |
+| scroll / pinch, drag | zoom the preview, move the image |
 | `⌘ ,` | settings |
 
 Shortcuts are ignored while you type in a text field, so a job code like
@@ -75,16 +79,20 @@ photos and videos are always full frame.
 ```
 <root>/PR-260412/PR-260412_2026-09-25_14-02-11.jpg
 <root>/PR-260412/PR-260412_2026-09-25_14-30-00.mov
-<root>/_Nezařazeno/bez-zakazky_2026-09-25_15-00-00.jpg      # no job set
+<root>/_Unsorted/no-job_2026-09-25_15-00-00.jpg       # no job set
 ```
 
 - Two captures in the same second get `_2`, `_3`. Nothing is ever
   overwritten.
 - **Settings → Storage** has two switches:
-  - Turn repair orders off, and everything goes straight into `<root>` as
+  - Turn off *Use jobs*, and everything goes straight into `<root>` as
     `microcam_…`.
-  - Turn on sorting by type, and each order gets `Fotky/`, `Videa/` and
-    `Časosběr/` subfolders.
+  - Turn on *Sort by type*, and each job gets `Photos/`, `Videos/` and
+    `Timelapse/` subfolders.
+- Folder names follow the app language (the Czech names are in
+  `Sources/MicroCAMCore/FolderLanguage.swift`). microCAM lists and moves
+  files named in any of its languages, so switching the language never
+  hides existing captures.
 - Recordings are written to `~/Library/Application Support/microCAM/Recording/`
   and moved into place when finished, so iCloud never uploads a half-written
   file. If a leftover file is found after a crash, microCAM opens that folder.
@@ -99,52 +107,94 @@ photos and videos are always full frame.
   | Field | Value |
   |---|---|
   | `file` | the JPEG / MOV |
-  | `job` | repair-order code from the file name (omitted without one) |
+  | `job` | job code from the file name (left out without one) |
   | `kind` | `photo`, `video` or `timelapse` |
   | `capturedAt` | ISO 8601 |
   | `idempotencyKey` | SHA-256 of the file, also sent as the `Idempotency-Key` header |
 
   An optional token is sent as `Authorization: Bearer …` and kept in the
-  Keychain. Any 2xx counts as success. Videos are sent only when "Posílat i
-  videa" is on; uploads stream from disk, so hour-long videos are fine.
+  Keychain. Any 2xx counts as success. Videos are sent only when *Send videos
+  too* is on; uploads stream from disk, so hour-long videos are fine.
 
 ## Live stream and viewer
 
-*Settings → Přenos*, off by default. It streams the live image to other
+*Settings → Stream*, off by default. It streams the live image to other
 devices on the shop network or tailnet. Open `http://<bench-ip>:8090/` in any
-browser, or switch microCAM on another Mac to **Prohlížeč** mode (*Settings →
-Režim appky*); it finds the bench via Bonjour.
+browser, or switch microCAM on another Mac to **Viewer** (*Settings → General
+→ Mode*); it finds the camera computer via Bonjour.
 
-- *Jen obraz*: just the picture, for a customer-facing screen.
-- *S ovládáním*: job code, full screen, drawing over the live image, and
-  **Vyfotit**. The photo is taken on the bench into the active job. Draw on
-  it and **Uložit k zakázce** saves an annotated copy (`…_2.jpg`); the
-  original stays untouched. Remote photos need the PIN set on the bench.
+- *Only watch*: just the picture, for a customer-facing screen.
+- *Watch, draw and take photos*: job code, full screen, drawing over the live
+  image, and **Take photo**. The photo is taken on the camera computer into
+  the active job. Draw on it and **Save to job** saves a copy with the drawing
+  (`…_2.jpg`); the original stays untouched. Remote photos need the *PIN for
+  photos* set on the camera computer.
 
+The page follows the browser's language (the viewer app passes its own).
 Only local-network and Tailscale clients are accepted. Nothing listens while
 the stream is off, and nothing is encoded while nobody watches.
 
 ## Development
 
 ```sh
-swift test                          # unit tests for MicroCAMCore
+swift test                          # unit tests (MicroCAMCore) and translation checks
 scripts/make-app.sh                 # app bundle
-scripts/make-screenshots.sh <dir>   # screenshots in demo mode (no camera needed)
-scripts/stream-smoke.sh <host> [port] [pin]   # check a running stream
-scripts/stream-page-shots.py <url> <dir> --pin <pin>   # stream page on phones/iPad/desktop (demo stream only)
+scripts/make-screenshots.sh <photos> [en|cs] [out-dir]   # screenshots in demo mode (no camera needed)
+scripts/stream-smoke.sh <host> [port] [pin]              # check a running stream
+scripts/stream-page-shots.py <url> <dir> --pin <pin> [--locale cs-CZ]   # stream page on phones/iPad/desktop (demo stream only)
 ```
 
 Demo mode without a camera can also serve the stream on 127.0.0.1: set
 `MICROCAM_DEMO_STREAM_PORT` (and optionally `MICROCAM_DEMO_STREAM_PIN`,
-`MICROCAM_DEMO_STREAM_MODE=imageOnly`). The smoke script adapts to *Jen obraz*
-and to a bench without a PIN. The page-shots script (Python Playwright with
-WebKit) checks that every control is on screen, at least 44 px and not
-overlapping, and saves a screenshot per device and state.
+`MICROCAM_DEMO_STREAM_MODE=imageOnly`). The smoke script adapts to *Only
+watch* and to a camera computer without a PIN. The page-shots script (Python
+Playwright with WebKit) checks that every control is on screen, at least
+44 px and not overlapping, and saves a screenshot per device and state.
 
 - `Sources/MicroCAMCore` holds the pure logic: naming, storage, moving,
   settings, the image pipeline and policies. It is fully unit-tested.
 - `Sources/MicroCAMApp` is the thin AVFoundation/SwiftUI layer.
+- `Resources/<lang>.lproj` holds the translations.
 - Design and plans live in `docs/superpowers/`. Measurements from the bench
   Mac go to `docs/acceptance.md`.
 - The README image lives in `docs/images/`. `docs/screenshots/` is
   git-ignored because it may contain photos of customer boards.
+
+## Contributing
+
+Bug reports and pull requests are welcome. Keep the app free of third-party
+dependencies, put logic that can be tested into `MicroCAMCore` with a test,
+and run `swift test` before you open a pull request.
+
+### Localization
+
+English is the source language: texts are written in English in the code,
+and every language has a folder in `Resources/`:
+
+- `Localizable.strings`: the app's texts. The key is the English text.
+- `InfoPlist.strings`: what macOS shows when it asks for camera, microphone
+  and local-network access.
+
+The stream page keeps its texts in the `STRINGS` dictionary in
+`Sources/MicroCAMApp/Streaming/StreamPage.swift`.
+
+Every new text must be in every language. `swift test` fails with the file,
+line and key when one is missing, empty or left in English by accident.
+
+To add a language (German, `de`, as an example):
+
+1. Copy `Resources/en.lproj` to `Resources/de.lproj` and translate the values
+   (the part after `=`). Keep placeholders such as `%@` and `%lld`.
+2. Add `<string>de</string>` to `CFBundleLocalizations` in
+   `Resources/Info.plist`.
+3. Add a `"de": { … }` entry with the same keys to `STRINGS` in
+   `StreamPage.swift`.
+4. Run `swift test`. If a text should stay the same as in English (a product
+   name, for example), add it to `sameAsEnglish` in
+   `Tests/LocalizationTests/LocalizationTests.swift`.
+5. Build with `scripts/make-app.sh` and check the screens with
+   `scripts/make-screenshots.sh <photos> de <out-dir>`.
+
+The language then appears in *Settings → General → Language* by itself.
+New folders get English names unless `FolderLanguage`
+(`Sources/MicroCAMCore/FolderLanguage.swift`) gets names for the language too.
