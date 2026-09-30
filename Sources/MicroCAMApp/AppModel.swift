@@ -553,7 +553,9 @@ final class AppModel: ObservableObject {
                 begin(false)
                 return
             }
-            engine.setAudioCapture(microphoneID: settings.lastMicrophoneID) { [weak self] attached in
+            // No microphone chosen means "System default"; nil would detach audio.
+            let microphone = settings.lastMicrophoneID ?? AVCaptureDevice.default(for: .audio)?.uniqueID
+            engine.setAudioCapture(microphoneID: microphone) { [weak self] attached in
                 if !attached {
                     self?.message = StatusMessage(text: String(localized: "Recording without sound: the microphone can't be used."), isError: true)
                 }
