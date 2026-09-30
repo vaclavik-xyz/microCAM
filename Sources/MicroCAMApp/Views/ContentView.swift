@@ -54,21 +54,15 @@ struct ContentView: View {
             if model.settings.jobsEnabled {
                 ToolbarItem(placement: .navigation) { JobToolbarButton() }
             }
-            ToolbarItem(placement: .principal) {
-                ControlGroup {
-                    Button { model.takePhoto() } label: { Label("Take photo", systemImage: "camera") }
-                        .help("Take a photo (Space)")
-                    RecordButton()
-                    TimelapseToolbarButton(runner: model.timelapse, show: $model.showTimelapse)
-                }
-                .controlGroupStyle(.navigation)
-                // Anchored on the group: a popover on a button inside a toolbar
-                // ControlGroup never appears. The point is the centre of the
-                // third (timelapse) segment, so the arrow points at its button.
-                .popover(isPresented: $model.showTimelapse,
-                         attachmentAnchor: .point(UnitPoint(x: 5.0 / 6.0, y: 1)), arrowEdge: .bottom) {
-                    TimelapseForm(runner: model.timelapse).padding().frame(width: 340)
-                }
+            // One item group, not a ControlGroup: macOS draws the three in one
+            // capsule anyway, and each button keeps its own popover anchor (a
+            // popover on a button inside a toolbar ControlGroup never appears,
+            // one on the group points at its middle, record).
+            ToolbarItemGroup(placement: .principal) {
+                Button { model.takePhoto() } label: { Label("Take photo", systemImage: "camera") }
+                    .help("Take a photo (Space)")
+                RecordButton()
+                TimelapseToolbarButton(runner: model.timelapse, show: $model.showTimelapse)
             }
             ToolbarItemGroup(placement: .primaryAction) {
                 if model.streamViewers > 0 {
@@ -180,6 +174,9 @@ struct TimelapseToolbarButton: View {
             Label("Timelapse", systemImage: runner.isRunning ? "timer.circle.fill" : "timer")
         }
         .help("Timelapse")
+        .popover(isPresented: $show, arrowEdge: .bottom) {
+            TimelapseForm(runner: runner).padding().frame(width: 340)
+        }
     }
 }
 
