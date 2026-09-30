@@ -16,16 +16,26 @@ struct MicroCAMApp: App {
             CommandGroup(replacing: .appInfo) {
                 Button("About microCAM") { AboutPanel.show() }
             }
+            // Menu shortcuts use ⌘ like other Mac apps (⌘T is Take Photo in
+            // Photo Booth). The quick single keys (Space, R, G, 0) are handled by
+            // KeyboardMonitor instead: as menu shortcuts they would also fire
+            // while typing in a text field, e.g. R in a job code.
             CommandMenu("Camera") {
-                Button("Take photo (Space)") { model.handle(.photo) }
-                Button("Start or stop recording (R)") { model.handle(.toggleRecording) }
+                Button("Take photo") { model.handle(.photo) }
+                    .keyboardShortcut("t")
+                Button("Start or stop recording") { model.handle(.toggleRecording) }
+                    .keyboardShortcut("r")
                 Divider()
-                Button("Show or hide grid (G)") { model.handle(.toggleGrid) }
-                Button("Reset zoom (0)") { model.handle(.resetZoom) }
+                Button("Show or hide grid") { model.handle(.toggleGrid) }
+                    .keyboardShortcut("'")
+                Button("Reset zoom") { model.handle(.resetZoom) }
+                    .keyboardShortcut("0")
                 Divider()
                 // Every toolbar action is also in the menu bar.
                 Button("Timelapse…") { model.showTimelapse = true }
+                    .keyboardShortcut("t", modifiers: [.command, .shift])
                 Button("Image adjustments…") { model.showAdjustments = true }
+                    .keyboardShortcut("i")
                 Divider()
                 Button("Open folder") { model.revealCaptureFolder() }
             }

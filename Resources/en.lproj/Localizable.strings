@@ -153,7 +153,7 @@
 "Red" = "Red";
 "Report a problem" = "Report a problem";
 "Report a problem…" = "Report a problem…";
-"Reset zoom (0)" = "Reset zoom (0)";
+"Reset zoom" = "Reset zoom";
 "Reset" = "Reset";
 "Restart now" = "Restart now";
 "s" = "s";
@@ -180,7 +180,7 @@
 "Sharing (AirDrop, Mail, Messages…) is always available in the side panel." = "Sharing (AirDrop, Mail, Messages…) is always available in the side panel.";
 "Sharpening" = "Sharpening";
 "Show in Finder" = "Show in Finder";
-"Show or hide grid (G)" = "Show or hide grid (G)";
+"Show or hide grid" = "Show or hide grid";
 "Shown in the window title. Leave it empty to use the camera's own name." = "Shown in the window title. Leave it empty to use the camera's own name.";
 "Shows the live picture in a browser on other devices on your network, or in microCAM on another Mac." = "Shows the live picture in a browser on other devices on your network, or in microCAM on another Mac.";
 "Side by side" = "Side by side";
@@ -190,6 +190,7 @@
 "Space – take a photo" = "Space – take a photo";
 "Standard" = "Standard";
 "Start or stop recording (R)" = "Start or stop recording (R)";
+"Start or stop recording" = "Start or stop recording";
 "Start timelapse" = "Start timelapse";
 "Still moving the previous files. Try again in a moment." = "Still moving the previous files. Try again in a moment.";
 "Still saving the previous video. Try again in a moment." = "Still saving the previous video. Try again in a moment.";
@@ -201,7 +202,6 @@
 "System default" = "System default";
 "System" = "System";
 "Take a photo (Space)" = "Take a photo (Space)";
-"Take photo (Space)" = "Take photo (Space)";
 "Take photo" = "Take photo";
 "Takes a photo at a fixed interval into the current folder. Start it from the toolbar." = "Takes a photo at a fixed interval into the current folder. Start it from the toolbar.";
 "Takes a photo at a fixed interval into the current folder." = "Takes a photo at a fixed interval into the current folder.";

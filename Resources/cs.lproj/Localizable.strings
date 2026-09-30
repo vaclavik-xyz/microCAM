@@ -152,7 +152,7 @@
 "Red" = "Červená";
 "Report a problem" = "Nahlásit problém";
 "Report a problem…" = "Nahlásit problém…";
-"Reset zoom (0)" = "Zrušit zoom (0)";
+"Reset zoom" = "Zrušit zoom";
 "Reset" = "Obnovit výchozí";
 "Restart now" = "Restartovat";
 "s" = "s";
@@ -179,7 +179,7 @@
 "Sharing (AirDrop, Mail, Messages…) is always available in the side panel." = "Sdílení (AirDrop, Mail, Zprávy…) je vždy k dispozici v bočním panelu.";
 "Sharpening" = "Doostření";
 "Show in Finder" = "Zobrazit ve Finderu";
-"Show or hide grid (G)" = "Zobrazit nebo skrýt mřížku (G)";
+"Show or hide grid" = "Zobrazit nebo skrýt mřížku";
 "Shown in the window title. Leave it empty to use the camera's own name." = "Zobrazuje se v titulku okna. Když pole necháš prázdné, použije se název kamery.";
 "Shows the live picture in a browser on other devices on your network, or in microCAM on another Mac." = "Ukazuje živý obraz v prohlížeči na jiných zařízeních v síti nebo v microCAMu na jiném Macu.";
 "Side by side" = "Vedle sebe";
@@ -189,6 +189,7 @@
 "Space – take a photo" = "Mezerník – vyfotit";
 "Standard" = "Standardní";
 "Start or stop recording (R)" = "Spustit nebo zastavit nahrávání (R)";
+"Start or stop recording" = "Spustit nebo zastavit nahrávání";
 "Start timelapse" = "Spustit časosběr";
 "Still moving the previous files. Try again in a moment." = "Ještě přesouvám předchozí soubory. Zkus to za chvíli.";
 "Still saving the previous video. Try again in a moment." = "Ještě ukládám předchozí video. Zkus to za chvíli.";
@@ -200,7 +201,6 @@
 "System default" = "Výchozí systémový";
 "System" = "Podle systému";
 "Take a photo (Space)" = "Vyfotit (mezerník)";
-"Take photo (Space)" = "Vyfotit (mezerník)";
 "Take photo" = "Vyfotit";
 "Takes a photo at a fixed interval into the current folder. Start it from the toolbar." = "Fotí v pravidelném intervalu do aktuální složky. Spustíš ho z panelu nástrojů.";
 "Takes a photo at a fixed interval into the current folder." = "Fotí v pravidelném intervalu do aktuální složky.";

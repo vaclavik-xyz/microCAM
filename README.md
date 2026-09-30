@@ -76,17 +76,19 @@ again after an update.
 On first launch microCAM asks where to save captures. It never picks a
 folder on its own.
 
-| Key | Action |
-|---|---|
-| `Space` | take a photo |
-| `R` | start or stop recording |
-| `G` | show or hide the grid |
-| `0` | reset zoom (or double-click the image) |
-| scroll / pinch, drag | zoom the preview, move the image |
-| `⌘ ,` | settings |
+| Quick key | Menu shortcut | Action |
+|---|---|---|
+| `Space` | `⌘ T` | take a photo |
+| `R` | `⌘ R` | start or stop recording |
+| `G` | `⌘ '` | show or hide the grid |
+| `0` | `⌘ 0` | reset zoom (or double-click the image) |
+| | `⌘ ⇧ T` | timelapse |
+| | `⌘ I` | image adjustments |
+| scroll / pinch, drag | | zoom the preview, move the image |
+| | `⌘ ,` | settings |
 
-Shortcuts are ignored while you type in a text field, so a job code like
-`PR-2600` never triggers anything. Zoom and grid affect only the preview:
+The quick keys are ignored while you type in a text field, so a job code
+like `PR-2600` never triggers anything; the menu shortcuts work everywhere. Zoom and grid affect only the preview:
 photos and videos are always full frame.
 
 The window:
