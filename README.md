@@ -216,3 +216,7 @@ To add a language (German, `de`, as an example):
 The language then appears in *Settings → General → Language* by itself.
 New folders get English names unless `FolderLanguage`
 (`Sources/MicroCAMCore/FolderLanguage.swift`) gets names for the language too.
+
+## License
+
+MIT, see [LICENSE](LICENSE).
