@@ -87,7 +87,7 @@ struct SidePanel: View {
 
     /// Actions for the selected files; shown only while something is selected.
     private var selectionBar: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 6) {
             // Count in the selection colour; the full text is in the tooltip,
             // "Selected: 2" doesn't fit a narrow panel.
             HStack(spacing: 4) {
@@ -126,8 +126,9 @@ struct SidePanel: View {
             }
                 .help("Clear selection")
         }
-        // .plain keeps the label colour; .borderless draws icons grey here.
-        .buttonStyle(.plain)
+        // Own style: keeps the label colour (.borderless draws icons grey here)
+        // and highlights on hover like toolbar buttons.
+        .buttonStyle(BarButtonStyle())
         .padding(.horizontal, 12).padding(.vertical, 8)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
         .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.primary.opacity(0.08)))
@@ -165,6 +166,30 @@ struct SidePanel: View {
         let key = { (url: URL) in CaptureFileName.parse(url.lastPathComponent)?.timestamp ?? url.lastPathComponent }
         let sorted = photos.sorted { key($0) < key($1) }
         return ComparePair(before: sorted[0], after: sorted[1])
+    }
+}
+
+/// Selection-bar buttons: a soft rounded highlight on hover, a stronger one
+/// while pressed, as toolbar buttons do.
+private struct BarButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        BarButton(configuration: configuration)
+    }
+
+    private struct BarButton: View {
+        let configuration: ButtonStyleConfiguration
+        @State private var hovering = false
+
+        var body: some View {
+            configuration.label
+                .padding(3)
+                .background(
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Color.primary.opacity(configuration.isPressed ? 0.16 : hovering ? 0.08 : 0))
+                )
+                .onHover { hovering = $0 }
+                .animation(.easeOut(duration: 0.12), value: hovering)
+        }
     }
 }
 
