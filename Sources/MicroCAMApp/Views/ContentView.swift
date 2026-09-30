@@ -63,8 +63,10 @@ struct ContentView: View {
                 }
                 .controlGroupStyle(.navigation)
                 // Anchored on the group: a popover on a button inside a toolbar
-                // ControlGroup never appears.
-                .popover(isPresented: $model.showTimelapse, arrowEdge: .bottom) {
+                // ControlGroup never appears. The point is the centre of the
+                // third (timelapse) segment, so the arrow points at its button.
+                .popover(isPresented: $model.showTimelapse,
+                         attachmentAnchor: .point(UnitPoint(x: 5.0 / 6.0, y: 1)), arrowEdge: .bottom) {
                     TimelapseForm(runner: model.timelapse).padding().frame(width: 340)
                 }
             }

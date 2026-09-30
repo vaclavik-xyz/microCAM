@@ -196,7 +196,7 @@ struct TimelapseSettingsTab: View {
                 DurationField.interval($model.settings.timelapseInterval)
                 DurationField.duration($model.settings.timelapseDuration)
             } footer: {
-                Text("Takes a photo at a fixed interval into the active job. Start it from the toolbar.")
+                Text("Takes a photo at a fixed interval into the current folder. Start it from the toolbar.")
             }
         }
     }

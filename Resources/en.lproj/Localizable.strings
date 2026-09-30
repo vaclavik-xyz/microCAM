@@ -199,8 +199,8 @@
 "Take a photo (Space)" = "Take a photo (Space)";
 "Take photo (Space)" = "Take photo (Space)";
 "Take photo" = "Take photo";
-"Takes a photo at a fixed interval into the active job. Start it from the toolbar." = "Takes a photo at a fixed interval into the active job. Start it from the toolbar.";
-"Takes a photo at a fixed interval into the active job." = "Takes a photo at a fixed interval into the active job.";
+"Takes a photo at a fixed interval into the current folder. Start it from the toolbar." = "Takes a photo at a fixed interval into the current folder. Start it from the toolbar.";
+"Takes a photo at a fixed interval into the current folder." = "Takes a photo at a fixed interval into the current folder.";
 "Temperature" = "Temperature";
 "The camera doesn't support this format. Choose another one in Settings → Device." = "The camera doesn't support this format. Choose another one in Settings → Device.";
 "The camera isn't sending a picture. Check that it's connected." = "The camera isn't sending a picture. Check that it's connected.";

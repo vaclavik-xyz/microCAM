@@ -44,7 +44,7 @@ struct TimelapseForm: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Takes a photo at a fixed interval into the active job.")
+            Text("Takes a photo at a fixed interval into the current folder.")
                 .font(.caption).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
             DurationField.interval($model.settings.timelapseInterval)
@@ -53,9 +53,17 @@ struct TimelapseForm: View {
                 ProgressView(value: Double(runner.shotsTaken), total: Double(schedule.shotCount)) {
                     Text("Photos: \(runner.shotsTaken) of \(schedule.shotCount)")
                 }
-                Button("Stop timelapse") { model.stopTimelapse() }
+                Button("Stop timelapse") {
+                    model.stopTimelapse()
+                    model.showTimelapse = false
+                }
             } else {
-                Button("Start timelapse") { model.startTimelapse() }
+                // Closes once it runs; progress shows in the window subtitle.
+                // A rejected schedule leaves it open next to the error.
+                Button("Start timelapse") {
+                    model.startTimelapse()
+                    if runner.isRunning { model.showTimelapse = false }
+                }
                     .keyboardShortcut(.defaultAction)
                     .disabled(model.engine.currentCameraID == nil)
             }
