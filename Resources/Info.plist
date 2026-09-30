@@ -15,7 +15,7 @@
     <!-- Sparkle updates: the appcast is published with every GitHub release
          (scripts/release.sh). Without SUPublicEDKey the updater stays off. -->
     <key>SUFeedURL</key><string>https://github.com/vaclavik-xyz/microCAM/releases/latest/download/appcast.xml</string>
-    <key>SUPublicEDKey</key><string></string>
+    <key>SUPublicEDKey</key><string>kiDYGvLL1ztG0Mqn5Z+khTDelpzbq8oNqooPiOtAxUE=</string>
     <key>SUEnableAutomaticChecks</key><true/>
     <key>NSHumanReadableCopyright</key><string>© 2026 Filip Václavík · MIT License</string>
     <key>CFBundleShortVersionString</key><string>0.1.2</string>
