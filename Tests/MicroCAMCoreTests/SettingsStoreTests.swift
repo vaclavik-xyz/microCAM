@@ -12,7 +12,8 @@ final class SettingsStoreTests: XCTestCase {
         let s = SettingsStore(defaults: defaults).load()
         XCTAssertEqual(s, AppSettings())
         XCTAssertNil(s.storageRoot)
-        XCTAssertTrue(s.jobsEnabled)
+        // Jobs are opt-in (Settings → Storage); a new user just captures.
+        XCTAssertFalse(s.jobsEnabled)
         XCTAssertFalse(s.sortByType)
     }
     func testRoundTrip() {
@@ -48,6 +49,8 @@ final class SettingsStoreTests: XCTestCase {
     }
     func testJobContext() {
         var s = AppSettings()
+        XCTAssertEqual(s.jobContext, .jobsDisabled)
+        s.jobsEnabled = true
         XCTAssertEqual(s.jobContext, .unassigned)
         s.activeJob = JobCode("PR-1")
         XCTAssertEqual(s.jobContext, .job(JobCode("PR-1")!))

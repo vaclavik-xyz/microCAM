@@ -24,7 +24,7 @@ public struct FormatChoice: Codable, Hashable, Sendable {
 public struct AppSettings: Equatable, Sendable {
     public var storageRootPath: String? = nil
     public var sortByType = false
-    public var jobsEnabled = true
+    public var jobsEnabled = false
     public var activeJob: JobCode? = nil
     public var jpegQuality = 0.9
     public var videoCodec = VideoCodec.hevc
