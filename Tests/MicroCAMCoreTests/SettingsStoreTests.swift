@@ -47,6 +47,22 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertNil(s.activeJob)
         XCTAssertTrue(s.jobsEnabled)
     }
+    func testCameraNameFallsBackToTheSystemName() {
+        var s = AppSettings()
+        XCTAssertEqual(s.cameraName(for: "cam", systemName: "Cam Link 4K"), "Cam Link 4K")
+        s.cameraNames["cam"] = "  Mikroskop  "
+        XCTAssertEqual(s.cameraName(for: "cam", systemName: "Cam Link 4K"), "Mikroskop")
+        XCTAssertEqual(s.cameraName(for: "other", systemName: "FaceTime HD"), "FaceTime HD")
+        s.cameraNames["cam"] = "   "
+        XCTAssertEqual(s.cameraName(for: "cam", systemName: "Cam Link 4K"), "Cam Link 4K")
+    }
+    func testCameraNamesRoundTrip() {
+        let store = SettingsStore(defaults: defaults)
+        var s = AppSettings()
+        s.cameraNames["cam"] = "Mikroskop"
+        store.save(s)
+        XCTAssertEqual(SettingsStore(defaults: defaults).load().cameraNames, ["cam": "Mikroskop"])
+    }
     func testJobContext() {
         var s = AppSettings()
         XCTAssertEqual(s.jobContext, .jobsDisabled)
