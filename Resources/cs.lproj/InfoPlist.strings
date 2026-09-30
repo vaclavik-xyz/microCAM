@@ -2,3 +2,5 @@
 "NSCameraUsageDescription" = "microCAM zobrazuje a nahrává obraz z mikroskopové kamery.";
 "NSMicrophoneUsageDescription" = "microCAM nahrává k videu tvůj komentář.";
 "NSLocalNetworkUsageDescription" = "microCAM posílá živý obraz mikroskopu do zařízení v místní síti.";
+/* About window. */
+"NSHumanReadableCopyright" = "© 2026 Filip Václavík · licence MIT";

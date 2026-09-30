@@ -8,6 +8,7 @@
 "A long recording doesn't stop because the Mac went to sleep. Closing the lid still stops it." = "A long recording doesn't stop because the Mac went to sleep. Closing the lid still stops it.";
 "A USB microscope, or an HDMI camera behind a capture card." = "A USB microscope, or an HDMI camera behind a capture card.";
 "A viewer only watches. It finds the camera computer on the network by itself." = "A viewer only watches. It finds the camera computer on the network by itself.";
+"About microCAM" = "About microCAM";
 "Adds sound from a microphone to videos, for example your narration." = "Adds sound from a microphone to videos, for example your narration.";
 "After" = "After";
 "After: %@" = "After: %@";
@@ -83,11 +84,14 @@
 "Keep the Mac awake while recording" = "Keep the Mac awake while recording";
 "Keyboard shortcuts" = "Keyboard shortcuts";
 "Language" = "Language";
+"Live picture, photos and video from a microscope camera." = "Live picture, photos and video from a microscope camera.";
 "Live stream" = "Live stream";
 "Looking for microCAM on the network…" = "Looking for microCAM on the network…";
+"Made by the repair shop" = "Made by the repair shop";
 "microCAM is recording a video" = "microCAM is recording a video";
 "microCAM isn't allowed to use the camera." = "microCAM isn't allowed to use the camera.";
 "microCAM isn't running as an app (.app)." = "microCAM isn't running as an app (.app).";
+"microCAM on GitHub" = "microCAM on GitHub";
 "microCAM uses it only while recording." = "microCAM uses it only while recording.";
 "microCAM" = "microCAM";
 "Microphone" = "Microphone";
@@ -144,6 +148,8 @@
 "Recording without sound: microCAM isn't allowed to use the microphone (System Settings → Privacy & Security)." = "Recording without sound: microCAM isn't allowed to use the microphone (System Settings → Privacy & Security).";
 "Recording without sound: the microphone can't be used." = "Recording without sound: the microphone can't be used.";
 "Red" = "Red";
+"Report a problem" = "Report a problem";
+"Report a problem…" = "Report a problem…";
 "Reset zoom (0)" = "Reset zoom (0)";
 "Reset" = "Reset";
 "Restart now" = "Restart now";
@@ -177,6 +183,7 @@
 "Side by side" = "Side by side";
 "Slider" = "Slider";
 "Sort by type" = "Sort by type";
+"Source code on GitHub" = "Source code on GitHub";
 "Space – take a photo" = "Space – take a photo";
 "Standard" = "Standard";
 "Start or stop recording (R)" = "Start or stop recording (R)";

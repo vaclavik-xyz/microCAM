@@ -2,3 +2,5 @@
 "NSCameraUsageDescription" = "microCAM shows and records the picture from your microscope camera.";
 "NSMicrophoneUsageDescription" = "microCAM records your narration with videos.";
 "NSLocalNetworkUsageDescription" = "microCAM sends the live microscope picture to devices on your local network.";
+/* About window. */
+"NSHumanReadableCopyright" = "© 2026 Filip Václavík · MIT License";

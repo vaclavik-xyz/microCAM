@@ -16,6 +16,8 @@ A tidier main window.
   subtitle shows the running time (and dropped frames) and the stop button
   turns red; the picture itself stays clean. A running timelapse shows its
   progress there too.
+- The About window has a short description, links to the source code and
+  to report a problem, and the copyright; the Help menu links to GitHub.
 - Cameras can be renamed in *Settings → Device*; an empty name brings back
   the camera's own.
 - The status bar is gone. Messages show briefly over the picture, and errors

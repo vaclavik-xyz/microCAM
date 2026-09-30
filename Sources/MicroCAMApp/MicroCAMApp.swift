@@ -13,6 +13,9 @@ struct MicroCAMApp: App {
                 .frame(minWidth: 640, minHeight: 420)
         }
         .commands {
+            CommandGroup(replacing: .appInfo) {
+                Button("About microCAM") { AboutPanel.show() }
+            }
             CommandMenu("Camera") {
                 Button("Take photo (Space)") { model.handle(.photo) }
                 Button("Start or stop recording (R)") { model.handle(.toggleRecording) }
@@ -29,6 +32,9 @@ struct MicroCAMApp: App {
                 }
             }
             CommandGroup(replacing: .help) {
+                Button("microCAM on GitHub") { NSWorkspace.shared.open(AboutPanel.repository) }
+                Button("Report a problem…") { NSWorkspace.shared.open(AboutPanel.issues) }
+                Divider()
                 Button("Keyboard shortcuts") {
                     let alert = NSAlert()
                     alert.messageText = String(localized: "Keyboard shortcuts")

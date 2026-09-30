@@ -7,6 +7,7 @@
 "A long recording doesn't stop because the Mac went to sleep. Closing the lid still stops it." = "Dlouhé nahrávání se nezastaví kvůli usnutí Macu. Zavřením víka se ale zastaví.";
 "A USB microscope, or an HDMI camera behind a capture card." = "USB mikroskop nebo HDMI kamera připojená přes záznamovou kartu.";
 "A viewer only watches. It finds the camera computer on the network by itself." = "Prohlížeč jen sleduje. Počítač s kamerou si v síti najde sám.";
+"About microCAM" = "O aplikaci microCAM";
 "Adds sound from a microphone to videos, for example your narration." = "Přidá do videí zvuk z mikrofonu, třeba tvůj komentář.";
 "After" = "Po";
 "After: %@" = "Po: %@";
@@ -82,11 +83,14 @@
 "Keep the Mac awake while recording" = "Nenechat Mac usnout během nahrávání";
 "Keyboard shortcuts" = "Klávesové zkratky";
 "Language" = "Jazyk";
+"Live picture, photos and video from a microscope camera." = "Živý obraz, fotky a video z mikroskopové kamery.";
 "Live stream" = "Živý přenos";
 "Looking for microCAM on the network…" = "Hledám microCAM v síti…";
+"Made by the repair shop" = "Vytvořil servis";
 "microCAM is recording a video" = "microCAM nahrává video";
 "microCAM isn't allowed to use the camera." = "microCAM nemá povolený přístup ke kameře.";
 "microCAM isn't running as an app (.app)." = "microCAM neběží jako aplikace (.app).";
+"microCAM on GitHub" = "microCAM na GitHubu";
 "microCAM uses it only while recording." = "microCAM ho používá jen během nahrávání.";
 "microCAM" = "microCAM";
 "Microphone" = "Mikrofon";
@@ -143,6 +147,8 @@
 "Recording without sound: microCAM isn't allowed to use the microphone (System Settings → Privacy & Security)." = "Nahrávám bez zvuku: microCAM nemá povolený mikrofon (Nastavení systému → Soukromí a zabezpečení).";
 "Recording without sound: the microphone can't be used." = "Nahrávám bez zvuku: mikrofon nejde použít.";
 "Red" = "Červená";
+"Report a problem" = "Nahlásit problém";
+"Report a problem…" = "Nahlásit problém…";
 "Reset zoom (0)" = "Zrušit zoom (0)";
 "Reset" = "Obnovit výchozí";
 "Restart now" = "Restartovat";
@@ -176,6 +182,7 @@
 "Side by side" = "Vedle sebe";
 "Slider" = "Posuvník";
 "Sort by type" = "Třídit podle typu";
+"Source code on GitHub" = "Zdrojový kód na GitHubu";
 "Space – take a photo" = "Mezerník – vyfotit";
 "Standard" = "Standardní";
 "Start or stop recording (R)" = "Spustit nebo zastavit nahrávání (R)";
