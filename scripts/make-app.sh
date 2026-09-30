@@ -24,6 +24,9 @@ install_name_tool -add_rpath @executable_path/../Frameworks "$APP/Contents/MacOS
 # Inside out, as Sparkle's documentation asks. The hardened runtime only with
 # a real identity: under it an ad-hoc app can't load an ad-hoc framework.
 IDENTITY="${SIGN_IDENTITY:--}"
+# Local ad-hoc builds never update themselves: without the public key the
+# updater stays off, so a development build isn't replaced by a release.
+[ "$IDENTITY" = "-" ] && plutil -replace SUPublicEDKey -string "" "$APP/Contents/Info.plist"
 FLAGS=(--force --sign "$IDENTITY")
 [ "$IDENTITY" != "-" ] && FLAGS+=(--options runtime --timestamp)
 SPARKLE="$APP/Contents/Frameworks/Sparkle.framework/Versions/B"
