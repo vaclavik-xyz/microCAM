@@ -370,17 +370,25 @@ struct StreamSettingsTab: View {
                     .onDisappear(perform: savePIN)
                     if pinInvalid {
                         Text("The PIN must have 4–8 digits.").font(.caption).foregroundStyle(.red)
-                    } else if model.streamPIN == nil, model.settings.streamingMode == .controls {
-                        Text("Without a PIN, other devices can't take photos.").font(.caption).foregroundStyle(.secondary)
                     }
                 }
                 Section {
-                    TextField(text: $portText) {
-                        Text("Port")
+                    // Title and field on one line, the description below over the full
+                    // width, so it doesn't wrap into a narrow column beside the field.
+                    VStack(alignment: .leading, spacing: 2) {
+                        HStack {
+                            Text("Port")
+                            Spacer()
+                            TextField(text: $portText) { Text("Port") }
+                                .labelsHidden()
+                                .multilineTextAlignment(.trailing)
+                                .frame(width: 90)
+                                .onSubmit(commitPort)
+                                .onDisappear(perform: commitPort)
+                        }
                         Text("Change it only if another app already uses this port.")
+                            .font(.subheadline).foregroundStyle(.secondary)
                     }
-                    .onSubmit(commitPort)
-                    .onDisappear(perform: commitPort)
                     if StreamPort.parse(portText) == nil {
                         Text("The port must be a number from 1024 to 65535. Press Return to apply it.")
                             .font(.caption).foregroundStyle(.red)
@@ -390,22 +398,22 @@ struct StreamSettingsTab: View {
                     }
                     if let error = model.streamError { Text(error).font(.caption).foregroundStyle(.red) }
                     if model.streamError == nil, StreamPort.isValid(model.settings.streamingPort) {
-                        LabeledContent {
-                            VStack(alignment: .trailing, spacing: 4) {
-                                ForEach(model.streamAddresses(), id: \.self) { address in
-                                    let url = "http://\(address):\(model.settings.streamingPort)/"
-                                    HStack {
-                                        Text(verbatim: url).textSelection(.enabled).monospaced()
-                                        Button("Copy") {
-                                            NSPasteboard.general.clearContents()
-                                            NSPasteboard.general.setString(url, forType: .string)
-                                        }
-                                    }
-                                }
-                            }
-                        } label: {
+                        VStack(alignment: .leading, spacing: 2) {
                             Text("Open on another device")
                             Text("Type the address into a browser on a device on the same network.")
+                                .font(.subheadline).foregroundStyle(.secondary)
+                            ForEach(model.streamAddresses(), id: \.self) { address in
+                                let url = "http://\(address):\(model.settings.streamingPort)/"
+                                HStack {
+                                    Text(verbatim: url).textSelection(.enabled).monospaced()
+                                    Spacer()
+                                    Button("Copy") {
+                                        NSPasteboard.general.clearContents()
+                                        NSPasteboard.general.setString(url, forType: .string)
+                                    }
+                                }
+                                .padding(.top, 4)
+                            }
                         }
                     }
                     LabeledContent("Watching now", value: "\(model.streamViewers)")

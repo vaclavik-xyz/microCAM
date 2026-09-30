@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// Number + unit editor for a duration stored in seconds.
+/// Number + unit editor for a duration stored in seconds. Units are
+/// abbreviations (s, min, h), so no plural forms are needed after a number.
 struct DurationField: View {
     let title: Text
     @Binding var seconds: TimeInterval
@@ -29,11 +30,11 @@ struct DurationField: View {
     }
 
     static func interval(_ seconds: Binding<TimeInterval>) -> DurationField {
-        DurationField(title: Text("Every"), seconds: seconds, units: [(Text("seconds"), 1), (Text("minutes"), 60)])
+        DurationField(title: Text("Interval"), seconds: seconds, units: [(Text("s"), 1), (Text("min"), 60)])
     }
 
     static func duration(_ seconds: Binding<TimeInterval>) -> DurationField {
-        DurationField(title: Text("For"), seconds: seconds, units: [(Text("minutes"), 60), (Text("hours"), 3600)])
+        DurationField(title: Text("Duration"), seconds: seconds, units: [(Text("min"), 60), (Text("h"), 3600)])
     }
 }
 
