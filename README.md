@@ -42,8 +42,9 @@ also pick one in *Settings → General → Language*.
   with a slider).
 - **Live stream** to a browser or to microCAM on another Mac, with remote
   photos and drawing for showing the customer their board.
-- **Integrations:** macOS share sheet, and an optional generic webhook for
-  sending captures to your own system (your CRM, n8n, Make, Zapier…).
+- **Integrations:** macOS share sheet, an optional generic webhook for
+  sending captures to your own system (your CRM, n8n, Make, Zapier…), and
+  an optional MCP server so AI agents can see and use the camera.
 - **Almost no dependencies.** Swift, SwiftUI/AppKit and Apple frameworks,
   plus [Sparkle](https://sparkle-project.org) for updates.
 
@@ -168,6 +169,58 @@ The window:
   Keychain. Any 2xx counts as success. Videos are sent only when *Send videos
   too* is on; uploads stream from disk, so hour-long videos are fine.
 
+### MCP server for AI agents
+
+*Settings → Integrations → MCP server for AI agents*, off by default. AI
+agents on other computers on your network (Claude Code, or any client that
+speaks [MCP](https://modelcontextprotocol.io) over Streamable HTTP) can then
+look through the microscope, take photos and record.
+
+1. Turn it on. microCAM creates a random token and keeps it in the Keychain.
+   The port is 8091; change it only if another app uses it.
+2. Click **Copy command** next to one of this Mac's addresses and run it on
+   the agent's computer:
+
+   ```sh
+   claude mcp add --transport http microcam http://<bench-ip>:8091/mcp \
+       --header "Authorization: Bearer <token>"
+   ```
+
+| Tool | What it does |
+|---|---|
+| `get_status` | camera (your name for it), format, recording and for how long, timelapse, current folder and job |
+| `capture_frame` | the live picture as a JPEG, with image adjustments, **not saved**; `max_size` (default 1568 px) |
+| `take_photo` | same as the photo button: saves the photo, returns it and its file name |
+| `list_captures` | newest photos and videos in the current folder: name, kind, time, size (`limit`, default 20) |
+| `get_capture` | a photo from the current folder as an image; for a video only its details |
+| `start_recording` / `stop_recording` | like the record button; stop waits until the video is saved |
+| `set_job` | sets or clears (`""`) the job; listed only while jobs are on |
+
+Errors (no camera, a recording already running, a wrong job code…) come back
+as tool errors with a sentence the agent can act on.
+
+The person at the bench sees what agents do: photos, recordings and job
+changes show a message over the preview, and the window subtitle says
+*Agent is watching* for 10 s after an agent last pulled a frame. A watching
+agent keeps the camera on while the window is hidden, like a stream viewer.
+
+Security:
+
+- **Anyone with the token controls the camera.** Give it only to your own
+  agents; *New token* locks out everyone using the old one.
+- Every request needs `Authorization: Bearer <token>` (compared in constant
+  time). After 5 wrong or missing tokens an address is refused for 5 minutes,
+  even with the right token. The token is never logged or sent back.
+- Like the stream, only local-network and Tailscale clients are accepted,
+  and requests from a foreign browser origin are refused. Nothing listens
+  while the server is off, and it never runs in viewer mode.
+
+Protocol details: `POST /mcp`, one JSON-RPC message per request, JSON
+responses (no SSE, no sessions; `GET` answers 405). Both MCP eras work: the
+`initialize` handshake of revisions 2025-03-26 to 2025-11-25, and the
+stateless 2026-07-28 revision (per-request `_meta`, mirrored headers,
+`server/discover`). `scripts/mcp-smoke.py` checks a running server.
+
 ## Live stream and viewer
 
 *Settings → Stream*, off by default. It streams the live image to other
@@ -195,11 +248,14 @@ scripts/make-icon.sh                # recompile the app icon (needs Xcode 26)
 scripts/make-screenshots.sh <photos> [en|cs] [out-dir]   # screenshots in demo mode (no camera needed)
 scripts/stream-smoke.sh <host> [port] [pin]              # check a running stream
 scripts/stream-page-shots.py <url> <dir> --pin <pin> [--locale cs-CZ]   # stream page on phones/iPad/desktop (demo stream only)
+MICROCAM_MCP_TOKEN=<token> scripts/mcp-smoke.py <host> [port] [--write] [--lockout]   # check a running MCP server
 ```
 
 Demo mode without a camera can also serve the stream on 127.0.0.1: set
 `MICROCAM_DEMO_STREAM_PORT` (and optionally `MICROCAM_DEMO_STREAM_PIN`,
-`MICROCAM_DEMO_STREAM_MODE=imageOnly`). The smoke script adapts to *Only
+`MICROCAM_DEMO_STREAM_MODE=imageOnly`). `MICROCAM_DEMO_MCP_PORT` (and
+optionally `MICROCAM_DEMO_MCP_TOKEN`) does the same for the MCP server; the
+demo keeps its token in memory and never touches the Keychain one. The smoke script adapts to *Only
 watch* and to a camera computer without a PIN. The page-shots script (Python
 Playwright with WebKit) checks that every control is on screen, at least
 44 px and not overlapping, and saves a screenshot per device and state.
