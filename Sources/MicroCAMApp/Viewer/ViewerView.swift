@@ -18,7 +18,7 @@ struct ViewerView: View {
                         Button("Připojit k \(source.name)") { viewer.connect(source) }
                     }
                     HStack {
-                        TextField("nebo adresa, např. 100.64.0.1:8090", text: $manual)
+                        TextField("nebo adresa, např. 192.168.1.20:8090", text: $manual)
                             .textFieldStyle(.roundedBorder).frame(width: 300)
                             .onSubmit { manualInvalid = !viewer.connect(manual: manual) }
                         Button("Připojit") { manualInvalid = !viewer.connect(manual: manual) }

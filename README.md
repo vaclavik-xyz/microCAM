@@ -47,7 +47,6 @@ started to stutter after a while.
 scripts/make-app.sh                 # → build/microCAM.app (ad-hoc signed)
 open build/microCAM.app             # or copy it to /Applications
 scripts/deploy.sh <ssh-host> [dir]  # build → another Mac over ssh (universal)
-scripts/deploy-bench.sh          # the same for bench Mac
 ```
 
 The app is ad-hoc signed for personal use, so macOS may ask for camera and
