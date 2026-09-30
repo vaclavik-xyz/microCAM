@@ -695,7 +695,7 @@ final class AppModel: ObservableObject {
             server.onError = { [weak self] in self?.streamError = $0 }
             streamServer = server
         }
-        guard (1024...65535).contains(settings.streamingPort) else {
+        guard StreamPort.isValid(settings.streamingPort) else {
             streamServer?.stop()
             streamError = "Port musí být 1024–65535."
             return
@@ -708,14 +708,32 @@ final class AppModel: ObservableObject {
 
     // MARK: Viewer mode
 
-    /// Mode changes take effect on a fresh process.
+    /// Mode changes take effect on a fresh process. The helper waits for this
+    /// one to quit, opens the bundle again and, should `open` fail, starts the
+    /// executable directly. Quits only when the helper is running; otherwise
+    /// the user is told to restart by hand and the app stays open.
     func relaunch() {
         flushSettings()
+        let bundle = Bundle.main.bundleURL
+        guard bundle.pathExtension == "app", let executable = Bundle.main.executableURL else {
+            return relaunchFailed("microCAM neběží jako aplikace (.app).")
+        }
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/sh")
-        process.arguments = ["-c", "sleep 1; /usr/bin/open -n \"$0\"", Bundle.main.bundlePath]
-        try? process.run()
+        process.arguments = ["-c", "sleep 1; /usr/bin/open -n \"$0\" || exec \"$1\"", bundle.path, executable.path]
+        do {
+            try process.run()
+        } catch {
+            return relaunchFailed(error.localizedDescription)
+        }
         NSApp.terminate(nil)
+    }
+
+    private func relaunchFailed(_ detail: String) {
+        let alert = NSAlert()
+        alert.messageText = "Restart se nepodařil"
+        alert.informativeText = "\(detail)\nUkonči microCAM a spusť ho znovu – nový režim se použije při dalším spuštění."
+        alert.runModal()
     }
 
     func showFullScreen(on screen: NSScreen) {

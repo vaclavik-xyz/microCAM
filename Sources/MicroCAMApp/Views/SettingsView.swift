@@ -211,6 +211,9 @@ struct StreamSettingsTab: View {
     @EnvironmentObject private var model: AppModel
     @State private var pin = ""
     @State private var pinInvalid = false
+    /// Edited text; the port is applied only on Enter or when leaving the tab,
+    /// because every change restarts the server and drops the viewers.
+    @State private var portText = ""
 
     var body: some View {
         Form {
@@ -220,7 +223,15 @@ struct StreamSettingsTab: View {
                     Text("S ovládáním (focení, kreslení)").tag(StreamMode.controls)
                     Text("Jen obraz").tag(StreamMode.imageOnly)
                 }
-                TextField("Port", value: $model.settings.streamingPort, format: .number.grouping(.never))
+                TextField("Port", text: $portText)
+                    .onSubmit(commitPort)
+                    .onDisappear(perform: commitPort)
+                if StreamPort.parse(portText) == nil {
+                    Text("Port musí být číslo 1024–65535 (potvrď Enterem).").font(.caption).foregroundStyle(.red)
+                } else if StreamPort.parse(portText) != model.settings.streamingPort {
+                    Text("Potvrď Enterem – přenos se restartuje a diváci se znovu připojí.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
                 SecureField("PIN pro focení (4–8 číslic)", text: $pin)
                     .onSubmit(savePIN)
                     .onDisappear(perform: savePIN)
@@ -229,15 +240,17 @@ struct StreamSettingsTab: View {
                     Text("Bez PINu je focení z jiného zařízení vypnuté.").font(.caption).foregroundStyle(.secondary)
                 }
                 if let error = model.streamError { Text(error).font(.caption).foregroundStyle(.red) }
-                LabeledContent("Otevřít na jiném zařízení") {
-                    VStack(alignment: .leading, spacing: 4) {
-                        ForEach(NetworkAddresses.streamIPv4(), id: \.self) { address in
-                            let url = "http://\(address):\(model.settings.streamingPort)/"
-                            HStack {
-                                Text(url).textSelection(.enabled).monospaced()
-                                Button("Kopírovat") {
-                                    NSPasteboard.general.clearContents()
-                                    NSPasteboard.general.setString(url, forType: .string)
+                if model.streamError == nil, StreamPort.isValid(model.settings.streamingPort) {
+                    LabeledContent("Otevřít na jiném zařízení") {
+                        VStack(alignment: .leading, spacing: 4) {
+                            ForEach(NetworkAddresses.streamIPv4(), id: \.self) { address in
+                                let url = "http://\(address):\(model.settings.streamingPort)/"
+                                HStack {
+                                    Text(url).textSelection(.enabled).monospaced()
+                                    Button("Kopírovat") {
+                                        NSPasteboard.general.clearContents()
+                                        NSPasteboard.general.setString(url, forType: .string)
+                                    }
                                 }
                             }
                         }
@@ -246,7 +259,15 @@ struct StreamSettingsTab: View {
                 Text("Sleduje: \(model.streamViewers)").font(.caption).foregroundStyle(.secondary)
             }
         }
-        .onAppear { pin = model.streamPIN ?? "" }
+        .onAppear {
+            pin = model.streamPIN ?? ""
+            portText = String(model.settings.streamingPort)
+        }
+    }
+
+    private func commitPort() {
+        guard let port = StreamPort.parse(portText), port != model.settings.streamingPort else { return }
+        model.settings.streamingPort = port
     }
 
     private func savePIN() {
