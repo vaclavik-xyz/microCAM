@@ -32,7 +32,7 @@ final class ViewerModel: ObservableObject {
 
     func start() {
         if let manual = settings().viewerManualURL, connect(manual: manual) { /* remembered manual URL */ }
-        let browser = NWBrowser(for: .bonjour(type: StreamServer.serviceType, domain: nil), using: .tcp)
+        let browser = NWBrowser(for: .bonjour(type: AppModel.streamServiceType, domain: nil), using: .tcp)
         browser.browseResultsChangedHandler = { [weak self] results, _ in
             MainActor.assumeIsolated {
                 guard let self else { return }

@@ -349,12 +349,113 @@ struct IntegrationSettingsTab: View {
                 }
                 .fixedSize(horizontal: false, vertical: true)
             }
+            MCPSettingsSection(mcp: model.mcp)
         }
         .onAppear { if model.demo == nil { token = KeychainToken.read() ?? "" } }
     }
 
     private func saveToken() {
         if model.demo == nil { KeychainToken.write(token) }
+    }
+}
+
+/// MCP server for AI agents on other computers: switch, port, token and the
+/// configuration that connects an agent's MCP client.
+struct MCPSettingsSection: View {
+    @EnvironmentObject private var model: AppModel
+    @ObservedObject var mcp: MCPController
+    @State private var showToken = false
+    /// Applied on Return or when leaving the tab, like the stream port.
+    @State private var portText = ""
+
+    var body: some View {
+        Section {
+            Toggle(isOn: $model.settings.mcpEnabled) {
+                Text("MCP server for AI agents")
+                Text("AI agents on other computers on your network can see the camera, take photos and record. You see what they do.")
+            }
+            if model.settings.mcpEnabled {
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack {
+                        Text("Port")
+                        Spacer()
+                        TextField(text: $portText) { Text("Port") }
+                            .labelsHidden()
+                            .multilineTextAlignment(.trailing)
+                            .frame(width: 90)
+                            .onSubmit(commitPort)
+                            .onDisappear(perform: commitPort)
+                    }
+                    Text("Change it only if another app already uses this port.")
+                        .font(.subheadline).foregroundStyle(.secondary)
+                }
+                if StreamPort.parse(portText) == nil {
+                    Text("The port must be a number from 1024 to 65535. Press Return to apply it.")
+                        .font(.caption).foregroundStyle(.red)
+                } else if StreamPort.parse(portText) != model.settings.mcpPort {
+                    Text("Press Return to apply. Agents reconnect by themselves.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+                if let token = mcp.token {
+                    LabeledContent {
+                        HStack {
+                            Text(verbatim: showToken ? token : String(repeating: "•", count: 16))
+                                .monospaced().lineLimit(1).truncationMode(.middle).textSelection(.enabled)
+                            if showToken {
+                                Button("Hide") { showToken = false }
+                            } else {
+                                Button("Show") { showToken = true }
+                            }
+                            Button("Copy") { copy(token) }
+                            Button("New token") { mcp.regenerateToken() }
+                                .help("Agents with the old token lose access until you connect them again.")
+                        }
+                    } label: {
+                        Text("Token")
+                        Text("Agents send it with every request.")
+                    }
+                }
+                Label("Anyone with the token controls the camera. Give it only to your own agents.",
+                      systemImage: "exclamationmark.triangle")
+                    .font(.caption).foregroundStyle(.orange)
+                if let error = mcp.error { Text(error).font(.caption).foregroundStyle(.red) }
+                if mcp.error == nil, let token = mcp.token, StreamPort.isValid(model.settings.mcpPort) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Connect an agent")
+                        Text("Paste the configuration into the MCP settings of the agent's app. The address and the Authorization header work in any MCP client.")
+                            .font(.subheadline).foregroundStyle(.secondary)
+                        ForEach(mcp.addresses(), id: \.self) { address in
+                            HStack {
+                                Text(verbatim: MCPClientConfig.url(address: address, port: model.settings.mcpPort))
+                                    .textSelection(.enabled).monospaced()
+                                Spacer()
+                                Button("Copy configuration") {
+                                    copy(MCPClientConfig.json(address: address, port: model.settings.mcpPort, token: token))
+                                }
+                                .help("Copies the MCP client configuration with this address and the token.")
+                            }
+                            .padding(.top, 4)
+                        }
+                    }
+                }
+            }
+        } footer: {
+            if model.settings.mcpEnabled {
+                Text("Tools: status, live picture, photo, recent captures, start and stop recording, and the job.")
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .onAppear { portText = String(model.settings.mcpPort) }
+    }
+
+    private func commitPort() {
+        guard let port = StreamPort.parse(portText), port != model.settings.mcpPort else { return }
+        model.settings.mcpPort = port
+    }
+
+    private func copy(_ text: String) {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
     }
 }
 

@@ -264,3 +264,27 @@
 "Zoom out" = "Zmenšit";
 "⌘, – settings" = "⌘, – nastavení";
 "● Recording %@" = "● Nahrává se %@";
+
+/* MCP server for AI agents */
+"An agent took a photo: %@" = "Agent vyfotil: %@";
+"An agent started recording." = "Agent spustil nahrávání.";
+"An agent stopped the recording. Video saved: %@" = "Agent zastavil nahrávání. Video uloženo: %@";
+"An agent set the job: %@" = "Agent nastavil zakázku: %@";
+"An agent cleared the job." = "Agent zrušil zakázku.";
+"Agent is watching" = "Agent sleduje";
+"Can't save the token in the Keychain, so the MCP server stays off." = "Token nejde uložit do Klíčenky, takže MCP server zůstane vypnutý.";
+"The MCP server can't start on port %lld: %@. Try another port." = "MCP server nejde spustit na portu %lld: %@. Zkus jiný port.";
+"MCP server for AI agents" = "MCP server pro AI agenty";
+"AI agents on other computers on your network can see the camera, take photos and record. You see what they do." = "AI agenti na jiných počítačích v síti uvidí kameru, můžou fotit a nahrávat. Co udělají, uvidíš.";
+"Press Return to apply. Agents reconnect by themselves." = "Potvrď Enterem. Agenti se znovu připojí sami.";
+"Show" = "Zobrazit";
+"Hide" = "Skrýt";
+"New token" = "Nový token";
+"Agents with the old token lose access until you connect them again." = "Agenti se starým tokenem ztratí přístup, dokud je znovu nepřipojíš.";
+"Agents send it with every request." = "Agenti ho posílají s každým požadavkem.";
+"Anyone with the token controls the camera. Give it only to your own agents." = "Kdo má token, ovládá kameru. Dej ho jen svým agentům.";
+"Connect an agent" = "Připojit agenta";
+"Paste the configuration into the MCP settings of the agent's app. The address and the Authorization header work in any MCP client." = "Vlož konfiguraci do nastavení MCP v aplikaci agenta. Adresa a hlavička Authorization fungují v každém MCP klientovi.";
+"Copy configuration" = "Kopírovat konfiguraci";
+"Copies the MCP client configuration with this address and the token." = "Zkopíruje konfiguraci MCP klienta s touto adresou a tokenem.";
+"Tools: status, live picture, photo, recent captures, start and stop recording, and the job." = "Nástroje: stav, živý obraz, fotka, poslední záznamy, spuštění a zastavení nahrávání a zakázka.";

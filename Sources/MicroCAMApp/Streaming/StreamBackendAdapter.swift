@@ -1,7 +1,7 @@
 import Foundation
 import MicroCAMCore
 
-/// Bridges the router (called on the main queue by `StreamServer`) to the
+/// Bridges the router (called on the main queue by `HTTPServer`) to the
 /// main-actor `AppModel`.
 final class StreamBackendAdapter: StreamBackend {
     private unowned let model: AppModel
@@ -25,7 +25,7 @@ final class StreamBackendAdapter: StreamBackend {
 
     func takePhoto(completion: @escaping (Result<String, Error>) -> Void) {
         MainActor.assumeIsolated {
-            model.takePhoto(remote: true) { completion($0.map(\.lastPathComponent)) }
+            model.takePhoto(source: .remote) { completion($0.map(\.lastPathComponent)) }
         }
     }
 

@@ -24,6 +24,7 @@ final class AppModel: ObservableObject {
                 || settings.sortByType != oldValue.sortByType { capturesChanged() }
             if settings.streamingEnabled != oldValue.streamingEnabled
                 || settings.streamingPort != oldValue.streamingPort { applyStreaming() }
+            if settings.mcpEnabled != oldValue.mcpEnabled || settings.mcpPort != oldValue.mcpPort { mcp.apply() }
         }
     }
     @Published private(set) var cameraAuthorized: Bool?
@@ -200,7 +201,7 @@ final class AppModel: ObservableObject {
     /// With `streamPort` the stream runs too (no Bonjour, PIN only in memory),
     /// so `scripts/stream-smoke.sh` can check it without a camera.
     func activateDemo(root: URL, job: String?, streamPort: Int? = nil, streamPIN: String? = nil,
-                      streamMode: StreamMode? = nil) {
+                      streamMode: StreamMode? = nil, mcpPort: Int? = nil, mcpToken: String? = nil) {
         cameraAuthorized = true
         engine.activateDemo()
         settings.storageRootPath = root.path
@@ -216,6 +217,12 @@ final class AppModel: ObservableObject {
             settings.streamingPort = streamPort
             if let streamMode { settings.streamingMode = streamMode }
             settings.streamingEnabled = true
+        }
+        // Same for the MCP token: kept in memory only, generated when not given.
+        mcp.useDemoToken(mcpToken)
+        if let mcpPort {
+            settings.mcpPort = mcpPort
+            settings.mcpEnabled = true
         }
     }
 
@@ -257,6 +264,7 @@ final class AppModel: ObservableObject {
         selectCamera(settings.lastDeviceID)
         applyLifecycle()
         applyStreaming()
+        mcp.apply()
     }
 
     func selectCamera(_ id: String?) {
@@ -327,9 +335,12 @@ final class AppModel: ObservableObject {
         library.reload(folders: layout?.listedFolders(for: settings.jobContext) ?? [])
     }
 
-    /// `remote` marks a photo requested from the stream page; `completion`
-    /// reports the saved file (main queue).
-    func takePhoto(kind: CaptureKind = .photo, remote: Bool = false,
+    /// Who asked for a photo; decides the message shown over the preview.
+    enum CaptureSource { case local, remote, agent }
+
+    /// `source` marks a photo requested from the stream page or by an AI
+    /// agent; `completion` reports the saved file (main queue).
+    func takePhoto(kind: CaptureKind = .photo, source: CaptureSource = .local,
                    completion: ((Result<URL, Error>) -> Void)? = nil) {
         guard let frame = engine.latestFrame.value, Date().timeIntervalSince(frame.receivedAt) < 1 else {
             report(CaptureError.noFrame, prefix: String(localized: "Photo not saved"))
@@ -351,9 +362,12 @@ final class AppModel: ObservableObject {
             switch result {
             case .success:
                 let name = url.lastPathComponent
-                self.message = StatusMessage(text: remote ? String(localized: "Photo from another device saved: \(name)")
-                                                    : String(localized: "Saved: \(name)"),
-                                             isError: false)
+                let text = switch source {
+                case .local: String(localized: "Saved: \(name)")
+                case .remote: String(localized: "Photo from another device saved: \(name)")
+                case .agent: String(localized: "An agent took a photo: \(name)")
+                }
+                self.message = StatusMessage(text: text, isError: false)
                 self.capturesChanged()
                 completion?(.success(url))
             case .failure(let error):
@@ -505,20 +519,37 @@ final class AppModel: ObservableObject {
         return DiskSpacePolicy.status(availableBytes: lowest)
     }
 
-    func startRecording() {
-        guard !isRecording, !isStartingRecording else { return }
+    /// A recording that didn't start or stop, with the text shown over the preview.
+    struct RecordingFailure: LocalizedError {
+        let errorDescription: String?
+    }
+
+    /// `agent` marks a recording started by an AI agent over MCP.
+    /// `completion` (main queue) reports whether the recording is running.
+    func startRecording(agent: Bool = false, completion: ((Result<Void, Error>) -> Void)? = nil) {
+        func fail(_ text: String, isError: Bool = true) {
+            message = StatusMessage(text: text, isError: isError)
+            completion?(.failure(RecordingFailure(errorDescription: text)))
+        }
+        func fail(_ error: Error) {
+            report(error, prefix: String(localized: "Recording didn't start"))
+            completion?(.failure(RecordingFailure(errorDescription: message?.text)))
+        }
+        guard !isRecording, !isStartingRecording else {
+            completion?(.failure(RecordingFailure(errorDescription: nil)))
+            return
+        }
         guard !isFinalizingRecording else {
-            message = StatusMessage(text: String(localized: "Still saving the previous video. Try again in a moment."), isError: false)
+            return fail(String(localized: "Still saving the previous video. Try again in a moment."), isError: false)
+        }
+        guard settings.storageRoot != nil else {
+            showFirstRun = true
+            completion?(.failure(CaptureError.noStorageRoot))
             return
         }
-        guard settings.storageRoot != nil else { showFirstRun = true; return }
-        guard let format = engine.activeFormat, engine.latestFrame.value != nil else {
-            report(CaptureError.noFrame, prefix: String(localized: "Recording didn't start"))
-            return
-        }
+        guard let format = engine.activeFormat, engine.latestFrame.value != nil else { return fail(CaptureError.noFrame) }
         if diskStatus() == .critical {
-            message = StatusMessage(text: String(localized: "Recording didn't start: less than 500 MB free on the disk. Free up some space."), isError: true)
-            return
+            return fail(String(localized: "Recording didn't start: less than 500 MB free on the disk. Free up some space."))
         }
         let finalURL: URL
         let stagingURL: URL
@@ -526,8 +557,7 @@ final class AppModel: ObservableObject {
             finalURL = try reserveURL(kind: .video)
             stagingURL = try Recorder.stagingDirectory().appendingPathComponent("\(UUID().uuidString).mov")
         } catch {
-            report(error, prefix: String(localized: "Recording didn't start"))
-            return
+            return fail(error)
         }
         isStartingRecording = true
         pendingStartCancelled = false
@@ -538,15 +568,13 @@ final class AppModel: ObservableObject {
                 self.pendingStartCancelled = false
                 self.releaseURL(finalURL)
                 self.engine.setAudioCapture(microphoneID: nil) { _ in }
-                self.message = StatusMessage(text: String(localized: "Recording cancelled."), isError: false)
-                return
+                return fail(String(localized: "Recording cancelled."), isError: false)
             }
             // The camera may have stopped while waiting for the microphone.
             guard self.engine.latestFrame.value != nil else {
                 self.releaseURL(finalURL)
                 self.engine.setAudioCapture(microphoneID: nil) { _ in }
-                self.report(CaptureError.noFrame, prefix: String(localized: "Recording didn't start"))
-                return
+                return fail(CaptureError.noFrame)
             }
             do {
                 try self.recorder.start(stagingURL: stagingURL, finalURL: finalURL, format: format,
@@ -555,8 +583,7 @@ final class AppModel: ObservableObject {
             } catch {
                 self.releaseURL(finalURL)
                 self.engine.setAudioCapture(microphoneID: nil) { _ in }
-                self.report(error, prefix: String(localized: "Recording didn't start"))
-                return
+                return fail(error)
             }
             self.isRecording = true
             self.recordingStartedAt = Date()
@@ -568,10 +595,13 @@ final class AppModel: ObservableObject {
             }
             if self.diskStatus() == .low {
                 self.message = StatusMessage(text: String(localized: "The disk is almost full. Recording stops at 500 MB free."), isError: true)
+            } else if agent {
+                self.message = StatusMessage(text: String(localized: "An agent started recording."), isError: false)
             }
             self.recordingTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in
                 MainActor.assumeIsolated { self?.recordingTick() }
             }
+            completion?(.success(()))
         }
         guard settings.recordAudio else { begin(false); return }
         Task {
@@ -596,8 +626,13 @@ final class AppModel: ObservableObject {
         if diskStatus() == .critical { stopRecording(reason: String(localized: "the disk is full")) }
     }
 
-    func stopRecording(reason: String?) {
-        guard isRecording else { return }
+    /// `agent` marks a stop requested by an AI agent over MCP; `completion`
+    /// (main queue) reports the saved video.
+    func stopRecording(reason: String?, agent: Bool = false, completion: ((Result<URL, Error>) -> Void)? = nil) {
+        guard isRecording else {
+            completion?(.failure(RecordingFailure(errorDescription: nil)))
+            return
+        }
         isRecording = false
         isFinalizingRecording = true
         recordingTimer?.invalidate()
@@ -617,12 +652,14 @@ final class AppModel: ObservableObject {
             case .success(let url):
                 let name = url.lastPathComponent
                 let text = reason.map { String(localized: "Recording stopped (\($0)). Video saved: \(name)") }
-                    ?? String(localized: "Video saved: \(name)")
+                    ?? (agent ? String(localized: "An agent stopped the recording. Video saved: \(name)")
+                              : String(localized: "Video saved: \(name)"))
                 self.message = StatusMessage(text: text, isError: reason != nil)
                 self.capturesChanged()
             case .failure(let error):
                 self.report(error, prefix: String(localized: "Video not saved"))
             }
+            completion?(result)
         }
     }
 
@@ -698,8 +735,10 @@ final class AppModel: ObservableObject {
 
     // MARK: Streaming
 
+    /// Bonjour type the viewer looks for.
+    static let streamServiceType = "_microcam._tcp"
     let streamHub = StreamHub(queue: DispatchQueue(label: "microcam.stream"))
-    private var streamServer: StreamServer?
+    private var streamServer: HTTPServer?
     @Published private(set) var streamViewers = 0
     @Published private(set) var streamError: String?
     private var cachedStreamPIN: String?? = nil
@@ -734,7 +773,12 @@ final class AppModel: ObservableObject {
             }, pin: { [weak self] in
                 MainActor.assumeIsolated { self?.streamPIN }
             })
-            let server = StreamServer(router: router, hub: streamHub, queue: DispatchQueue(label: "microcam.stream.server"))
+            let hub = streamHub
+            let server = HTTPServer(queue: DispatchQueue(label: "microcam.stream.server"), cannotStart: { port, reason in
+                String(localized: "The stream can't start on port \(port): \(reason). Try another port.")
+            }, onStream: { hub.add($0) }, onStop: { hub.closeAll() }) { request, _, reply in
+                router.handle(request, completion: reply)
+            }
             server.onError = { [weak self] in self?.streamError = $0 }
             streamServer = server
         }
@@ -746,7 +790,7 @@ final class AppModel: ObservableObject {
         // Demo mode stays on loopback and off Bonjour so it never shows up as a real bench.
         streamServer?.start(port: UInt16(settings.streamingPort),
                             serviceName: demo == nil ? (Host.current().localizedName ?? "microCAM") : nil,
-                            loopbackOnly: demo != nil)
+                            serviceType: Self.streamServiceType, loopbackOnly: demo != nil)
     }
 
     /// Addresses shown in Settings → Stream. The demo shows a documentation
@@ -754,6 +798,10 @@ final class AppModel: ObservableObject {
     func streamAddresses() -> [String] {
         demo == nil ? NetworkAddresses.streamIPv4() : ["192.0.2.10"]
     }
+
+    // MARK: MCP server for AI agents
+
+    private(set) lazy var mcp = MCPController(model: self)
 
     // MARK: Language
 

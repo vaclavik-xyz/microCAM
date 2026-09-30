@@ -49,7 +49,7 @@ struct ContentView: View {
             .frame(minWidth: 400)
             .background(WindowAccessor { model.attachMainWindow($0) })
         }
-        .modifier(WindowTitle(engine: model.engine, timelapse: model.timelapse))
+        .modifier(WindowTitle(engine: model.engine, timelapse: model.timelapse, mcp: model.mcp))
         .toolbar {
             if model.settings.jobsEnabled {
                 ToolbarItem(placement: .navigation) { JobToolbarButton() }
@@ -103,13 +103,15 @@ struct ContentView: View {
 
 /// Title: the camera the picture comes from (the user's name for it, if set).
 /// Subtitle: its format; while recording "● Recording 0:12:34" (and dropped
-/// frames), then "Saving video…"; a running timelapse adds its progress.
+/// frames), then "Saving video…"; a running timelapse adds its progress, and
+/// "Agent is watching" shows while an AI agent pulls frames over MCP.
 /// This is the only recording indicator besides the red stop button, so the
 /// picture stays clean. The app name stays in the menu bar and Dock.
 private struct WindowTitle: ViewModifier {
     @EnvironmentObject private var model: AppModel
     @ObservedObject var engine: CaptureEngine
     @ObservedObject var timelapse: TimelapseRunner
+    @ObservedObject var mcp: MCPController
     /// Ticks once a second while recording, to advance the time.
     @State private var now = Date()
     /// In @State so one timer survives re-evaluation; a `let` would create a
@@ -139,6 +141,7 @@ private struct WindowTitle: ViewModifier {
             parts.append(String(localized: "Timelapse \(timelapse.shotsTaken) of \(schedule.shotCount)"))
         }
         if parts.isEmpty, let format = engine.activeFormat { parts.append(format.label) }
+        if mcp.agentWatching { parts.append(String(localized: "Agent is watching")) }
         return parts.joined(separator: " · ")
     }
 }

@@ -50,6 +50,9 @@ public struct AppSettings: Equatable, Sendable {
     public var streamingEnabled = false
     public var streamingPort = 8090
     public var streamingMode = StreamMode.controls
+    /// MCP server for AI agents (off by default). The token lives in the Keychain.
+    public var mcpEnabled = false
+    public var mcpPort = 8091
     /// `viewer` turns this Mac into a screen for another microCAM's stream.
     public var appMode = AppMode.camera
     public var viewerSourceName: String? = nil
@@ -88,7 +91,7 @@ extension AppSettings: Codable {
              timelapseInterval, timelapseDuration, gridType, gridColor, pauseWhenHidden,
              preventSleepWhileRecording, lastDeviceID, lastFormatByDevice, lastMicrophoneID,
              recordAudio, adjustmentsByDevice, cameraNames, webhookEnabled, webhookURL, webhookSendVideos,
-             streamingEnabled, streamingPort, streamingMode, appMode, viewerSourceName, viewerManualURL
+             streamingEnabled, streamingPort, streamingMode, mcpEnabled, mcpPort, appMode, viewerSourceName, viewerManualURL
     }
 
     /// Every key is optional so settings from older builds keep working. A
@@ -125,6 +128,8 @@ extension AppSettings: Codable {
         streamingEnabled = value(.streamingEnabled, d.streamingEnabled)
         streamingPort = value(.streamingPort, d.streamingPort)
         streamingMode = value(.streamingMode, d.streamingMode)
+        mcpEnabled = value(.mcpEnabled, d.mcpEnabled)
+        mcpPort = value(.mcpPort, d.mcpPort)
         appMode = value(.appMode, d.appMode)
         viewerSourceName = value(.viewerSourceName, d.viewerSourceName)
         viewerManualURL = value(.viewerManualURL, d.viewerManualURL)
