@@ -90,6 +90,12 @@ final class AppModel: ObservableObject {
 
     func zoomChanged(_ scale: CGFloat) { zoomScale = scale }
 
+    /// Menu zoom (⌘+ / ⌘−) around the centre of the picture.
+    func zoom(by factor: CGFloat) {
+        guard launchMode == .camera else { return }
+        previewView?.zoom(by: factor, anchor: CGPoint(x: 0.5, y: 0.5))
+    }
+
     /// Adjustments of the current camera; neutral values are not stored.
     var currentAdjustments: ImageAdjustments {
         get { settings.adjustments(forDevice: engine.currentCameraID) }

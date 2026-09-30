@@ -23,7 +23,7 @@ A tidier main window.
 - The status bar is gone. Messages show briefly over the picture, and errors
   stay until closed.
 - Camera menu items have standard ⌘ shortcuts shown by macOS (⌘T photo,
-  ⌘R record, ⌘' grid, ⌘0 zoom, ⌘⇧T timelapse, ⌘I adjustments); the quick
+  ⌘R record, ⌘' grid, ⌘+ / ⌘− / ⌘0 zoom, ⌘⇧T timelapse, ⌘I adjustments); the quick
   single keys still work.
 - Jobs are off by default. Turn them on in *Settings → Storage*; the active
   job is then set from the toolbar. Existing settings keep their choice.

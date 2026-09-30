@@ -189,8 +189,13 @@ struct TimelapseToolbarButton: View {
             Label {
                 Text("Timelapse")
             } icon: {
-                Image(systemName: "timer")
-                    .foregroundStyle(runner.isRunning ? AnyShapeStyle(.tint) : AnyShapeStyle(.primary))
+                // Colour only while running: an explicit colour when idle kept
+                // the icon bright in an inactive window, unlike its neighbours.
+                if runner.isRunning {
+                    Image(systemName: "timer").foregroundStyle(.tint)
+                } else {
+                    Image(systemName: "timer")
+                }
             }
         }
         .help("Timelapse")

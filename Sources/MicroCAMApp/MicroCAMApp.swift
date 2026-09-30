@@ -28,6 +28,10 @@ struct MicroCAMApp: App {
                 Divider()
                 Button("Show or hide grid") { model.handle(.toggleGrid) }
                     .keyboardShortcut("'")
+                Button("Zoom in") { model.zoom(by: 1.25) }
+                    .keyboardShortcut("+")
+                Button("Zoom out") { model.zoom(by: 0.8) }
+                    .keyboardShortcut("-")
                 Button("Reset zoom") { model.handle(.resetZoom) }
                     .keyboardShortcut("0")
                 Divider()

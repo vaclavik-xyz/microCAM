@@ -81,6 +81,7 @@ folder on its own.
 | `Space` | `⌘ T` | take a photo |
 | `R` | `⌘ R` | start or stop recording |
 | `G` | `⌘ '` | show or hide the grid |
+| | `⌘ +` / `⌘ −` | zoom in / out |
 | `0` | `⌘ 0` | reset zoom (or double-click the image) |
 | | `⌘ ⇧ T` | timelapse |
 | | `⌘ I` | image adjustments |
