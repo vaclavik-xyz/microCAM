@@ -19,8 +19,10 @@ from playwright.sync_api import sync_playwright
 DEVICES = ["iPhone SE", "iPhone SE landscape", "iPhone 15 Pro Max", "iPhone 15 Pro Max landscape",
            "iPad (gen 7)", "iPad (gen 7) landscape", "Desktop 1440"]
 
+# offsetParent is null for position:fixed elements (the status chip), so visibility
+# is decided by layout boxes and computed style instead.
 CONTROLS = """() => [...document.querySelectorAll('#dock button, #dock a.btn, #status')]
-  .filter(e => e.offsetParent !== null && getComputedStyle(e).visibility !== 'hidden')
+  .filter(e => e.getClientRects().length > 0 && getComputedStyle(e).visibility !== 'hidden')
   .map(e => { const r = e.getBoundingClientRect();
               return {id: e.id || e.dataset.tool || e.dataset.color || e.className, x: r.left, y: r.top,
                       w: r.width, h: r.height, chip: e.id === 'status'}; })"""
@@ -41,6 +43,17 @@ def check(page, name):
             if a["x"] < b["x"] + b["w"] - 0.5 and b["x"] < a["x"] + a["w"] - 0.5 \
                     and a["y"] < b["y"] + b["h"] - 0.5 and b["y"] < a["y"] + a["h"] - 0.5:
                 problems.append(f"{a['id']} overlaps {b['id']}")
+    image = page.evaluate("""() => { const i = [live, shot].find(e => !e.classList.contains('hidden'));
+                                      const r = i.getBoundingClientRect(); return {x: r.left, y: r.top, w: r.width, h: r.height}; }""")
+    panels = page.evaluate("""() => ['palette', 'controls'].map(id => document.getElementById(id))
+      .filter(e => !e.classList.contains('hidden'))
+      .map(e => { const r = e.getBoundingClientRect(); return {id: e.id, x: r.left, y: r.top, w: r.width, h: r.height}; })""")
+    for p in panels:
+        if image["w"] and image["x"] < p["x"] + p["w"] - 0.5 and p["x"] < image["x"] + image["w"] - 0.5 \
+                and image["y"] < p["y"] + p["h"] - 0.5 and p["y"] < image["y"] + image["h"] - 0.5:
+            problems.append(f"image lies under #{p['id']}")
+    if not any(b["chip"] for b in boxes) and page.evaluate("!document.body.classList.contains('image-only')"):
+        problems.append("status chip not measured")
     for p in problems:
         print(f"FAIL {name}: {p}")
     return not problems

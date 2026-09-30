@@ -221,13 +221,15 @@ function layout() {
 window.addEventListener("resize", layout);
 window.addEventListener("orientationchange", () => setTimeout(layout, 250));
 shot.addEventListener("load", layout);
-// Keep the image clear of the main panel: below it in portrait, beside the rail in landscape.
+// Keep the image clear of the main panel and, while drawing, of the tools: above them in
+// portrait, beside the rail in landscape. The colour popover is transient and may overlap.
 function reserve() {
-  const dock = $("dock"), rail = getComputedStyle(dock).flexDirection === "row";
-  const r = $("controls").getBoundingClientRect();
-  const hidden = MODE === "imageOnly" || r.width === 0;
-  root.style.setProperty("--reserve-b", hidden || rail ? "0px" : (innerHeight - r.top + 8) + "px");
-  root.style.setProperty("--reserve-r", hidden || !rail ? "0px" : (innerWidth - r.left + 8) + "px");
+  const rail = getComputedStyle($("dock")).flexDirection === "row";
+  const rects = ["palette", "controls"].map(id => $(id).getBoundingClientRect()).filter(r => r.width > 0);
+  const off = MODE === "imageOnly" || !rects.length;
+  const top = Math.min(...rects.map(r => r.top)), left = Math.min(...rects.map(r => r.left));
+  root.style.setProperty("--reserve-b", off || rail ? "0px" : (innerHeight - top + 8) + "px");
+  root.style.setProperty("--reserve-r", off || !rail ? "0px" : (innerWidth - left + 8) + "px");
   layout();
 }
 // Deferred to the next frame: resizing inside the observer callback would loop.
@@ -235,6 +237,7 @@ let relayout = 0;
 function scheduleReserve() { cancelAnimationFrame(relayout); relayout = requestAnimationFrame(reserve); }
 if (window.ResizeObserver) {
   new ResizeObserver(scheduleReserve).observe($("controls"));
+  new ResizeObserver(scheduleReserve).observe($("palette"));
   new ResizeObserver(scheduleReserve).observe($("stage"));
 }
 window.addEventListener("resize", scheduleReserve);
@@ -301,6 +304,7 @@ function setDrawing(v) {
   $("draw").setAttribute("aria-pressed", v);
   $("palette").classList.toggle("hidden", !v);
   if (!v) showSwatches(false);
+  scheduleReserve();
   wake();
 }
 function showSwatches(v) {
