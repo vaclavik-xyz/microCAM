@@ -227,7 +227,8 @@ async function fetchCapture(ref) {
     r = await fetch(ref.url, { headers: { "X-MicroCAM-PIN": p }, cache: "no-store" });
   } catch (e) { toast("bench Mac není dostupný"); return null; }
   if (!(await accepted(r))) return null;
-  return URL.createObjectURL(await r.blob());
+  try { return URL.createObjectURL(await r.blob()); }
+  catch (e) { toast("Fotku se nepodařilo načíst"); return null; }
 }
 async function setDownload(ref) {
   const url = await fetchCapture(ref); if (!url) return;
