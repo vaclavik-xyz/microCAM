@@ -16,6 +16,10 @@ final class LibraryModel: ObservableObject {
         return cache
     }()
     private var reloadTask: Task<Void, Never>?
+    private var pendingSelection: URL?
+
+    /// Selects `url` once the next reload lists it (a copy just saved).
+    func selectAfterReload(_ url: URL) { pendingSelection = url }
 
     func reload(folders: [URL]) {
         reloadTask?.cancel()
@@ -25,6 +29,10 @@ final class LibraryModel: ObservableObject {
             files = found
             grid.selected.formIntersection(found)
             if let anchor = grid.anchor, !found.contains(anchor) { grid.anchor = nil }
+            if let url = pendingSelection, found.contains(url) {
+                grid = GridSelection(selected: [url], anchor: url)
+                pendingSelection = nil
+            }
         }
     }
 

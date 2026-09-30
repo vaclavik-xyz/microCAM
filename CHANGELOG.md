@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+- Mark up photos right in microCAM: *Mark up…* in the side panel (right
+  click, or the pen button for one selected photo) opens the system Markup
+  editor with arrows, shapes, text and loupe. *Done* saves a new copy next
+  to the photo (`…_2.jpg`); the original stays untouched.
+- Space in the side panel opens the selected photos and videos in Quick
+  Look, full size, and the arrow keys move on. With nothing selected, and
+  anywhere else in the window, Space still takes a photo.
+
 ## 0.3.0 — 2026-10-01
 
 AI agents can use the microscope.

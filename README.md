@@ -99,6 +99,7 @@ folder on its own.
 | Quick key | Menu shortcut | Action |
 |---|---|---|
 | `Space` | `⌘ T` | take a photo |
+| `Space` in the side panel | | Quick Look of the selected files (a photo when nothing is selected) |
 | `R` | `⌘ R` | start or stop recording |
 | `G` | `⌘ '` | show or hide the grid |
 | | `⌘ +` / `⌘ −` | zoom in / out |
@@ -123,6 +124,18 @@ The window:
   opens the folder; share and compare appear at the bottom once you select
   files. The panel remembers its
   width. Hide it with the button next to the window buttons.
+- **Quick Look and Markup.** After a click in the side panel, Space opens
+  the selected photos and videos in Quick Look, full size; the arrow keys
+  move on. With nothing selected, or after a click in the picture, Space
+  takes a photo. *Mark up…* (right
+  click, or the pen button once one photo is selected) opens the system
+  Markup editor, the one from Finder: arrows, shapes, text, loupe, crop.
+  *Done* saves the result as a new copy next to the photo (`…_2.jpg`) and
+  selects it; the original stays as it was. Quick Look on the Mac has no
+  public editing mode, so microCAM runs the Markup extension
+  (`com.apple.MarkupUI.Markup`) through `NSSharingService`; if a future
+  macOS drops it, *Open in Preview* takes its place (Preview has the same
+  Markup tools, and saves into the photo itself).
 - **Title.** The camera (rename it in *Settings → Device*) and its format.
   While recording it shows the running time instead, and the stop button is
   red; a running timelapse shows its progress.

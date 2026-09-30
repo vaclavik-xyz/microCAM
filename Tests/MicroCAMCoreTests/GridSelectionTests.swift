@@ -39,4 +39,25 @@ final class GridSelectionTests: XCTestCase {
         XCTAssertEqual(s.targets(forContextClickOn: "b", in: order), ["a", "b"])
         XCTAssertEqual(s.targets(forContextClickOn: "d", in: order), ["d"])
     }
+
+    func testPreviewOfOneItemBrowsesTheWholeGrid() {
+        let s = GridSelection<String>(selected: ["c"], anchor: "c")
+        let preview = s.previewItems(in: order)
+        XCTAssertEqual(preview?.items, order)
+        XCTAssertEqual(preview?.start, 2)
+    }
+
+    func testPreviewOfSeveralItemsShowsOnlyThoseFromTheLastClicked() {
+        let s = GridSelection<String>(selected: ["d", "b"], anchor: "d")
+        let preview = s.previewItems(in: order)
+        XCTAssertEqual(preview?.items, ["b", "d"])
+        XCTAssertEqual(preview?.start, 1)
+        // Anchor outside the selection (⌘-click removed it): start at the first one.
+        XCTAssertEqual(GridSelection<String>(selected: ["b", "d"], anchor: "c").previewItems(in: order)?.start, 0)
+    }
+
+    func testNoPreviewWithoutSelection() {
+        XCTAssertNil(GridSelection<String>().previewItems(in: order))
+        XCTAssertNil(GridSelection<String>(selected: ["gone"]).previewItems(in: order))
+    }
 }

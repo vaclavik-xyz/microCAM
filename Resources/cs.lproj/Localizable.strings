@@ -90,6 +90,10 @@
 "Live picture, photos and video from a microscope camera." = "Živý obraz, fotky a video z mikroskopové kamery.";
 "Live stream" = "Živý přenos";
 "Looking for microCAM on the network…" = "Hledám microCAM v síti…";
+"Mark up (arrows, shapes, text) and save as a copy" = "Anotovat (šipky, tvary, text) a uložit jako kopii";
+"Mark up…" = "Anotovat…";
+"Marked-up copy not saved" = "Anotovaná kopie se neuložila";
+"Marked-up copy saved: %@" = "Uložena anotovaná kopie: %@";
 "microCAM asks before it installs anything. You can also check in the microCAM menu." = "microCAM se před instalací vždy zeptá. Ručně můžeš hledat v menu microCAM.";
 "microCAM is recording a video" = "microCAM nahrává video";
 "microCAM isn't allowed to use the camera." = "microCAM nemá povolený přístup ke kameře.";
@@ -120,6 +124,8 @@
 "of %lld" = "z %lld";
 "Only watch" = "Jen sledovat";
 "Open folder" = "Otevřít složku";
+"Open in Preview" = "Otevřít v Náhledu";
+"Open in Preview to mark up" = "Otevřít v Náhledu k anotaci";
 "Open on another device" = "Otevřít na jiném zařízení";
 "Open System Settings" = "Otevřít Nastavení systému";
 "Open the folder where captures are saved now" = "Otevřít složku, kam se teď ukládá";
@@ -140,6 +146,7 @@
 "Press G to show or hide it. The grid is never saved in photos or videos." = "Zobrazíš a skryješ ji klávesou G. Do fotek ani videí se nikdy neuloží.";
 "Press Return to apply. The stream restarts and viewers reconnect." = "Potvrď Enterem. Přenos se restartuje a diváci se znovu připojí.";
 "Preview" = "Náhled";
+"Quick Look" = "Rychlý náhled";
 "Quit microCAM and open it again. The change applies on the next start." = "Ukonči microCAM a spusť ho znovu. Změna se projeví při dalším spuštění.";
 "R – start or stop recording" = "R – spustit nebo zastavit nahrávání";
 "Record sound" = "Nahrávat zvuk";
@@ -189,6 +196,7 @@
 "Slider" = "Posuvník";
 "Sort by type" = "Třídit podle typu";
 "Source code on GitHub" = "Zdrojový kód na GitHubu";
+"Space in the side panel – Quick Look of the selected files" = "Mezerník v bočním panelu – rychlý náhled vybraných souborů";
 "Space – take a photo" = "Mezerník – vyfotit";
 "Standard" = "Standardní";
 "Start or stop recording (R)" = "Spustit nebo zastavit nahrávání (R)";

@@ -10,7 +10,8 @@ struct ComparePair: Identifiable {
 
 /// Grid of the current folder's captures, grouped by day. Click selects,
 /// ⌘-click adds, ⇧-click selects a range, double-click opens, drag copies
-/// the file into another app.
+/// the file into another app. After a click in the panel Space opens Quick
+/// Look instead of taking a photo (see `KeyboardMonitor`).
 struct SidePanel: View {
     @EnvironmentObject private var model: AppModel
     @ObservedObject var library: LibraryModel
@@ -59,6 +60,7 @@ struct SidePanel: View {
             }
         }
         .animation(.easeOut(duration: 0.15), value: library.selection.isEmpty)
+        .background(ViewAccessor { model.sidePanelView = $0 })
     }
 
     /// Where captures go now, with the file count; click opens it in Finder.
@@ -97,6 +99,15 @@ struct SidePanel: View {
             .font(.callout.weight(.medium)).fixedSize()
             .help("Selected: \(library.selection.count)")
             Spacer(minLength: 4)
+            if let photo = markupTarget {
+                if MarkupSession.isAvailable(for: photo) {
+                    Button { model.markUp(photo) } label: { BarIcon("pencil.tip.crop.circle") }
+                        .help("Mark up (arrows, shapes, text) and save as a copy")
+                } else if MarkupSession.canOpenInPreview(photo) {
+                    Button { MarkupSession.openInPreview(photo) } label: { BarIcon("pencil.tip.crop.circle") }
+                        .help("Open in Preview to mark up")
+                }
+            }
             if comparePair != nil {
                 Button { compare = comparePair } label: { BarIcon("rectangle.split.2x1") }
                     .help("Compare the two photos")
@@ -138,6 +149,14 @@ struct SidePanel: View {
     @ViewBuilder
     private func menu(for urls: [URL]) -> some View {
         Button("Open") { urls.forEach { NSWorkspace.shared.open($0) } }
+        Button("Quick Look") { model.preview(GridSelection(selected: Set(urls), anchor: urls.first)) }
+        if urls.count == 1, let url = urls.first {
+            if MarkupSession.isAvailable(for: url) {
+                Button("Mark up…") { model.markUp(url) }
+            } else if MarkupSession.canOpenInPreview(url) {
+                Button("Open in Preview") { MarkupSession.openInPreview(url) }
+            }
+        }
         Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting(urls) }
         ShareLink("Share…", items: urls)
         if model.webhookEndpoint != nil {
@@ -156,6 +175,13 @@ struct SidePanel: View {
         }
         let flags = event?.modifierFlags ?? []
         library.grid.click(url, in: library.files, command: flags.contains(.command), shift: flags.contains(.shift))
+    }
+
+    /// The one selected photo (Markup, or Preview when Markup is missing).
+    private var markupTarget: URL? {
+        guard library.selection.count == 1, let url = library.selection.first,
+              url.pathExtension.lowercased() != "mov" else { return nil }
+        return url
     }
 
     /// Exactly two photos, older one first ("before"). Sorted by the timestamp

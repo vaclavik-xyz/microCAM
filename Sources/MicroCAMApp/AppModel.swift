@@ -78,6 +78,9 @@ final class AppModel: ObservableObject {
     @Published var gridVisible = false
     @Published private(set) var zoomScale: CGFloat = 1
     private var keyboard: KeyboardMonitor?
+    let quickLook = QuickLookController()
+    /// Backs the side panel; tells `KeyboardMonitor` where it is.
+    weak var sidePanelView: NSView?
 
     func handle(_ action: ShortcutAction) {
         guard launchMode == .camera else { return }
@@ -86,6 +89,7 @@ final class AppModel: ObservableObject {
         case .resetZoom: previewView?.resetZoom()
         case .photo: takePhoto()
         case .toggleRecording: toggleRecording()
+        case .quickLook: previewSelection()
         }
     }
 
@@ -175,7 +179,10 @@ final class AppModel: ObservableObject {
         }
         keyboard = KeyboardMonitor(isMainWindow: { [weak self] window in
             window != nil && window === self?.mainWindow
-        }, handler: { [weak self] action in self?.handle(action) })
+        }, isInSidePanel: { [weak self] event in
+            guard let view = self?.sidePanelView, view.window === event.window else { return false }
+            return view.bounds.contains(view.convert(event.locationInWindow, from: nil))
+        }, hasSelection: { [weak self] in self?.library.selection.isEmpty == false }, handler: { [weak self] action in self?.handle(action) })
         checkUnfinishedRecordings()
         capturesChanged()
         NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification,
@@ -232,6 +239,7 @@ final class AppModel: ObservableObject {
         // Start with no text field focused so the shortcuts work right away.
         DispatchQueue.main.async { window.makeFirstResponder(nil) }
         lifecycle.attach(window: window)
+        quickLook.attach(to: window)
     }
 
     /// Single place that decides whether the camera runs.
@@ -381,14 +389,10 @@ final class AppModel: ObservableObject {
     /// index of the same timestamp (`…_2.jpg`); the original stays untouched.
     func saveAnnotatedCopy(of source: URL, shapes: [AnnotationShape],
                            completion: @escaping (Result<URL, Error>) -> Void) {
-        guard let name = CaptureFileName.parse(source.lastPathComponent) else {
+        guard CaptureFileName.parse(source.lastPathComponent) != nil else {
             return completion(.failure(CocoaError(.fileReadInvalidFileName)))
         }
-        let pending = pendingURLs
-        let destination = CaptureFileNamer(fileExists: {
-            pending.contains($0) || FileManager.default.fileExists(atPath: $0.path)
-        }).availableURL(in: source.deletingLastPathComponent(), prefix: name.prefix, timestamp: name.timestamp, ext: "jpg")
-        pendingURLs.insert(destination)
+        let destination = reserveEditedCopyURL(of: source)
         let quality = settings.jpegQuality
         Task.detached(priority: .userInitiated) {
             let result: Result<URL, Error> = Result {
@@ -411,6 +415,53 @@ final class AppModel: ObservableObject {
                     self.report(error, prefix: String(localized: "Drawing not saved"))
                 }
                 completion(result)
+            }
+        }
+    }
+
+    /// Next free `…_2.jpg` next to `source`, reserved until `releaseURL`.
+    private func reserveEditedCopyURL(of source: URL) -> URL {
+        let pending = pendingURLs
+        let destination = CaptureFileNamer(fileExists: {
+            pending.contains($0) || FileManager.default.fileExists(atPath: $0.path)
+        }).editedCopyURL(of: source)
+        pendingURLs.insert(destination)
+        return destination
+    }
+
+    /// Space in the side panel: Quick Look over the selection, or closes it.
+    func previewSelection() {
+        if quickLook.isVisible { return quickLook.close() }
+        preview(library.grid)
+    }
+
+    /// Quick Look for `selection` (see `GridSelection.previewItems`).
+    func preview(_ selection: GridSelection<URL>) {
+        guard let preview = selection.previewItems(in: library.files) else { return }
+        quickLook.show(items: preview.items, start: preview.start)
+    }
+
+    /// Opens the system Markup editor for a photo. Done saves the result as a
+    /// new copy next to it (`…_2.jpg`) and selects it; the original is never
+    /// touched, as with drawings from the stream page.
+    func markUp(_ source: URL) {
+        guard let window = mainWindow else { return }
+        quickLook.close()
+        MarkupSession.start(source, in: window) { [weak self] result in
+            guard let self else { return }
+            let destination = self.reserveEditedCopyURL(of: source)
+            let written = result.flatMap { data in
+                // .withoutOverwriting: never replace a file that appeared meanwhile.
+                Result { try data.write(to: destination, options: .withoutOverwriting); return destination }
+            }
+            self.releaseURL(destination)
+            switch written {
+            case .success(let url):
+                self.message = StatusMessage(text: String(localized: "Marked-up copy saved: \(url.lastPathComponent)"), isError: false)
+                self.library.selectAfterReload(url)
+                self.capturesChanged()
+            case .failure(let error):
+                self.report(error, prefix: String(localized: "Marked-up copy not saved"))
             }
         }
     }
