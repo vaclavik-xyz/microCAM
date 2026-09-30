@@ -23,6 +23,7 @@
     <!-- macOS runs gesture detection (Vision/ANE) on every frame for "Reactions" unless the app opts out;
          that alone costs ~10 % CPU and a microscope never needs it. -->
     <key>NSCameraReactionEffectsEnabled</key><false/>
+    <key>NSCameraReactionEffectGesturesEnabledDefault</key><false/>
     <!-- Live stream: Bonjour advertising for viewer mode and local-network privacy. -->
     <key>NSLocalNetworkUsageDescription</key><string>microCAM sends the live microscope picture to devices on your local network.</string>
     <key>NSBonjourServices</key><array><string>_microcam._tcp</string></array>
