@@ -120,7 +120,8 @@ public struct WebhookClient {
         guard (200..<300).contains(http.statusCode) else { throw WebhookError.httpStatus(http.statusCode) }
     }
 
-    private static func capturedAt(_ file: URL) -> String? {
+    /// ISO 8601 time from the capture's file name.
+    public static func capturedAt(_ file: URL) -> String? {
         guard let name = CaptureFileName.parse(file.lastPathComponent) else { return nil }
         let parser = DateFormatter()
         parser.locale = Locale(identifier: "en_US_POSIX")
