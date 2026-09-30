@@ -7,9 +7,11 @@ import Foundation
 public enum LanguagePreference {
     public static let defaultsKey = "AppleLanguages"
 
-    /// Language codes the user can pick, e.g. `["cs", "en"]`.
+    /// Language codes the user can pick, e.g. `["cs", "en"]`. Unique: the
+    /// bundle lists each language once per lproj folder and once per
+    /// CFBundleLocalizations entry.
     public static func choices(bundleLocalizations: [String]) -> [String] {
-        bundleLocalizations.filter { $0 != "Base" }.sorted()
+        Set(bundleLocalizations).subtracting(["Base"]).sorted()
     }
 
     /// The picked language for a stored `AppleLanguages` value, or nil for "system".
