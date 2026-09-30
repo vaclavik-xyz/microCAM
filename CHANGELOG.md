@@ -15,7 +15,8 @@ A tidier main window.
 - The window title shows the camera and its format. While recording, the
   subtitle shows the running time (and dropped frames) and the stop button
   turns red; the picture itself stays clean. A running timelapse shows its
-  progress there too.
+  progress there too; clicking the timelapse button
+  while it runs stops it, like the record button.
 - The About window has a short description, links to the source code and
   to report a problem, and the copyright; the Help menu links to GitHub.
 - Cameras can be renamed in *Settings → Device*; an empty name brings back
