@@ -1,3 +1,10 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/brand/logo-dark@2x.png">
+    <img src="docs/brand/logo-light@2x.png" alt="microCAM" width="360">
+  </picture>
+</p>
+
 # microCAM
 
 **A small, native macOS app for the microscope camera at a repair bench.**
@@ -45,7 +52,15 @@ also pick one in *Settings → General → Language*.
 - macOS 14 or later, Apple Silicon or Intel
 - Xcode command-line tools to build (`xcode-select --install`)
 
-## Build and install
+## Install
+
+Download `microCAM-<version>.zip` from
+[Releases](https://github.com/vaclavik-xyz/microCAM/releases), unzip it and
+move `microCAM.app` to Applications. The app is not notarized, so the first
+time open it with right-click → **Open** (or allow it in *System Settings →
+Privacy & Security*).
+
+## Build from source
 
 ```sh
 scripts/make-app.sh                 # → build/microCAM.app (ad-hoc signed)
@@ -53,8 +68,8 @@ open build/microCAM.app             # or copy it to /Applications
 scripts/deploy.sh <ssh-host> [dir]  # build → another Mac over ssh (universal)
 ```
 
-The app is ad-hoc signed for personal use, so macOS may ask for camera and
-microphone access again after an update.
+Builds are ad-hoc signed, so macOS may ask for camera and microphone access
+again after an update.
 
 ## Using it
 
@@ -139,6 +154,7 @@ the stream is off, and nothing is encoded while nobody watches.
 ```sh
 swift test                          # unit tests (MicroCAMCore) and translation checks
 scripts/make-app.sh                 # app bundle
+scripts/make-icon.sh                # recompile the app icon (needs Xcode 26)
 scripts/make-screenshots.sh <photos> [en|cs] [out-dir]   # screenshots in demo mode (no camera needed)
 scripts/stream-smoke.sh <host> [port] [pin]              # check a running stream
 scripts/stream-page-shots.py <url> <dir> --pin <pin> [--locale cs-CZ]   # stream page on phones/iPad/desktop (demo stream only)
@@ -157,6 +173,8 @@ Playwright with WebKit) checks that every control is on screen, at least
 - `Resources/<lang>.lproj` holds the translations.
 - Design and plans live in `docs/superpowers/`. Measurements from the bench
   Mac go to `docs/acceptance.md`.
+- Logo, app icon and social preview image live in `docs/brand/` (see its
+  README for the colours and rules).
 - The README image lives in `docs/images/`. `docs/screenshots/` is
   git-ignored because it may contain photos of customer boards.
 
