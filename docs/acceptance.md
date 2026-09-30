@@ -1,6 +1,6 @@
 # microCAM acceptance — bench Mac
 
-Status: **pending** — measurements scheduled on the bench Mac for 2026-09-30.
+Status: **in progress** — rows 2, 2a, 4 (recording case) and 6 measured on the bench Mac on 2026-09-30; the rest pending.
 
 Date: … · macOS … · commit … · Cam Link 4K, 1920×1080 @ 60 fps
 
@@ -10,9 +10,9 @@ Date: … · macOS … · commit … · Cam Link 4K, 1920×1080 @ 60 fps
 | 2 | microCAM preview, no adjustments | low single-digit % CPU | 2026-09-30, bench Mac, Cam Link 1080p60, macOS 26.5: ~12 % with only `NSCameraReactionEffectsEnabled` off (sample showed Reactions hand-gesture detection on every frame); ~7.7 % with `NSCameraReactionEffectGesturesEnabledDefault` off too, no detection left in the sample | partly: better than the baseline, above target |
 | 2a | Format chosen in Settings is kept (e.g. 640×480 @ 25 fps) | photos have that size; stays after window hide/show | 2026-09-30, bench Mac: before the fix the session reset it to 1920×1080 @ 60 (photo 1920×1080, UVCAssistant ~22 %); with the device lock held, photo 640×480, UVCAssistant ~5.5 % | yes |
 | 3 | microCAM preview, adjustments on | clearly below baseline | | |
-| 4 | Window minimized / covered | ~0 % | | |
+| 4 | Window minimized / covered | ~0 % | while recording the camera must keep running: before 0.1.2 a minimized window lost ~1 300 frames/min (App Nap + an undrawn preview layer); fixed, see row 6 | preview-only case pending |
 | 5 | Screen locked 1 min | ~0 % | | |
-| 6 | 60 min recording, no adjustments, narration | frames ≥ 99.5 % of duration×fps, dropped 0, A/V Δ ≤ 0.2 s | | |
+| 6 | 60 min recording, no adjustments, narration | frames ≥ 99.5 % of duration×fps, dropped 0, A/V Δ ≤ 0.2 s | 2026-09-30, 0.1.2 build, HEVC 1080p60, USB microphone, window minimized most of the time: 72:11 min, 3.44 GB, 259 376 of 259 879 frames (99.81 %; ~500 missing, mostly in two bursts, the app's counter saw far fewer, so most were lost before the app), A/V Δ 0.011 s, microCAM 22–25 % CPU, memory 205 → 220 MB | yes |
 | 7 | 60 min recording, adjustments on, narration | same as 6 | | |
 | 8 | Cam Link unplugged mid-recording | file finalized and playable | | |
 | 9 | Sleep/wake, unplug/replug during preview | image recovers without relaunch | | |

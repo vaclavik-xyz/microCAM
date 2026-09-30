@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.1.2 — 2026-09-30
+
+Fixes found in a one-hour test recording on a bench Mac.
+
+- Recordings with sound from a USB microphone failed the moment they
+  started. The audio is now captured in a format the writer accepts.
+- With the microphone left on "System default", recordings had no sound and
+  no warning. They now use the system's default microphone.
+- A minimized window no longer drops frames from a recording (it lost about
+  a third of them): microCAM opts out of App Nap while recording, running a
+  timelapse or streaming to a viewer, and stops feeding the hidden preview.
+- The dropped-frame counter also counts frames the camera pipeline drops.
+- Error messages include the error code, and a recording is no longer
+  deleted when writing fails part-way.
+
+A one-hour 1080p60 recording with narration: 99.8 % of frames, sound in
+sync within 11 ms.
+
 ## 0.1.1 — 2026-09-30
 
 - The camera format chosen in Settings is kept. Before, the capture session
