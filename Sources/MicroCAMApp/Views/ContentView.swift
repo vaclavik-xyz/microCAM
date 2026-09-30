@@ -165,19 +165,14 @@ struct CameraStateOverlay: View {
     }
 }
 
-/// Like the record button: idle, a click opens the settings to start from;
-/// running, a click stops it (progress is in the window subtitle).
 struct TimelapseToolbarButton: View {
-    @EnvironmentObject private var model: AppModel
     @ObservedObject var runner: TimelapseRunner
     @Binding var show: Bool
 
     var body: some View {
         // Same symbol while running, in the accent colour: "timer.circle.fill"
         // drew visibly smaller than "timer" next to it.
-        Button {
-            if runner.isRunning { model.stopTimelapse() } else { show.toggle() }
-        } label: {
+        Button { show.toggle() } label: {
             Label {
                 Text("Timelapse")
             } icon: {
@@ -185,7 +180,7 @@ struct TimelapseToolbarButton: View {
                     .foregroundStyle(runner.isRunning ? AnyShapeStyle(.tint) : AnyShapeStyle(.primary))
             }
         }
-        .help(runner.isRunning ? String(localized: "Stop timelapse") : String(localized: "Timelapse"))
+        .help("Timelapse")
         .popover(isPresented: $show, arrowEdge: .bottom) {
             TimelapseForm(runner: runner).padding().frame(width: 340)
         }
