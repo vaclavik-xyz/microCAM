@@ -82,7 +82,7 @@ final class SettingsStoreTests: XCTestCase {
         s.streamingEnabled = true
         s.streamingMode = .imageOnly
         s.appMode = .viewer
-        s.viewerSourceName = "bench Mac"
+        s.viewerSourceName = "Workbench"
         store.save(s)
         XCTAssertEqual(SettingsStore(defaults: defaults).load(), s)
     }

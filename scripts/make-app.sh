@@ -2,7 +2,7 @@
 # Build microCAM.app (universal, ad-hoc signed, personal use; no notarization).
 set -euo pipefail
 cd "$(dirname "$0")/.."
-# Universal: bench Mac and test-mac are Apple Silicon, reception-mac is Intel.
+# Universal: runs on Apple Silicon and on Intel Macs (e.g. an older Mac used only as a viewer).
 swift build -c release --arch arm64 --arch x86_64
 BIN="$(swift build -c release --arch arm64 --arch x86_64 --show-bin-path)/MicroCAMApp"
 APP="build/microCAM.app"
