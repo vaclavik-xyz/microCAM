@@ -39,3 +39,16 @@ public enum MCPToken {
         return token.isEmpty ? nil : token
     }
 }
+
+/// What the user pastes on the agent's computer to connect it.
+public enum MCPClientCommand {
+    public static func url(address: String, port: Int) -> String {
+        let host = address.contains(":") ? "[\(address)]" : address
+        return "http://\(host):\(port)\(MCPRouter.path)"
+    }
+
+    /// Claude Code. The token is URL-safe (see `MCPToken.isValid`), so it needs no shell quoting inside "…".
+    public static func claude(address: String, port: Int, token: String) -> String {
+        #"claude mcp add --transport http microcam \#(url(address: address, port: port)) --header "Authorization: Bearer \#(token)""#
+    }
+}

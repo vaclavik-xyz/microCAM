@@ -100,3 +100,12 @@ final class MCPAuthGuardTests: XCTestCase {
         XCTAssertLessThanOrEqual(g.trackedCount, 3)
     }
 }
+
+final class MCPClientCommandTests: XCTestCase {
+    func testURLAndClaudeCommand() {
+        XCTAssertEqual(MCPClientCommand.url(address: "192.0.2.10", port: 8091), "http://192.0.2.10:8091/mcp")
+        XCTAssertEqual(MCPClientCommand.url(address: "fd7a::1", port: 8091), "http://[fd7a::1]:8091/mcp")
+        XCTAssertEqual(MCPClientCommand.claude(address: "192.0.2.10", port: 8091, token: "abc_DEF-123"),
+                       #"claude mcp add --transport http microcam http://192.0.2.10:8091/mcp --header "Authorization: Bearer abc_DEF-123""#)
+    }
+}

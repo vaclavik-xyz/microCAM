@@ -9,6 +9,8 @@ import MicroCAMCore
 /// permission). Never active in normal use. `MICROCAM_DEMO_STREAM_PORT` (and
 /// optionally `MICROCAM_DEMO_STREAM_PIN`, `MICROCAM_DEMO_STREAM_MODE=imageOnly`)
 /// also serves the frames as a live stream for `scripts/stream-smoke.sh`.
+/// `MICROCAM_DEMO_MCP_PORT` (and optionally `MICROCAM_DEMO_MCP_TOKEN`) serves
+/// the MCP server on 127.0.0.1 with an in-memory token, never the Keychain one.
 /// `MICROCAM_DEMO_VIEWER=1` starts in viewer mode instead (no network search).
 struct DemoConfig {
     let frames: [URL]
@@ -19,6 +21,8 @@ struct DemoConfig {
     var streamPort: Int? = nil
     var streamPIN: String? = nil
     var streamMode: StreamMode? = nil
+    var mcpPort: Int? = nil
+    var mcpToken: String? = nil
     var viewer = false
 
     static func fromEnvironment(_ env: [String: String] = ProcessInfo.processInfo.environment) -> DemoConfig? {
@@ -36,6 +40,8 @@ struct DemoConfig {
                           streamPort: env["MICROCAM_DEMO_STREAM_PORT"].flatMap { Int($0) },
                           streamPIN: env["MICROCAM_DEMO_STREAM_PIN"],
                           streamMode: env["MICROCAM_DEMO_STREAM_MODE"].flatMap(StreamMode.init(rawValue:)),
+                          mcpPort: env["MICROCAM_DEMO_MCP_PORT"].flatMap { Int($0) },
+                          mcpToken: env["MICROCAM_DEMO_MCP_TOKEN"],
                           viewer: env["MICROCAM_DEMO_VIEWER"] == "1")
     }
 
@@ -73,7 +79,7 @@ final class DemoDriver {
             return
         }
         model.activateDemo(root: config.root, job: config.job, streamPort: config.streamPort, streamPIN: config.streamPIN,
-                           streamMode: config.streamMode)
+                           streamMode: config.streamMode, mcpPort: config.mcpPort, mcpToken: config.mcpToken)
         NSApp.activate(ignoringOtherApps: true)
         show(config.frames[0])
         timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
@@ -152,6 +158,13 @@ final class DemoDriver {
         model.library.grid = GridSelection()
         main.setFrame(NSRect(x: 80, y: 80, width: 1440, height: 860), display: true)
         await pause(1)
+
+        // 1c. An AI agent at work: its photo message and "Agent is watching" in the subtitle.
+        model.mcp.noteAgentWatching()
+        model.message = StatusMessage(text: String(localized: "An agent took a photo: \(name)"), isError: false)
+        await pause(1.5)
+        capture(main, withChildren: true, as: "01c-agent-watching", in: dir)
+        model.message = nil
 
         // 2. Image adjustments popover on a warmer, punchier picture.
         show(frame(1))
@@ -232,6 +245,8 @@ final class DemoDriver {
         // 10. Every Settings tab, with the optional parts switched on.
         model.settings.webhookEnabled = true
         model.settings.webhookURL = "https://crm.example.com/microcam"
+        // In-memory token (see `activateDemo`); the listener stays on loopback.
+        model.settings.mcpEnabled = true
         if !model.settings.streamingEnabled { model.settings.streamingEnabled = true }
         let tabs = ["general", "device", "image", "storage", "timelapse", "preview", "integrations", "stream"]
         for (index, tab) in tabs.enumerated() {
