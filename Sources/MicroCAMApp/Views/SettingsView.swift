@@ -39,6 +39,7 @@ struct SettingsView: View {
 /// what the camera does while the window is hidden or a recording runs.
 struct GeneralSettingsTab: View {
     @EnvironmentObject private var model: AppModel
+    @EnvironmentObject private var updater: Updater
 
     var body: some View {
         Form {
@@ -62,6 +63,15 @@ struct GeneralSettingsTab: View {
                 }
                 if model.settings.appMode != model.launchMode || model.language != model.launchLanguage {
                     RestartRow()
+                }
+            }
+            if updater.isAvailable {
+                Section {
+                    Toggle(isOn: Binding(get: { updater.automaticallyChecks },
+                                         set: { updater.automaticallyChecks = $0 })) {
+                        Text("Check for updates automatically")
+                        Text("microCAM asks before it installs anything. You can also check in the microCAM menu.")
+                    }
                 }
             }
             if model.launchMode == .camera {

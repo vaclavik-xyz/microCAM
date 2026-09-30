@@ -5,6 +5,8 @@ import SwiftUI
 struct MicroCAMApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var model = AppModel()
+    /// Never in the screenshot demo, which must not check the network.
+    @StateObject private var updater = Updater(enabled: DemoConfig.fromEnvironment() == nil)
 
     var body: some Scene {
         Window("microCAM", id: "main") {
@@ -15,6 +17,10 @@ struct MicroCAMApp: App {
         .commands {
             CommandGroup(replacing: .appInfo) {
                 Button("About microCAM") { AboutPanel.show() }
+                if updater.isAvailable {
+                    Button("Check for Updates…") { updater.checkForUpdates() }
+                        .disabled(!updater.canCheck)
+                }
             }
             // Menu shortcuts use ⌘ like other Mac apps (⌘T is Take Photo in
             // Photo Booth). The quick single keys (Space, R, G, 0) are handled by
@@ -71,6 +77,7 @@ struct MicroCAMApp: App {
         Settings {
             SettingsView()
                 .environmentObject(model)
+                .environmentObject(updater)
         }
     }
 }

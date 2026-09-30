@@ -27,6 +27,8 @@
 "Cancel" = "Cancel";
 "Change it only if another app already uses this port." = "Change it only if another app already uses this port.";
 "Change…" = "Change…";
+"Check for updates automatically" = "Check for updates automatically";
+"Check for Updates…" = "Check for Updates…";
 "Choose a camera computer" = "Choose a camera computer";
 "Choose a folder. microCAM saves everything there and never picks a folder on its own. You can change it any time in Settings." = "Choose a folder. microCAM saves everything there and never picks a folder on its own. You can change it any time in Settings.";
 "Choose folder…" = "Choose folder…";
@@ -89,6 +91,7 @@
 "Live picture, photos and video from a microscope camera." = "Live picture, photos and video from a microscope camera.";
 "Live stream" = "Live stream";
 "Looking for microCAM on the network…" = "Looking for microCAM on the network…";
+"microCAM asks before it installs anything. You can also check in the microCAM menu." = "microCAM asks before it installs anything. You can also check in the microCAM menu.";
 "microCAM is recording a video" = "microCAM is recording a video";
 "microCAM isn't allowed to use the camera." = "microCAM isn't allowed to use the camera.";
 "microCAM isn't running as an app (.app)." = "microCAM isn't running as an app (.app).";

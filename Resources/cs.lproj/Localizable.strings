@@ -26,6 +26,8 @@
 "Cancel" = "Zrušit";
 "Change it only if another app already uses this port." = "Změň ho jen tehdy, když tento port už používá jiná aplikace.";
 "Change…" = "Změnit…";
+"Check for updates automatically" = "Automaticky vyhledávat aktualizace";
+"Check for Updates…" = "Vyhledat aktualizace…";
 "Choose a camera computer" = "Vyber počítač s kamerou";
 "Choose a folder. microCAM saves everything there and never picks a folder on its own. You can change it any time in Settings." = "Vyber složku. microCAM do ní ukládá všechno a jinou si sám nikdy nevybere. Kdykoli ji změníš v Nastavení.";
 "Choose folder…" = "Vybrat složku…";
@@ -88,6 +90,7 @@
 "Live picture, photos and video from a microscope camera." = "Živý obraz, fotky a video z mikroskopové kamery.";
 "Live stream" = "Živý přenos";
 "Looking for microCAM on the network…" = "Hledám microCAM v síti…";
+"microCAM asks before it installs anything. You can also check in the microCAM menu." = "microCAM se před instalací vždy zeptá. Ručně můžeš hledat v menu microCAM.";
 "microCAM is recording a video" = "microCAM nahrává video";
 "microCAM isn't allowed to use the camera." = "microCAM nemá povolený přístup ke kameře.";
 "microCAM isn't running as an app (.app)." = "microCAM neběží jako aplikace (.app).";

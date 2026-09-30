@@ -44,8 +44,8 @@ also pick one in *Settings → General → Language*.
   photos and drawing for showing the customer their board.
 - **Integrations:** macOS share sheet, and an optional generic webhook for
   sending captures to your own system (your CRM, n8n, Make, Zapier…).
-- **No third-party dependencies.** Swift, SwiftUI/AppKit and Apple
-  frameworks only.
+- **Almost no dependencies.** Swift, SwiftUI/AppKit and Apple frameworks,
+  plus [Sparkle](https://sparkle-project.org) for updates.
 
 ## Requirements
 
@@ -56,9 +56,10 @@ also pick one in *Settings → General → Language*.
 
 Download `microCAM-<version>.zip` from
 [Releases](https://github.com/vaclavik-xyz/microCAM/releases), unzip it and
-move `microCAM.app` to Applications. The app is not notarized, so the first
-time open it with right-click → **Open** (or allow it in *System Settings →
-Privacy & Security*).
+move `microCAM.app` to Applications. Releases from 0.2.0 on are signed with
+Developer ID and notarized by Apple, and microCAM updates itself: it checks
+for new versions (*Settings → General*, or *microCAM → Check for Updates…*)
+and asks before installing. Versions 0.1.x have to be replaced by hand once.
 
 ## Build from source
 
@@ -66,10 +67,12 @@ Privacy & Security*).
 scripts/make-app.sh                 # → build/microCAM.app (ad-hoc signed)
 open build/microCAM.app             # or copy it to /Applications
 scripts/deploy.sh <ssh-host> [dir]  # build → another Mac over ssh (universal)
+scripts/release.sh                  # maintainers: signed, notarized GitHub release + appcast
 ```
 
-Builds are ad-hoc signed, so macOS may ask for camera and microphone access
-again after an update.
+Local builds are ad-hoc signed, so macOS asks for camera and microphone access
+again after each build, and they don't update themselves (no update key).
+`scripts/release.sh` describes the one-time setup for releases.
 
 ## Using it
 
