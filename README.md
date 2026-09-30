@@ -8,11 +8,11 @@
 # microCAM
 
 **A small, native macOS app for the microscope camera at a repair bench.**
-Live preview, photos, hour-long recordings with narration, timelapse, and
-every capture filed under the job it belongs to. A *job* is a repair order:
-the ticket or order number you already use for the repair.
+Live preview, photos, hour-long recordings with narration, timelapse and,
+if you want, every capture filed under the job it belongs to. A *job* is a
+repair order: the ticket or order number you already use for the repair.
 
-![microCAM main window: live microscope image, toolbar and the side panel with the job's photos and videos](docs/images/microcam-window.jpg)
+![microCAM main window: live microscope image, the camera and its format in the title, and the side panel with the folder's photos and videos grouped by day](docs/images/microcam-window.jpg)
 
 microCAM works with any camera macOS can see: USB/UVC microscopes and HDMI
 cameras behind a capture card such as the Elgato Cam Link 4K. It was built
@@ -32,9 +32,9 @@ also pick one in *Settings → General → Language*.
 - **Recordings that don't stutter.** Hardware HEVC/H.264 encoding, narration
   from any microphone, no length limit. A crash-safe file is written while
   recording.
-- **Files sorted per job.** Type the job code (`PR-260412`) and every photo
-  and video lands in that job's folder. Misfiled shots can be moved later
-  without overwriting anything.
+- **Files sorted per job, if you want.** Turn on jobs, type the job code
+  (`PR-260412`) and every photo and video lands in that job's folder.
+  Misfiled shots can be moved later without overwriting anything.
 - **Image adjustments per camera:** brightness, contrast, saturation, white
   balance, gamma and sharpening. They apply to the preview, photos and video
   alike, and cost nothing when switched off.
@@ -46,6 +46,19 @@ also pick one in *Settings → General → Language*.
   sending captures to your own system (your CRM, n8n, Make, Zapier…).
 - **Almost no dependencies.** Swift, SwiftUI/AppKit and Apple frameworks,
   plus [Sparkle](https://sparkle-project.org) for updates.
+
+<table>
+  <tr>
+    <td width="33%"><img src="docs/images/microcam-adjustments.jpg" alt="Image adjustments popover with sliders for brightness, contrast, saturation, temperature, tint, gamma and sharpening"></td>
+    <td width="33%"><img src="docs/images/microcam-timelapse.jpg" alt="Running timelapse: shot count, progress, next photo and expected end"></td>
+    <td width="33%"><img src="docs/images/microcam-compare.jpg" alt="Before/after compare with a slider"></td>
+  </tr>
+  <tr>
+    <td align="center">Image adjustments</td>
+    <td align="center">Timelapse</td>
+    <td align="center">Before/after compare</td>
+  </tr>
+</table>
 
 ## Requirements
 
@@ -204,8 +217,8 @@ Playwright with WebKit) checks that every control is on screen, at least
 
 ## Contributing
 
-Bug reports and pull requests are welcome. Keep the app free of third-party
-dependencies, put logic that can be tested into `MicroCAMCore` with a test,
+Bug reports and pull requests are welcome. Don't add third-party dependencies
+(Sparkle is the only one), put logic that can be tested into `MicroCAMCore` with a test,
 and run `swift test` before you open a pull request.
 
 ### Localization
