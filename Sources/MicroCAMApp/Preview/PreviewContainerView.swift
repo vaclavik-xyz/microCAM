@@ -26,6 +26,9 @@ final class PreviewContainerView: NSView {
         previewLayer = AVCaptureVideoPreviewLayer(session: session)
         previewLayer.videoGravity = .resizeAspect
         super.init(frame: .zero)
+        connectionObservation = previewLayer.observe(\.connection) { [weak self] _, _ in
+            DispatchQueue.main.async { if let self, let mode = self.mode { self.setMode(mode) } }
+        }
         wantsLayer = true
         layer?.backgroundColor = NSColor.black.cgColor
 
@@ -84,13 +87,48 @@ final class PreviewContainerView: NSView {
         zoom.zoom(by: factor, anchor: CGPoint(x: p.x / bounds.width, y: p.y / bounds.height))
     }
 
+    private var mode: RenderMode?
+    private var windowVisible = true
+    private var occlusionObserver: NSObjectProtocol?
+    /// The layer's connection appears only once the session runs; re-apply
+    /// the enabled state then, or a camera started while the window is
+    /// hidden would feed the preview again.
+    private var connectionObservation: NSKeyValueObservation?
+
+    deinit {
+        if let occlusionObserver { NotificationCenter.default.removeObserver(occlusionObserver) }
+    }
+
     func setMode(_ mode: RenderMode) {
+        self.mode = mode
         let adjusted = mode == .adjusted && renderer != nil
         renderer?.view.isHidden = !adjusted
-        renderer?.setActive(adjusted)
+        renderer?.setActive(adjusted && windowVisible)
         passthroughHost.isHidden = adjusted
         // A hidden preview layer would still be fed frames; disable its connection.
-        previewLayer.connection?.isEnabled = !adjusted
+        // The same while the window is minimized or covered: nothing draws the
+        // layer then, its queue fills up and the session started dropping
+        // frames for every output — a recording lost a third of its frames
+        // while the window was minimized.
+        previewLayer.connection?.isEnabled = !adjusted && windowVisible
+    }
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        if let occlusionObserver { NotificationCenter.default.removeObserver(occlusionObserver) }
+        occlusionObserver = nil
+        guard let window else { return }
+        occlusionObserver = NotificationCenter.default.addObserver(
+            forName: NSWindow.didChangeOcclusionStateNotification, object: window, queue: .main
+        ) { [weak self] _ in self?.updateWindowVisibility() }
+        updateWindowVisibility()
+    }
+
+    private func updateWindowVisibility() {
+        let visible = window?.occlusionState.contains(.visible) ?? false
+        guard visible != windowVisible else { return }
+        windowVisible = visible
+        if let mode { setMode(mode) }
     }
 
     @available(*, unavailable)

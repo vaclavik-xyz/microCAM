@@ -23,4 +23,12 @@ public enum CaptureLifecyclePolicy {
         if s.pauseWhenHidden && !s.windowVisible { return false }
         return true
     }
+
+    /// Work that must keep going while the window is hidden. macOS App Naps
+    /// a minimized app: during a bench recording its frames reached the
+    /// encoder late and ~1 500 were dropped in a few minutes. While this is
+    /// true the app holds a `ProcessInfo` activity that opts out of App Nap.
+    public static func needsAppAwake(_ s: CaptureLifecycleState) -> Bool {
+        !s.systemSleeping && (s.recording || s.timelapseRunning || s.streamViewers)
+    }
 }

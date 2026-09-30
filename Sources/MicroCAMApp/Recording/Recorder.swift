@@ -148,6 +148,14 @@ final class Recorder {
         }
     }
 
+    /// A frame the camera pipeline dropped before `appendVideo` saw it. It is
+    /// missing from the file all the same, so it counts while recording.
+    func noteDroppedFrame() {
+        lock.lock()
+        defer { lock.unlock() }
+        if writer != nil && startTime != nil { stats.update { $0.framesDropped += 1 } }
+    }
+
     func appendAudio(_ sampleBuffer: CMSampleBuffer) {
         lock.lock()
         defer { lock.unlock() }

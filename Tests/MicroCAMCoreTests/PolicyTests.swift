@@ -32,6 +32,20 @@ final class PolicyTests: XCTestCase {
         s.timelapseRunning = true
         XCTAssertTrue(CaptureLifecyclePolicy.shouldRun(s))
     }
+    func testBackgroundWorkKeepsTheAppAwake() {
+        var s = CaptureLifecycleState()
+        XCTAssertFalse(CaptureLifecyclePolicy.needsAppAwake(s), "plain preview may nap")
+        for set in [{ (s: inout CaptureLifecycleState) in s.recording = true },
+                    { (s: inout CaptureLifecycleState) in s.timelapseRunning = true },
+                    { (s: inout CaptureLifecycleState) in s.streamViewers = true }] {
+            s = CaptureLifecycleState(); s.windowVisible = false
+            set(&s)
+            XCTAssertTrue(CaptureLifecyclePolicy.needsAppAwake(s))
+            s.systemSleeping = true
+            XCTAssertFalse(CaptureLifecyclePolicy.needsAppAwake(s))
+        }
+    }
+
     func testSystemSleepAlwaysStops() {
         var s = CaptureLifecycleState()
         s.recording = true

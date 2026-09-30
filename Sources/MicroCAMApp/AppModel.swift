@@ -133,6 +133,7 @@ final class AppModel: ObservableObject {
             self.lifecycle.update { $0.streamViewers = count > 0 }
         }
         engine.onAudioSample = { recorder.appendAudio($0) }
+        engine.onVideoDropped = { recorder.noteDroppedFrame() }
         recorder.onFailure = { [weak self] error in
             self?.stopRecording(reason: error.localizedDescription)
         }
@@ -218,8 +219,24 @@ final class AppModel: ObservableObject {
 
     /// Single place that decides whether the camera runs.
     func applyLifecycle() {
+        applyAppNap()
         guard cameraAuthorized == true, demo == nil else { return }
         engine.setRunning(CaptureLifecyclePolicy.shouldRun(lifecycle.state))
+    }
+
+    private var awakeActivity: NSObjectProtocol?
+
+    /// See `CaptureLifecyclePolicy.needsAppAwake`.
+    private func applyAppNap() {
+        let needed = CaptureLifecyclePolicy.needsAppAwake(lifecycle.state)
+        if needed, awakeActivity == nil {
+            awakeActivity = ProcessInfo.processInfo.beginActivity(
+                options: [.userInitiatedAllowingIdleSystemSleep, .latencyCritical],
+                reason: "Recording, timelapse or live stream in progress")
+        } else if !needed, let activity = awakeActivity {
+            ProcessInfo.processInfo.endActivity(activity)
+            awakeActivity = nil
+        }
     }
 
     func start() async {
