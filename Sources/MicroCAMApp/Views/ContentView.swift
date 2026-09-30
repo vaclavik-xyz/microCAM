@@ -170,8 +170,15 @@ struct TimelapseToolbarButton: View {
     @Binding var show: Bool
 
     var body: some View {
+        // Same symbol while running, in the accent colour: "timer.circle.fill"
+        // drew visibly smaller than "timer" next to it.
         Button { show.toggle() } label: {
-            Label("Timelapse", systemImage: runner.isRunning ? "timer.circle.fill" : "timer")
+            Label {
+                Text("Timelapse")
+            } icon: {
+                Image(systemName: "timer")
+                    .foregroundStyle(runner.isRunning ? AnyShapeStyle(.tint) : AnyShapeStyle(.primary))
+            }
         }
         .help("Timelapse")
         .popover(isPresented: $show, arrowEdge: .bottom) {
