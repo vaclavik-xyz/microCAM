@@ -204,21 +204,30 @@ async function post(path, body) {
     r = await fetch(path, { method: "POST", headers: { "X-MicroCAM-PIN": p, "Content-Type": "application/json" },
                             body: JSON.stringify(body || {}) });
   } catch (e) { toast("bench Mac není dostupný"); return null; }
-  if (r.status === 401) { localStorage.removeItem("microcamPin"); toast("Špatný PIN"); return null; }
-  if (r.status === 429) { const j = await r.json(); toast("Příliš mnoho pokusů – zkus to za " + j.retryAfter + " s"); return null; }
-  if (r.status === 403) { toast("Tahle akce je na bench Macu vypnutá"); return null; }
-  if (!r.ok) { toast("Chyba " + r.status); return null; }
+  if (!(await accepted(r))) return null;
   return r.json();
+}
+/// Shared handling of refused remote actions; false when `r` is an error.
+async function accepted(r) {
+  if (r.status === 401) { localStorage.removeItem("microcamPin"); toast("Špatný PIN"); return false; }
+  if (r.status === 429) {
+    const j = await r.json().catch(() => ({}));
+    toast("Příliš mnoho pokusů – zkus to za " + (j.retryAfter || 60) + " s"); return false;
+  }
+  if (r.status === 403) { toast("Tahle akce je na bench Macu vypnutá"); return false; }
+  if (!r.ok) { toast("Chyba " + r.status); return false; }
+  return true;
 }
 // Job photos need the PIN header, so they are fetched and shown as blob URLs.
 let shotURL = null, downloadURL = null;
 async function fetchCapture(ref) {
+  const p = pin(); if (!p) return null;   // prompt cancelled: nothing to report
+  let r;
   try {
-    const r = await fetch(ref.url, { headers: { "X-MicroCAM-PIN": pin() || "" }, cache: "no-store" });
-    if (r.status === 401) { localStorage.removeItem("microcamPin"); toast("Špatný PIN"); return null; }
-    if (!r.ok) { toast("Fotku nelze načíst (" + r.status + ")"); return null; }
-    return URL.createObjectURL(await r.blob());
+    r = await fetch(ref.url, { headers: { "X-MicroCAM-PIN": p }, cache: "no-store" });
   } catch (e) { toast("bench Mac není dostupný"); return null; }
+  if (!(await accepted(r))) return null;
+  return URL.createObjectURL(await r.blob());
 }
 async function setDownload(ref) {
   const url = await fetchCapture(ref); if (!url) return;
@@ -245,10 +254,14 @@ $("photo").onclick = async () => {
 };
 $("save").onclick = async () => {
   if (!shapes.length) { toast("Nejdřív něco nakresli"); return; }
-  const ref = await post("/annotated", { source: frozen.name, shapes });
-  if (!ref) return;
-  await setDownload(ref);
-  toast("Uloženo s anotací: " + ref.name);
+  if ($("save").disabled) return;   // one annotated copy per click, even on a double click
+  $("save").disabled = true;
+  try {
+    const ref = await post("/annotated", { source: frozen.name, shapes });
+    if (!ref) return;
+    await setDownload(ref);
+    toast("Uloženo s anotací: " + ref.name);
+  } finally { $("save").disabled = false; }
 };
 $("back").onclick = () => {
   frozen = null; shapes = []; redraw();
