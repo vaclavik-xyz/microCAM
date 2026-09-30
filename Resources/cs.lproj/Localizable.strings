@@ -124,6 +124,8 @@
 "of %lld" = "z %lld";
 "Only watch" = "Jen sledovat";
 "Open folder" = "Otevřít složku";
+"Open in Preview" = "Otevřít v Náhledu";
+"Open in Preview to mark up" = "Otevřít v Náhledu k anotaci";
 "Open on another device" = "Otevřít na jiném zařízení";
 "Open System Settings" = "Otevřít Nastavení systému";
 "Open the folder where captures are saved now" = "Otevřít složku, kam se teď ukládá";

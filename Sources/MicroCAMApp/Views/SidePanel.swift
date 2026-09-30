@@ -100,8 +100,13 @@ struct SidePanel: View {
             .help("Selected: \(library.selection.count)")
             Spacer(minLength: 4)
             if let photo = markupTarget {
-                Button { model.markUp(photo) } label: { BarIcon("pencil.tip.crop.circle") }
-                    .help("Mark up (arrows, shapes, text) and save as a copy")
+                if MarkupSession.isAvailable(for: photo) {
+                    Button { model.markUp(photo) } label: { BarIcon("pencil.tip.crop.circle") }
+                        .help("Mark up (arrows, shapes, text) and save as a copy")
+                } else if MarkupSession.canOpenInPreview(photo) {
+                    Button { MarkupSession.openInPreview(photo) } label: { BarIcon("pencil.tip.crop.circle") }
+                        .help("Open in Preview to mark up")
+                }
             }
             if comparePair != nil {
                 Button { compare = comparePair } label: { BarIcon("rectangle.split.2x1") }
@@ -145,8 +150,12 @@ struct SidePanel: View {
     private func menu(for urls: [URL]) -> some View {
         Button("Open") { urls.forEach { NSWorkspace.shared.open($0) } }
         Button("Quick Look") { model.preview(GridSelection(selected: Set(urls), anchor: urls.first)) }
-        if urls.count == 1, let url = urls.first, MarkupSession.isAvailable(for: url) {
-            Button("Mark up…") { model.markUp(url) }
+        if urls.count == 1, let url = urls.first {
+            if MarkupSession.isAvailable(for: url) {
+                Button("Mark up…") { model.markUp(url) }
+            } else if MarkupSession.canOpenInPreview(url) {
+                Button("Open in Preview") { MarkupSession.openInPreview(url) }
+            }
         }
         Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting(urls) }
         ShareLink("Share…", items: urls)
@@ -168,10 +177,10 @@ struct SidePanel: View {
         library.grid.click(url, in: library.files, command: flags.contains(.command), shift: flags.contains(.shift))
     }
 
-    /// The one selected photo, when Markup can open it.
+    /// The one selected photo (Markup, or Preview when Markup is missing).
     private var markupTarget: URL? {
         guard library.selection.count == 1, let url = library.selection.first,
-              MarkupSession.isAvailable(for: url) else { return nil }
+              url.pathExtension.lowercased() != "mov" else { return nil }
         return url
     }
 

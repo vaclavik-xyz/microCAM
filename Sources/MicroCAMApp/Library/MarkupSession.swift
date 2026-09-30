@@ -8,7 +8,8 @@ import UniformTypeIdentifiers
 /// iOS only), but Markup is a system extension that `NSSharingService` runs
 /// by its identifier. When Markup finishes it hands back the edited image and
 /// leaves the file alone; the caller saves it as a new copy. If a future macOS
-/// renames the extension, `isAvailable` turns false and the command hides.
+/// renames the extension, `isAvailable` turns false and the side panel
+/// offers Open in Preview instead (Preview has the same Markup tools).
 @MainActor
 final class MarkupSession: NSObject, NSSharingServiceDelegate {
     private static let serviceName = NSSharingService.Name("com.apple.MarkupUI.Markup")
@@ -16,6 +17,19 @@ final class MarkupSession: NSObject, NSSharingServiceDelegate {
     static func isAvailable(for url: URL) -> Bool {
         url.pathExtension.lowercased() != "mov"
             && NSSharingService(named: serviceName)?.canPerform(withItems: [url]) == true
+    }
+
+    private static var previewApp: URL? {
+        NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.Preview")
+    }
+
+    static func canOpenInPreview(_ url: URL) -> Bool {
+        url.pathExtension.lowercased() != "mov" && previewApp != nil
+    }
+
+    static func openInPreview(_ url: URL) {
+        guard let app = previewApp else { return }
+        NSWorkspace.shared.open([url], withApplicationAt: app, configuration: NSWorkspace.OpenConfiguration())
     }
 
     private let window: NSWindow
@@ -44,6 +58,13 @@ final class MarkupSession: NSObject, NSSharingServiceDelegate {
                                     sourceWindowForShareItems items: [Any],
                                     sharingContentScope: UnsafeMutablePointer<NSSharingService.SharingContentScope>) -> NSWindow? {
         MainActor.assumeIsolated { window }
+    }
+
+    /// Markup places its editor over this frame; without it the editor
+    /// opens at the left edge of the screen, away from the window.
+    nonisolated func sharingService(_ sharingService: NSSharingService,
+                                    sourceFrameOnScreenForShareItem item: Any) -> NSRect {
+        MainActor.assumeIsolated { window.frame }
     }
 
     nonisolated func sharingService(_ sharingService: NSSharingService, didShareItems items: [Any]) {

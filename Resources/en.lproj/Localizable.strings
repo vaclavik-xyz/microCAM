@@ -125,6 +125,8 @@
 "of %lld" = "of %lld";
 "Only watch" = "Only watch";
 "Open folder" = "Open folder";
+"Open in Preview" = "Open in Preview";
+"Open in Preview to mark up" = "Open in Preview to mark up";
 "Open on another device" = "Open on another device";
 "Open System Settings" = "Open System Settings";
 "Open the folder where captures are saved now" = "Open the folder where captures are saved now";

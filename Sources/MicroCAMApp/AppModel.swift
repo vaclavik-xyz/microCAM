@@ -182,7 +182,7 @@ final class AppModel: ObservableObject {
         }, isInSidePanel: { [weak self] event in
             guard let view = self?.sidePanelView, view.window === event.window else { return false }
             return view.bounds.contains(view.convert(event.locationInWindow, from: nil))
-        }, handler: { [weak self] action in self?.handle(action) })
+        }, hasSelection: { [weak self] in self?.library.selection.isEmpty == false }, handler: { [weak self] action in self?.handle(action) })
         checkUnfinishedRecordings()
         capturesChanged()
         NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification,
