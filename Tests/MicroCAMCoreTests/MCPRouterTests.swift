@@ -218,6 +218,14 @@ final class MCPRouterTests: XCTestCase {
         XCTAssertEqual(list["result"]?["resultType"], "complete")
         guard case .array(let tools)? = list["result"]?["tools"] else { return XCTFail() }
         XCTAssertEqual(tools.count, 8)
+        // Caching hints are required on both (utilities/caching). The tool list
+        // changes with the jobs setting, so it is never fresh for long.
+        XCTAssertEqual(list["result"]?["ttlMs"], 0)
+        XCTAssertEqual(list["result"]?["cacheScope"], "private")
+        XCTAssertNotNil(discover["result"]?["ttlMs"]?.integer)
+        XCTAssertEqual(discover["result"]?["cacheScope"], "private")
+        // Legacy results stay as they were.
+        XCTAssertNil(rpc("tools/list").1["result"]?["ttlMs"])
     }
 
     func testModernHeadersMustMatchTheBody() {

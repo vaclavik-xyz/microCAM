@@ -27,6 +27,10 @@ public final class MCPRouter {
 
     private enum Era { case modern, legacy }
 
+    /// Caching hints (milliseconds) the modern revision requires on these
+    /// results. The tool list changes with the jobs setting, so it is always stale.
+    static let cacheTTL = ["server/discover": 3_600_000, "tools/list": 0]
+
     /// A JSON-RPC failure with the HTTP status it is sent with.
     private struct RPCError: Error {
         var status = 200
@@ -116,6 +120,11 @@ public final class MCPRouter {
             case .success(var value):
                 if era == .modern, case .object(var o) = value {
                     o["resultType"] = "complete"
+                    if let ttl = Self.cacheTTL[method] {
+                        o["ttlMs"] = .int(ttl)
+                        // Behind a token, so never shared across callers.
+                        o["cacheScope"] = "private"
+                    }
                     var meta = o["_meta"]?.object ?? [:]
                     meta["io.modelcontextprotocol/serverInfo"] = serverInfo
                     o["_meta"] = .object(meta)
