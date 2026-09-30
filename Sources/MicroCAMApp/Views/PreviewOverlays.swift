@@ -1,12 +1,19 @@
 import SwiftUI
 
 /// "● REC 0:12:34" over the preview while recording, with dropped frames
-/// when there are any.
+/// when there are any; "Saving video…" while the stopped recording is still
+/// being finalized (`recordingStartedAt` is cleared only after that).
 struct RecordingBadge: View {
     @EnvironmentObject private var model: AppModel
 
     var body: some View {
-        if let started = model.recordingStartedAt {
+        if model.isFinalizingRecording && !model.isRecording {
+            Label("Saving video…", systemImage: "hourglass")
+                .font(.callout).foregroundStyle(.white)
+                .padding(.horizontal, 12).padding(.vertical, 6)
+                .background(.black.opacity(0.6), in: Capsule())
+                .transition(.opacity)
+        } else if model.isRecording, let started = model.recordingStartedAt {
             TimelineView(.periodic(from: started, by: 1)) { context in
                 let seconds = max(0, Int(context.date.timeIntervalSince(started)))
                 HStack(spacing: 7) {
