@@ -34,21 +34,12 @@ public final class PinGuard: @unchecked Sendable {
             lockedUntil = nil
             failures = 0
         }
-        if let candidate, Self.constantTimeEquals(candidate, expected) {
+        if let candidate, ConstantTime.equals(candidate, expected) {
             failures = 0
             return .ok
         }
         failures += 1
         if failures >= maxFailures { lockedUntil = t.addingTimeInterval(lockout) }
         return .wrong
-    }
-
-    private static func constantTimeEquals(_ a: String, _ b: String) -> Bool {
-        let x = Array(a.utf8), y = Array(b.utf8)
-        var diff = UInt8(x.count == y.count ? 0 : 1)
-        for i in 0..<max(x.count, y.count) {
-            diff |= (i < x.count ? x[i] : 0) ^ (i < y.count ? y[i] : 0)
-        }
-        return diff == 0
     }
 }
