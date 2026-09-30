@@ -8,20 +8,26 @@ struct JobBar: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            Text("Zakázka:")
-            TextField("např. PR-260042", text: $draft)
+            Text("Job:")
+            TextField("e.g. PR-260042", text: $draft)
                 .textFieldStyle(.roundedBorder)
                 .frame(width: 180)
                 .onSubmit(apply)
-            Button("Nastavit", action: apply)
-            Button("Bez zakázky") { draft = ""; apply() }
+            Button("Set", action: apply)
+            Button("No job") { draft = ""; apply() }
                 .disabled(model.settings.activeJob == nil)
             if invalid {
-                Text("Jen písmena, číslice a pomlčka.").font(.caption).foregroundStyle(.red)
+                Text("Use only letters, digits and hyphens.").font(.caption).foregroundStyle(.red)
             }
             Spacer()
-            Text(model.settings.activeJob.map { "Aktivní: \($0.value)" } ?? "Aktivní: bez zakázky")
-                .font(.callout.weight(.semibold))
+            Group {
+                if let job = model.settings.activeJob {
+                    Text("Active: \(job.value)")
+                } else {
+                    Text("Active: no job")
+                }
+            }
+            .font(.callout.weight(.semibold))
         }
         .padding(.horizontal, 10).padding(.vertical, 6)
         .onAppear { draft = model.settings.activeJob?.value ?? "" }

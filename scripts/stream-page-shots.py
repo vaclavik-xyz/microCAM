@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Screenshots and layout checks of the stream page on phones, tablet and desktop.
 
-Usage: scripts/stream-page-shots.py <base-url> <out-dir> [--pin 1234]
+Usage: scripts/stream-page-shots.py <base-url> <out-dir> [--pin 1234] [--locale cs-CZ]
 
 Run against the demo stream (see README, MICROCAM_DEMO_STREAM_PORT) — with --pin
 it also takes a photo, annotates it and saves the copy, so never point it with
@@ -9,7 +9,8 @@ a PIN at a real bench. Needs Python Playwright with WebKit and Chromium.
 For every device and state (live, PIN panel empty / wrong / locked, drawing,
 annotated photo) it checks that each
 visible control lies fully inside the viewport, is at least 44 px and does not
-overlap another control, and it writes <device>-<state>.png.
+overlap another control, and it writes <device>-<state>.png. --locale sets the
+browser language (the page picks its texts from it; default en-US).
 """
 import argparse
 import sys
@@ -94,19 +95,19 @@ def pin_states(page, name, out, slug):
     route_json(page, "**/photo", 401, '{"error":"pin"}')
     page.fill("#pinInput", "0000")
     page.keyboard.press("Enter")
-    page.wait_for_function("document.getElementById('pinNote').textContent.includes('Špatný')", timeout=3000)
+    page.wait_for_function("document.getElementById('pinForm').classList.contains('error')", timeout=3000)
     ok &= check(page, f"{name} pin wrong")
     page.screenshot(path=str(out / f"{slug}-5-pin-wrong.png"))
     route_json(page, "**/photo", 429, '{"error":"locked","retryAfter":42}')
     page.fill("#pinInput", "1111")
     tap(page, "#pinOk")
-    page.wait_for_function("document.getElementById('pinNote').textContent.includes('Znovu za')", timeout=3000)
+    page.wait_for_function("document.getElementById('pinInput').disabled", timeout=3000)
     ok &= check(page, f"{name} pin locked")
     page.screenshot(path=str(out / f"{slug}-6-pin-locked.png"))
     page.unroute("**/photo")
     page.keyboard.press("Escape")
     page.wait_for_timeout(300)
-    if page.is_visible("#pinDialog") or "Špatný" in page.inner_text("#toast"):
+    if page.is_visible("#pinDialog") or page.evaluate("document.getElementById('toast').classList.contains('show')"):
         print(f"FAIL {name}: Esc did not cancel the PIN panel quietly")
         ok = False
     return ok
@@ -133,6 +134,7 @@ def main():
     ap.add_argument("base")
     ap.add_argument("out")
     ap.add_argument("--pin")
+    ap.add_argument("--locale", default="en-US")
     args = ap.parse_args()
     out = Path(args.out).expanduser()
     out.mkdir(parents=True, exist_ok=True)
@@ -144,6 +146,7 @@ def main():
                 browser, opts = chromium, {"viewport": {"width": 1440, "height": 900}}
             else:
                 browser, opts = webkit, dict(p.devices[name])
+            opts["locale"] = args.locale
             ctx = browser.new_context(**opts)
             page = ctx.new_page()
             errors = []
@@ -152,6 +155,11 @@ def main():
             page.wait_for_timeout(2500)
             slug = name.replace(" ", "_").replace("(", "").replace(")", "")
 
+            want = args.locale.split("-")[0].lower()
+            got = page.evaluate("document.documentElement.lang")
+            if got != want and want in page.evaluate("Object.keys(STRINGS)"):
+                print(f"FAIL {name}: page language {got}, expected {want}")
+                ok = False
             try:
                 page.mouse.move(10, 10)
                 ok &= check(page, f"{name} live")

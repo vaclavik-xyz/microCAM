@@ -10,5 +10,7 @@ rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/MicroCAMApp"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
+# Translations: one <lang>.lproj per language (Localizable.strings, InfoPlist.strings).
+cp -R Resources/*.lproj "$APP/Contents/Resources/"
 codesign --force --sign - "$APP"
 echo "Built: $APP"

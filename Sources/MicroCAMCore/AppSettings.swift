@@ -59,8 +59,9 @@ public struct AppSettings: Equatable, Sendable {
         storageRootPath.map { URL(fileURLWithPath: $0, isDirectory: true) }
     }
 
-    public var layout: StorageLayout? {
-        storageRoot.map { StorageLayout(root: $0, sortByType: sortByType) }
+    /// Folder names follow the app language, which lives outside these settings.
+    public func layout(language: FolderLanguage) -> StorageLayout? {
+        storageRoot.map { StorageLayout(root: $0, sortByType: sortByType, language: language) }
     }
 
     public var jobContext: JobContext {

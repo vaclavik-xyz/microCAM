@@ -1,21 +1,28 @@
 #!/usr/bin/env bash
-# Render README screenshots in demo mode — no camera needed. Still photos
-# stand in for the live image and the app captures its own windows into
-# docs/screenshots/. Needs a logged-in GUI session.
+# Render screenshots in demo mode — no camera needed. Still photos stand in
+# for the live image and the app captures its own windows: the main window,
+# adjustments, zoom, recording, timelapse, compare, Move to job, first
+# launch, every Settings tab and viewer mode. Needs a logged-in GUI session.
 #
-# Usage: scripts/make-screenshots.sh <photos>
+# Usage: scripts/make-screenshots.sh <photos> [language] [out-dir]
 #   <photos>/frames/*.jpg    "live" images, in order: main, adjustments, zoom, timelapse
 #   <photos>/library/*.jpg   photos shown in the side panel of the demo job
 #   <photos>/compare/before.jpg, after.jpg   pair for the before/after screenshots
+#   language                 app language, e.g. en or cs (default: the system's)
+#   out-dir                  default docs/screenshots (git-ignored)
 set -euo pipefail
 cd "$(dirname "$0")/.."
-PHOTOS="$(cd "${1:?usage: scripts/make-screenshots.sh <photos>}" && pwd)"
-OUT="$PWD/docs/screenshots"
+PHOTOS="$(cd "${1:?usage: scripts/make-screenshots.sh <photos> [language] [out-dir]}" && pwd)"
+LANG_ARGS=()
+[ -n "${2:-}" ] && LANG_ARGS=(--args -AppleLanguages "($2)")
+OUT="${3:-$PWD/docs/screenshots}"
+mkdir -p "$OUT"
+OUT="$(cd "$OUT" && pwd)"
 JOB="PR-260412"
 # A readable path for the Settings screenshot; refuse to touch an existing folder.
 ROOT="$HOME/Pictures/microCAM demo"
 [ -e "$ROOT" ] && { echo "$ROOT already exists, remove it first" >&2; exit 1; }
-mkdir -p "$ROOT/$JOB" "$OUT"
+mkdir -p "$ROOT/$JOB"
 
 # Side-panel library, named like real captures.
 cp "$PHOTOS/compare/before.jpg" "$ROOT/$JOB/${JOB}_2026-09-25_13-40-00.jpg"
@@ -39,7 +46,13 @@ open -W -n build/microCAM.app \
     --env MICROCAM_DEMO_ROOT="$ROOT" \
     --env MICROCAM_DEMO_JOB="$JOB" \
     --env MICROCAM_DEMO_COMPARE="$ROOT/$JOB/${JOB}_2026-09-25_13-40-00.jpg:$ROOT/$JOB/${JOB}_2026-09-25_13-55-00.jpg" \
-    --env MICROCAM_DEMO_SHOTS="$OUT"
+    --env MICROCAM_DEMO_SHOTS="$OUT" ${LANG_ARGS[@]+"${LANG_ARGS[@]}"}
+# Viewer mode: a second launch with its own screenshots.
+open -W -n build/microCAM.app \
+    --env MICROCAM_DEMO_FRAMES="$frames" \
+    --env MICROCAM_DEMO_ROOT="$ROOT" \
+    --env MICROCAM_DEMO_VIEWER=1 \
+    --env MICROCAM_DEMO_SHOTS="$OUT" ${LANG_ARGS[@]+"${LANG_ARGS[@]}"}
 rm -rf "${ROOT:?}"
 # Keep the repo small: 2400 px JPEGs instead of full-resolution PNGs.
 for png in "$OUT"/*.png; do

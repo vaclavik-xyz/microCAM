@@ -10,9 +10,9 @@ enum RecorderError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .cannotStart(let d): "Nahrávání nelze spustit: \(d)"
-        case .noFrames: "Nebyl zaznamenán žádný snímek."
-        case .failed(let d): "Záznam selhal: \(d)"
+        case .cannotStart(let d): String(localized: "Recording can't start: \(d)")
+        case .noFrames: String(localized: "No frames were recorded. Check that the camera sends a picture.")
+        case .failed(let d): String(localized: "Recording failed: \(d)")
         }
     }
 }
@@ -178,7 +178,7 @@ final class Recorder {
                     try FileManager.default.moveItem(at: staging, to: final)
                     result = .success(final)
                 } catch {
-                    result = .failure(RecorderError.failed("soubor zůstal v \(staging.path): \(error.localizedDescription)"))
+                    result = .failure(RecorderError.failed(String(localized: "the file was left in \(staging.path) (\(error.localizedDescription))")))
                 }
             } else {
                 result = .failure(RecorderError.failed(writer.error?.localizedDescription ?? "?"))
@@ -190,7 +190,7 @@ final class Recorder {
     private func reportFailureLocked(_ writer: AVAssetWriter) {
         guard !failureReported else { return }
         failureReported = true
-        let error = RecorderError.failed(writer.error?.localizedDescription ?? "zápis selhal")
+        let error = RecorderError.failed(writer.error?.localizedDescription ?? String(localized: "writing the file failed"))
         DispatchQueue.main.async { self.onFailure?(error) }
     }
 }

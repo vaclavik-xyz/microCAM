@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Stream the live microscope image from microCAM on bench Mac to a browser or to microCAM in viewer mode on reception-mac. The host decides between an image-only page and a page with controls. With controls, the viewer can take photos (PIN-protected), annotate the live image, and save an annotated copy to the active job.
+**Goal:** Stream the live microscope image from microCAM on the bench Mac to a browser or to microCAM in viewer mode on the reception Mac. The host decides between an image-only page and a page with controls. With controls, the viewer can take photos (PIN-protected), annotate the live image, and save an annotated copy to the active job.
 
 **Architecture:** A small HTTP server inside microCAM, built on `Network.framework`. Pure protocol and security logic lives in `MicroCAMCore` with unit tests: the request parser, response builder, MJPEG framing, the local-network access policy, the PIN guard with lockout, and annotation rendering. The app layer holds four pieces:
 - `StreamServer`: listener, Bonjour advertising and routing.
@@ -23,7 +23,7 @@
   - *S ovládáním*: controls, the default.
 - Port, default 8090.
 - Photo PIN, 4–8 digits, stored in the Keychain. Without a PIN, remote photos are disabled.
-- The addresses to open on the recepce Mac, with a copy button.
+- The addresses to open on the reception Mac, with a copy button.
 
 **Access and cost:**
 - Connections are accepted only from loopback, private LAN, link-local and Tailscale ranges. Everything else is closed immediately.
@@ -39,13 +39,13 @@
 - Full screen button.
 - **Kreslit** (live pointer drawing that is never saved) and **Smazat**.
 - **Vyfotit** (asks for the PIN once and keeps it in `localStorage`):
-  - The photo is taken on bench Mac exactly like pressing Space: full frame, adjustments applied, saved to the active job.
+  - The photo is taken on the bench Mac exactly like pressing Space: full frame, adjustments applied, saved to the active job.
   - The page switches to the frozen photo. There you can annotate (arrow, ellipse, pen), **Uložit k zakázce**, **Stáhnout** or go **Zpět na živý obraz**.
-- **Uložit k zakázce** renders the shapes on bench Mac onto the original. The result is saved as a new capture with the same timestamp and the next index (`…_2.jpg`); the original stays untouched.
+- **Uložit k zakázce** renders the shapes on the bench Mac onto the original. The result is saved as a new capture with the same timestamp and the next index (`…_2.jpg`); the original stays untouched.
 
 **Bench feedback:** the status bar shows "Sleduje N" while viewers are connected and "Vyfoceno z recepce: <file>" after a remote photo.
 
-**Viewer mode (reception-mac):**
+**Viewer mode (reception Mac):**
 - Settings → Režim appky: *Kamera* / *Prohlížeč*. In viewer mode the camera, storage and shortcuts stay untouched.
 - The window lists bench Mac instances found via Bonjour (`_microcam._tcp`), with a manual URL fallback for Tailscale, where Bonjour does not cross.
 - It remembers the last source, auto-connects and retries after failures.
@@ -58,7 +58,7 @@
 - annotations shared back to the bench,
 - a native video decoder (HEVC).
 
-**Build:** universal binary (arm64 + x86_64), because reception-mac is an Intel Mac.
+**Build:** universal binary (arm64 + x86_64), because the reception Mac is an Intel Mac.
 
 ## Global Constraints
 
@@ -76,7 +76,7 @@
 
 ## Review Focus
 
-1. A web page on another site POSTing to `http://bench-mac:8090/photo` must not take a photo. Pinned by `StreamRouterTests.testPhotoRequiresPostPinAndSameOrigin` (Task 5) and the no-CORS rule.
+1. A web page on another site POSTing to `http://<bench-host>:8090/photo` must not take a photo. Pinned by `StreamRouterTests.testPhotoRequiresPostPinAndSameOrigin` (Task 5) and the no-CORS rule.
 2. `GET /captures/../../etc/passwd` or `/captures/%2e%2e%2f…` must never read outside the job folder. Pinned by `CaptureNameGuardTests` (Task 2).
 3. A client on a public IP (port forwarded, VPN) must be refused before any HTTP is parsed. Pinned by `StreamAccessPolicyTests` (Task 1).
 4. A slow viewer (weak Wi-Fi) must not delay other viewers or the bench preview. Frames for a busy connection are dropped, not queued; covered by manual check #4 in Task 9.
@@ -106,7 +106,7 @@ Sources/MicroCAMApp/Viewer/
 Sources/MicroCAMApp/Views/SettingsView.swift  + Přenos tab, Režim appky
 Tests/MicroCAMCoreTests/…     one test file per Core file
 scripts/make-app.sh           universal build
-scripts/deploy.sh             deploy to any host (bench-mac, reception-mac)
+scripts/deploy.sh             deploy to any host (`<bench-host>`, `<reception-host>`)
 scripts/stream-smoke.sh       curl-based end-to-end check
 ```
 
@@ -806,7 +806,7 @@ Append to `SettingsStoreTests`:
         s.streamingEnabled = true
         s.streamingMode = .imageOnly
         s.appMode = .viewer
-        s.viewerSourceName = "bench Mac"
+        s.viewerSourceName = "Bench Mac"
         store.save(s)
         XCTAssertEqual(SettingsStore(defaults: defaults).load(), s)
     }
@@ -1715,7 +1715,7 @@ In `Resources/Info.plist` add (Bonjour and local-network privacy):
 
 - [ ] **Step 7: Build and smoke-test locally**
 
-Run: `swift build && swift test && scripts/make-app.sh`. On a Mac with a camera and the user present (test-mac, via `scripts/deploy.sh test-mac` from Task 9, or copy manually): enable Přenos, set PIN `1234`, allow the incoming-connection and local-network prompts, then from the dev Mac:
+Run: `swift build && swift test && scripts/make-app.sh`. On a Mac with a camera and the user present (a second Mac, via `scripts/deploy.sh <second-mac>` from Task 9, or copy manually): enable Přenos, set PIN `1234`, allow the incoming-connection and local-network prompts, then from the dev Mac:
 ```bash
 curl -s http://<ip>:8090/status                         # JSON with job/mode
 curl -s --max-time 3 http://<ip>:8090/stream | grep -c "Content-Type: image/jpeg"   # ≥ 20
@@ -1820,7 +1820,7 @@ body.image-only .bar,body.image-only #ink{display:none!important}
     <button id="clear" title="Smazat kresbu">Smazat</button>
   </span>
   <span class="sep"></span>
-  <span id="liveTools" class="group"><button id="photo" class="primary" title="Vyfotit na bench Macu">📷 Vyfotit</button></span>
+  <span id="liveTools" class="group"><button id="photo" class="primary" title="Vyfotit na počítači s kamerou">📷 Vyfotit</button></span>
   <span id="shotTools" class="group hidden">
     <button id="save" class="primary">Uložit k zakázce</button>
     <a id="download" class="btn" download>Stáhnout</a>
@@ -1851,7 +1851,7 @@ async function poll() {
     const s = await r.json();
     $("job").textContent = s.job ? "Zakázka " + s.job : "Bez zakázky";
     $("photo").disabled = !s.photoEnabled;
-    $("photo").title = s.photoEnabled ? "Vyfotit na bench Macu" : "Focení je na bench Macu vypnuté (chybí PIN)";
+    $("photo").title = s.photoEnabled ? "Vyfotit na počítači s kamerou" : "Focení je na počítači s kamerou vypnuté (chybí PIN)";
     if (offline && !frozen) startStream();
   } catch (e) { if (!frozen) setOffline(true); }
   setTimeout(poll, 3000);
@@ -1950,7 +1950,7 @@ function toast(text) {
 }
 function pin() {
   let p = localStorage.getItem("microcamPin");
-  if (!p) { p = prompt("PIN pro focení (nastavený na bench Macu)"); if (p) localStorage.setItem("microcamPin", p.trim()); }
+  if (!p) { p = prompt("PIN pro focení (nastavený na počítači s kamerou)"); if (p) localStorage.setItem("microcamPin", p.trim()); }
   return p && p.trim();
 }
 async function post(path, body) {
@@ -1959,10 +1959,10 @@ async function post(path, body) {
   try {
     r = await fetch(path, { method: "POST", headers: { "X-MicroCAM-PIN": p, "Content-Type": "application/json" },
                             body: JSON.stringify(body || {}) });
-  } catch (e) { toast("bench Mac není dostupný"); return null; }
+  } catch (e) { toast("Počítač s kamerou není dostupný"); return null; }
   if (r.status === 401) { localStorage.removeItem("microcamPin"); toast("Špatný PIN"); return null; }
   if (r.status === 429) { const j = await r.json(); toast("Příliš mnoho pokusů – zkus to za " + j.retryAfter + " s"); return null; }
-  if (r.status === 403) { toast("Tahle akce je na bench Macu vypnutá"); return null; }
+  if (r.status === 403) { toast("Tahle akce je na počítači s kamerou vypnutá"); return null; }
   if (!r.ok) { toast("Chyba " + r.status); return null; }
   return r.json();
 }
@@ -2316,8 +2316,8 @@ In `MicroCAMApp` commands, add:
 
 - [ ] **Step 4: Build and verify**
 
-Run: `swift build && swift test && scripts/make-app.sh`. On test-mac (camera mode, Přenos on) and this dev Mac (switch to Prohlížeč → Restartovat):
-1. The viewer lists the test-mac name within a few seconds and connects automatically when it is the only source; the live page appears without the full-screen button.
+Run: `swift build && swift test && scripts/make-app.sh`. On the second Mac (camera mode, Přenos on) and this dev Mac (switch to Prohlížeč → Restartovat):
+1. The viewer lists the second Mac's name within a few seconds and connects automatically when it is the only source; the live page appears without the full-screen button.
 2. Quit and relaunch the viewer → it reconnects to the same source without asking.
 3. Quit microCAM on the host → the page shows "Připojuji se…"; restart it → the image returns.
 4. Manual URL `100.x.y.z:8090` works where Bonjour does not.
@@ -2341,7 +2341,7 @@ Check Roborev.
 
 In `scripts/make-app.sh` replace the two build lines:
 ```bash
-# Universal: bench Mac and test-mac are Apple Silicon, reception-mac is Intel.
+# Universal: the bench Mac and the second Mac are Apple Silicon, the reception Mac is Intel.
 swift build -c release --arch arm64 --arch x86_64
 BIN="$(swift build -c release --arch arm64 --arch x86_64 --show-bin-path)/MicroCAMApp"
 ```
@@ -2366,7 +2366,7 @@ rsync -a --delete build/microCAM.app "$HOST:$DIR/"
 ssh "$HOST" "/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f \"$DIR/microCAM.app\""
 echo "Deployed to $HOST:$DIR/microCAM.app — launch: ssh $HOST 'open \"$DIR/microCAM.app\"'"
 ```
-Replace the body of `scripts/deploy-bench.sh` with `exec "$(dirname "$0")/deploy.sh" bench-mac /Applications`. `chmod +x scripts/deploy.sh`.
+Replace the body of `scripts/deploy-bench.sh` with `exec "$(dirname "$0")/deploy.sh" <bench-host> /Applications`. `chmod +x scripts/deploy.sh`.
 
 - [ ] **Step 3: Smoke test script**
 
@@ -2421,10 +2421,10 @@ the toggle is off, and nothing is encoded while nobody watches.
 `docs/acceptance.md` — append rows:
 ```markdown
 | 13 | Stream on, no viewer | CPU same as #2 | | |
-| 14 | Stream, 1 viewer in Safari (reception-mac) | + a few % CPU on bench, smooth image | | |
-| 15 | Viewer mode on reception-mac (Intel) | auto-connects, CPU on recepce noted | | |
+| 14 | Stream, 1 viewer in Safari (reception Mac) | + a few % CPU on bench, smooth image | | |
+| 15 | Viewer mode on the reception Mac (Intel) | auto-connects, CPU on the reception Mac noted | | |
 | 16 | Remote photo + annotated copy | files in job folder, original untouched | | |
-| 17 | `stream-smoke.sh bench-mac 8090` | all ok | | |
+| 17 | `stream-smoke.sh <bench-host> 8090` | all ok | | |
 | 18 | Slow viewer (iPhone on weak Wi-Fi) + second viewer | second viewer and bench preview stay smooth | | |
 ```
 
@@ -2434,6 +2434,6 @@ the toggle is off, and nothing is encoded while nobody watches.
 git add -A && git commit -m "build: universal app, generic deploy and stream smoke test; document streaming"
 git push -u origin streaming
 gh pr create --base integrations --head streaming --title "feat: live stream, remote photo with annotations and viewer mode" \
-  --body "Implements docs/superpowers/plans/2026-09-30-microcam-streaming.md. bench Mac/reception-mac acceptance rows 13–18 pending."
+  --body "Implements docs/superpowers/plans/2026-09-30-microcam-streaming.md. Bench/reception Mac acceptance rows 13–18 pending."
 ```
 Check Roborev (per commit, then one whole-branch review before merge).

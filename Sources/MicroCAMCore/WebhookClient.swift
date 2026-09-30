@@ -61,7 +61,7 @@ public enum WebhookError: Error, Equatable {
 /// also sent as the `Idempotency-Key` header), and `job` when the file
 /// belongs to a repair order. Optional `Authorization: Bearer <token>`.
 /// Any receiver can accept this: an own server, n8n, Make, Zapier, or a small
-/// endpoint in the the CRM.
+/// endpoint in your CRM.
 public struct WebhookClient {
     public let endpoint: URL
     public let token: String?
@@ -76,8 +76,7 @@ public struct WebhookClient {
     /// Job code from the capture's file name; nil for unassigned/jobless files.
     public static func jobCode(for file: URL) -> String? {
         guard let name = CaptureFileName.parse(file.lastPathComponent),
-              name.prefix != StorageLayout.prefix(for: .unassigned),
-              name.prefix != StorageLayout.prefix(for: .jobsDisabled) else { return nil }
+              !StorageLayout.isJoblessPrefix(name.prefix) else { return nil }
         return JobCode(name.prefix)?.value
     }
 

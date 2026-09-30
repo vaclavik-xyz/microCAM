@@ -11,7 +11,7 @@ which runs on Apple Silicon only through Rosetta, uses ~20 % CPU and ~340 MB RAM
 continuously while left open for days, and produces stuttering videos after a
 while.
 
-The primary machine is **bench Mac** (Apple Silicon, macOS 26). The camera is a
+The primary machine is the **bench Mac** (Apple Silicon, macOS 26). The camera is a
 Mechanic Super HD 8K connected over HDMI to an **Elgato Cam Link 4K**, which
 macOS exposes as a standard UVC/AVFoundation device (1920×1080, up to 60 fps;
 formats `420v`/`yuvs`). Nothing in the app is specific to this camera; any
@@ -43,7 +43,7 @@ AVFoundation video device must work.
 ## Architecture
 
 Swift + SwiftUI/AppKit on AVFoundation, Core Image and Metal. Minimum macOS 14.
-Swift Package layout following `an existing print-agent app`:
+Swift Package layout following an existing small SwiftPM macOS agent app:
 
 - `MicroCAMCore` — pure logic, no AVFoundation UI: job codes, file naming,
   storage layout, moving files between jobs, settings model, adjustment
@@ -173,7 +173,7 @@ Settings persist in `UserDefaults`. Fixed shortcuts in v1: `Space` photo,
 - Unit tests (`swift test`) for `MicroCAMCore`: code sanitization, file naming
   and collisions, storage layout, moving files between jobs (incl. failure
   cases), settings/preset encoding, timelapse scheduling.
-- Manual acceptance on bench Mac, recorded in `docs/acceptance.md`:
+- Manual acceptance on the bench Mac, recorded in `docs/acceptance.md`:
   - CPU/energy of passthrough preview, adjusted preview, hidden window, versus
     Digital Viewer (Activity Monitor / `top`).
   - 60-minute 1080p60 recording with audio in both paths; `ffprobe` frame count
@@ -183,14 +183,14 @@ Settings persist in `UserDefaults`. Fixed shortcuts in v1: `Space` photo,
 
 ## Phase 2 — CRM upload (not in v1)
 
-the CRM already supports this without new server features:
+Your CRM may already support this without new server features, for example:
 - Jobs are identified by `Job.code` (`{prefix}-{yy}{nnnn}`), looked up via
   `job.getByCode`.
 - Photos upload via `job.uploadAttachmentFromBase64` on the API-key tRPC
   endpoint (`/api/ai/trpc`), with `photoCategory: REPAIR_PROGRESS`,
   `capturedAt`, `idempotencyKey`; images ≤ 10 MB (JPEG from 1080p fits easily).
 - Device pairing and a Keychain-stored token can follow the
-  `apps/print-agent-mac` pattern.
+  pattern of an existing device agent.
 - Photos uploaded by microCAM must not become customer-visible automatically;
   verify how `source` maps to `customerVisible` before implementing.
 
@@ -201,5 +201,5 @@ CRM upload requires jobs to be enabled; files without a job code
 while jobs are off.
 
 The integration is optional and **off by default**, so microCAM stays a plain
-camera app for anyone without the CRM. The upload button appears only
+camera app for anyone without a CRM. The upload button appears only
 when it is enabled and paired.

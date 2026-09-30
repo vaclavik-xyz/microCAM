@@ -1,0 +1,4 @@
+/* Texts macOS shows when it asks for access. */
+"NSCameraUsageDescription" = "microCAM zobrazuje a nahrává obraz z mikroskopové kamery.";
+"NSMicrophoneUsageDescription" = "microCAM nahrává k videu tvůj komentář.";
+"NSLocalNetworkUsageDescription" = "microCAM posílá živý obraz mikroskopu do zařízení v místní síti.";

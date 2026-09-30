@@ -15,15 +15,15 @@ struct ViewerView: View {
                 VStack(spacing: 14) {
                     Text(viewer.status).font(.title3)
                     ForEach(viewer.sources) { source in
-                        Button("Připojit k \(source.name)") { viewer.connect(source) }
+                        Button("Connect to \(source.name)") { viewer.connect(source) }
                     }
                     HStack {
-                        TextField("nebo adresa, např. 192.168.1.20:8090", text: $manual)
+                        TextField("or an address, e.g. 192.168.1.20:8090", text: $manual)
                             .textFieldStyle(.roundedBorder).frame(width: 300)
                             .onSubmit { manualInvalid = !viewer.connect(manual: manual) }
-                        Button("Připojit") { manualInvalid = !viewer.connect(manual: manual) }
+                        Button("Connect") { manualInvalid = !viewer.connect(manual: manual) }
                     }
-                    if manualInvalid { Text("Neplatná adresa").font(.caption).foregroundStyle(.red) }
+                    if manualInvalid { Text("Invalid address. Enter it as host:port, e.g. 192.168.1.20:8090.").font(.caption).foregroundStyle(.red) }
                 }
                 .padding(28)
                 .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
@@ -35,7 +35,7 @@ struct ViewerView: View {
                     Menu(viewer.status) {
                         ForEach(viewer.sources) { source in Button(source.name) { viewer.connect(source) } }
                         Divider()
-                        Button("Odpojit a vybrat jiný") { viewer.disconnect() }
+                        Button("Disconnect and choose another") { viewer.disconnect() }
                     }
                 }
             }

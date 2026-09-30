@@ -13,30 +13,31 @@ struct MicroCAMApp: App {
                 .frame(minWidth: 640, minHeight: 420)
         }
         .commands {
-            CommandMenu("Kamera") {
-                Button("Vyfotit (mezerník)") { model.handle(.photo) }
-                Button("Nahrávat / zastavit (R)") { model.handle(.toggleRecording) }
+            CommandMenu("Camera") {
+                Button("Take photo (Space)") { model.handle(.photo) }
+                Button("Start or stop recording (R)") { model.handle(.toggleRecording) }
                 Divider()
-                Button("Mřížka (G)") { model.handle(.toggleGrid) }
-                Button("Zrušit zoom (0)") { model.handle(.resetZoom) }
+                Button("Show or hide grid (G)") { model.handle(.toggleGrid) }
+                Button("Reset zoom (0)") { model.handle(.resetZoom) }
             }
-            CommandMenu("Zobrazení") {
+            // Into the system View menu, next to Enter Full Screen.
+            CommandGroup(after: .toolbar) {
                 ForEach(Array(NSScreen.screens.enumerated()), id: \.offset) { _, screen in
-                    Button("Na celou obrazovku: \(screen.localizedName)") { model.showFullScreen(on: screen) }
+                    Button("Full screen on \(screen.localizedName)") { model.showFullScreen(on: screen) }
                 }
             }
             CommandGroup(replacing: .help) {
-                Button("Klávesové zkratky") {
+                Button("Keyboard shortcuts") {
                     let alert = NSAlert()
-                    alert.messageText = "Klávesové zkratky"
-                    alert.informativeText = """
-                    Mezerník – vyfotit
-                    R – nahrávat / zastavit
-                    G – mřížka
-                    0 – zrušit zoom (nebo dvojklik do obrazu)
-                    Kolečko / sevření – zoom, tažení – posun
-                    ⌘, – nastavení
-                    """
+                    alert.messageText = String(localized: "Keyboard shortcuts")
+                    alert.informativeText = [
+                        String(localized: "Space – take a photo"),
+                        String(localized: "R – start or stop recording"),
+                        String(localized: "G – show or hide the grid"),
+                        String(localized: "0 – reset zoom (or double-click the image)"),
+                        String(localized: "Scroll or pinch – zoom, drag – move the image"),
+                        String(localized: "⌘, – settings"),
+                    ].joined(separator: "\n")
                     alert.runModal()
                 }
             }

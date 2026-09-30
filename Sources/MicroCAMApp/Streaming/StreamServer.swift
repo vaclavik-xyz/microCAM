@@ -25,7 +25,7 @@ final class StreamServer {
     /// 127.0.0.1 (demo mode: no firewall prompt, never reachable from the LAN).
     func start(port: UInt16, serviceName: String?, loopbackOnly: Bool = false) {
         stop()
-        guard let nwPort = NWEndpoint.Port(rawValue: port) else { return report("Neplatný port \(port).") }
+        guard let nwPort = NWEndpoint.Port(rawValue: port) else { return report(String(localized: "The port must be a number from 1024 to 65535.")) }
         do {
             let parameters = NWParameters.tcp
             parameters.allowLocalEndpointReuse = true
@@ -41,14 +41,14 @@ final class StreamServer {
             listener.stateUpdateHandler = { [weak self] state in
                 switch state {
                 case .ready: self?.report(nil)
-                case .failed(let error): self?.report("Přenos nelze spustit na portu \(port): \(error.localizedDescription)")
+                case .failed(let error): self?.report(Self.cannotStart(port, error))
                 default: break
                 }
             }
             listener.start(queue: queue)
             self.listener = listener
         } catch {
-            report("Přenos nelze spustit na portu \(port): \(error.localizedDescription)")
+            report(Self.cannotStart(port, error))
         }
     }
 
@@ -56,6 +56,11 @@ final class StreamServer {
         listener?.cancel()
         listener = nil
         hub.closeAll()
+    }
+
+    private static func cannotStart(_ port: UInt16, _ error: Error) -> String {
+        let number = Int(port)
+        return String(localized: "The stream can't start on port \(number): \(error.localizedDescription). Try another port.")
     }
 
     private func report(_ text: String?) {

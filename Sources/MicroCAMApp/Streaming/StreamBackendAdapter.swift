@@ -20,7 +20,7 @@ final class StreamBackendAdapter: StreamBackend {
     func page(mode: StreamMode, embedded: Bool) -> String { StreamPage.html(mode: mode, embedded: embedded) }
 
     func captureFolders() -> [URL] {
-        MainActor.assumeIsolated { model.settings.layout?.listedFolders(for: model.settings.jobContext) ?? [] }
+        MainActor.assumeIsolated { model.layout?.listedFolders(for: model.settings.jobContext) ?? [] }
     }
 
     func takePhoto(completion: @escaping (Result<String, Error>) -> Void) {

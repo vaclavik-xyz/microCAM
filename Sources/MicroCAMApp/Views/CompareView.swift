@@ -38,17 +38,17 @@ struct CompareView: View {
         VStack(spacing: 12) {
             HStack {
                 Picker("", selection: $mode) {
-                    Text("Vedle sebe").tag(0)
-                    Text("Posuvník").tag(1)
+                    Text("Side by side").tag(0)
+                    Text("Slider").tag(1)
                 }
                 .pickerStyle(.segmented).labelsHidden().frame(width: 240)
                 Spacer()
-                Button("Zavřít") { dismiss() }.keyboardShortcut(.cancelAction)
+                Button("Close") { dismiss() }.keyboardShortcut(.cancelAction)
             }
             if mode == 0 {
                 HStack(spacing: 8) {
-                    labeled(beforeImage, "Před", before)
-                    labeled(afterImage, "Po", after)
+                    labeled(beforeImage, Text("Before: \(before.lastPathComponent)"))
+                    labeled(afterImage, Text("After: \(after.lastPathComponent)"))
                 }
             } else {
                 GeometryReader { geo in
@@ -64,7 +64,7 @@ struct CompareView: View {
                         split = min(max(value.location.x / geo.size.width, 0), 1)
                     })
                 }
-                HStack { Text("Před"); Spacer(); Text("Po") }.font(.caption).foregroundStyle(.secondary)
+                HStack { Text("Before"); Spacer(); Text("After") }.font(.caption).foregroundStyle(.secondary)
             }
         }
         .padding(16)
@@ -82,17 +82,17 @@ struct CompareView: View {
             case .loading: ProgressView()
             case .loaded(let nsImage): Image(nsImage: nsImage).resizable().scaledToFit()
             case .failed:
-                Label("Soubor nelze načíst (přesunutý nebo smazaný?)", systemImage: "exclamationmark.triangle")
+                Label("Can't open the file. It may have been moved or deleted.", systemImage: "exclamationmark.triangle")
                     .foregroundStyle(.secondary)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
-    private func labeled(_ image: LoadedImage, _ title: String, _ url: URL) -> some View {
+    private func labeled(_ image: LoadedImage, _ caption: Text) -> some View {
         VStack(spacing: 4) {
             picture(image)
-            Text("\(title): \(url.lastPathComponent)").font(.caption).foregroundStyle(.secondary)
+            caption.font(.caption).foregroundStyle(.secondary)
         }
     }
 }

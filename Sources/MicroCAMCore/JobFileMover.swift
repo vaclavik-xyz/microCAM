@@ -32,11 +32,10 @@ public struct JobFileMover {
         guard let name = CaptureFileName.parse(source.lastPathComponent) else { return .failure(.notACaptureFile) }
         let kind = CaptureKind.fromTypeFolder(source.deletingLastPathComponent().lastPathComponent)
             ?? CaptureKind.fromExtension(name.ext)
-        let prefix = StorageLayout.prefix(for: target)
-        if source.deletingLastPathComponent().standardizedFileURL
-            == layout.folder(for: target, kind: kind).standardizedFileURL, name.prefix == prefix {
+        if layout.isInPlace(folder: source.deletingLastPathComponent(), prefix: name.prefix, context: target, kind: kind) {
             return .failure(.alreadyThere)
         }
+        let prefix = layout.prefix(for: target)
         let folder: URL
         do {
             folder = try layout.prepareFolder(for: target, kind: kind, fileManager: fileManager)

@@ -10,14 +10,15 @@ struct MoveToJobSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Přesunout \(files.count) soubor(ů) k zakázce").font(.headline)
-            TextField("např. PR-260042", text: $draft).textFieldStyle(.roundedBorder).onSubmit(moveToJob)
-            if invalid { Text("Jen písmena, číslice a pomlčka.").font(.caption).foregroundStyle(.red) }
+            Text("Move to job").font(.headline)
+            Text("Selected files: \(files.count)").foregroundStyle(.secondary)
+            TextField("e.g. PR-260042", text: $draft).textFieldStyle(.roundedBorder).onSubmit(moveToJob)
+            if invalid { Text("Use only letters, digits and hyphens.").font(.caption).foregroundStyle(.red) }
             HStack {
-                Button("Bez zakázky") { model.moveFiles(files, to: .unassigned); dismiss() }
+                Button("Move to Unsorted") { model.moveFiles(files, to: .unassigned); dismiss() }
                 Spacer()
-                Button("Zrušit", role: .cancel) { dismiss() }
-                Button("Přesunout", action: moveToJob).keyboardShortcut(.defaultAction)
+                Button("Cancel", role: .cancel) { dismiss() }
+                Button("Move", action: moveToJob).keyboardShortcut(.defaultAction)
             }
         }
         .padding(20)
