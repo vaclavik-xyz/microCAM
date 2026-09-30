@@ -132,12 +132,15 @@ swift test                          # unit tests for MicroCAMCore
 scripts/make-app.sh                 # app bundle
 scripts/make-screenshots.sh <dir>   # screenshots in demo mode (no camera needed)
 scripts/stream-smoke.sh <host> [port] [pin]   # check a running stream
+scripts/stream-page-shots.py <url> <dir> --pin <pin>   # stream page on phones/iPad/desktop (demo stream only)
 ```
 
 Demo mode without a camera can also serve the stream on 127.0.0.1: set
 `MICROCAM_DEMO_STREAM_PORT` (and optionally `MICROCAM_DEMO_STREAM_PIN`,
 `MICROCAM_DEMO_STREAM_MODE=imageOnly`). The smoke script adapts to *Jen obraz*
-and to a bench without a PIN.
+and to a bench without a PIN. The page-shots script (Python Playwright with
+WebKit) checks that every control is on screen, at least 44 px and not
+overlapping, and saves a screenshot per device and state.
 
 - `Sources/MicroCAMCore` holds the pure logic: naming, storage, moving,
   settings, the image pipeline and policies. It is fully unit-tested.
