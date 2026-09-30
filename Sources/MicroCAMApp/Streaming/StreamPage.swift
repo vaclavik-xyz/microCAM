@@ -157,6 +157,8 @@ body.image-only #dock,body.image-only #status,body.image-only #ink{display:none!
   #draw{width:var(--hit);padding:0}
   button.primary{width:64px;height:64px;min-width:0;padding:0;flex-direction:column;gap:1px;font-size:11px}
   #photo{min-width:0}
+  /* "Take photo" is wider than the round button: wrap it onto two lines inside. */
+  button.primary>span{white-space:normal;max-width:54px;line-height:1.05;text-align:center}
   #toast{position:fixed;left:50%;top:calc(var(--st) + var(--edge));bottom:auto;max-width:60vw}
   #pinDialog{padding-top:calc(var(--st) + 10px)}
   .card{padding:16px 18px 14px}
