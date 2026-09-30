@@ -12,8 +12,9 @@ A tidier main window.
   while files are selected.
 - The area around the picture follows the window colour instead of black.
   It stays black in full screen.
-- While recording, a red *REC* badge with the time shows over the picture,
-  the stop button turns red and the window title says so.
+- The window title shows the camera and its format. While recording, the
+  subtitle shows the running time (and dropped frames) and the stop button
+  turns red; the picture itself stays clean.
 - The status bar is gone. Messages show briefly over the picture, and errors
   stay until closed.
 - Jobs are off by default. Turn them on in *Settings → Storage*; the active

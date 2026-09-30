@@ -141,7 +141,6 @@
 "Recording stopped (%@). Video saved: %@" = "Nahrávání se zastavilo (%@). Video uloženo: %@";
 "Recording without sound: microCAM isn't allowed to use the microphone (System Settings → Privacy & Security)." = "Nahrávám bez zvuku: microCAM nemá povolený mikrofon (Nastavení systému → Soukromí a zabezpečení).";
 "Recording without sound: the microphone can't be used." = "Nahrávám bez zvuku: mikrofon nejde použít.";
-"Recording. Press R to stop." = "Nahrává se. Zastavíš klávesou R.";
 "Red" = "Červená";
 "Reset zoom (0)" = "Zrušit zoom (0)";
 "Reset" = "Obnovit výchozí";
@@ -244,4 +243,4 @@
 "You can also open these from the toolbar while you work." = "Při práci je otevřeš i z panelu nástrojů.";
 "You can change these after the recording ends." = "Změnit to půjde po skončení nahrávání.";
 "⌘, – settings" = "⌘, – nastavení";
-"● Recording" = "● Nahrává se";
+"● Recording %@" = "● Nahrává se %@";

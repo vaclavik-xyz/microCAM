@@ -100,8 +100,9 @@ The window:
   opens the folder; share and compare appear at the bottom once you select
   files. The panel remembers its
   width. Hide it with the button next to the window buttons.
-- **Preview.** A red *REC* badge with the running time shows while recording.
-  Short messages like *Saved: …* show at the bottom and hide on their own.
+- **Title.** The camera and its format. While recording it shows the running
+  time instead, and the stop button is red.
+- **Preview.** Short messages like *Saved: …* show at the bottom and hide on their own.
   Errors stay until you close them.
 
 ### Where files go

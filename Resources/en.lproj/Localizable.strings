@@ -142,7 +142,6 @@
 "Recording stopped (%@). Video saved: %@" = "Recording stopped (%@). Video saved: %@";
 "Recording without sound: microCAM isn't allowed to use the microphone (System Settings → Privacy & Security)." = "Recording without sound: microCAM isn't allowed to use the microphone (System Settings → Privacy & Security).";
 "Recording without sound: the microphone can't be used." = "Recording without sound: the microphone can't be used.";
-"Recording. Press R to stop." = "Recording. Press R to stop.";
 "Red" = "Red";
 "Reset zoom (0)" = "Reset zoom (0)";
 "Reset" = "Reset";
@@ -245,4 +244,4 @@
 "You can also open these from the toolbar while you work." = "You can also open these from the toolbar while you work.";
 "You can change these after the recording ends." = "You can change these after the recording ends.";
 "⌘, – settings" = "⌘, – settings";
-"● Recording" = "● Recording";
+"● Recording %@" = "● Recording %@";

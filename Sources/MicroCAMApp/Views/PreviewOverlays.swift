@@ -1,44 +1,5 @@
 import SwiftUI
 
-/// "● REC 0:12:34" over the preview while recording, with dropped frames
-/// when there are any; "Saving video…" while the stopped recording is still
-/// being finalized (`recordingStartedAt` is cleared only after that).
-struct RecordingBadge: View {
-    @EnvironmentObject private var model: AppModel
-
-    var body: some View {
-        if model.isFinalizingRecording && !model.isRecording {
-            Label("Saving video…", systemImage: "hourglass")
-                .font(.callout).foregroundStyle(.white)
-                .padding(.horizontal, 12).padding(.vertical, 6)
-                .background(.black.opacity(0.6), in: Capsule())
-                .transition(.opacity)
-        } else if model.isRecording, let started = model.recordingStartedAt {
-            TimelineView(.periodic(from: started, by: 1)) { context in
-                let seconds = max(0, Int(context.date.timeIntervalSince(started)))
-                HStack(spacing: 7) {
-                    Image(systemName: "circle.fill")
-                        .font(.system(size: 9)).foregroundStyle(.red)
-                        .symbolEffect(.pulse, options: .repeating)
-                    Text(verbatim: "REC").fontWeight(.bold)
-                    Text(verbatim: String(format: "%d:%02d:%02d", seconds / 3600, seconds / 60 % 60, seconds % 60))
-                        .monospacedDigit()
-                    if model.droppedFrames > 0 {
-                        Text("Dropped frames: \(model.droppedFrames)").foregroundStyle(.orange)
-                    }
-                }
-                .font(.callout)
-                .foregroundStyle(.white)
-                .padding(.horizontal, 12).padding(.vertical, 6)
-                .background(.black.opacity(0.6), in: Capsule())
-                .overlay(Capsule().strokeBorder(.red.opacity(0.8), lineWidth: 1.5))
-            }
-            .help("Recording. Press R to stop.")
-            .transition(.opacity)
-        }
-    }
-}
-
 /// Short messages over the preview. Information hides after a few seconds;
 /// errors stay until closed or replaced.
 struct MessageToast: View {

@@ -36,8 +36,6 @@ struct ContentView: View {
             ZStack {
                 PreviewView()
                 CameraStateOverlay(engine: model.engine)
-                RecordingBadge()
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading).padding(12)
                 if model.zoomScale > 1.01 {
                     Text(String(format: "%.1f×", model.zoomScale))
                         .font(.caption.monospacedDigit()).padding(6)
@@ -48,7 +46,6 @@ struct ContentView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom).padding(16)
             }
             .animation(.easeOut(duration: 0.2), value: model.message)
-            .animation(.easeOut(duration: 0.2), value: model.recordingStartedAt)
             .frame(minWidth: 400)
             .background(WindowAccessor { model.attachMainWindow($0) })
         }
@@ -103,18 +100,35 @@ struct ContentView: View {
     }
 }
 
-/// Title: the camera the picture comes from; subtitle: its format, or the
-/// recording state while recording. The app name stays in the menu bar and Dock.
+/// Title: the camera the picture comes from. Subtitle: its format; while
+/// recording "● Recording 0:12:34" (and dropped frames), then "Saving video…".
+/// This is the only recording indicator besides the red stop button, so the
+/// picture stays clean. The app name stays in the menu bar and Dock.
 private struct WindowTitle: ViewModifier {
     @EnvironmentObject private var model: AppModel
     @ObservedObject var engine: CaptureEngine
+    /// Ticks once a second while recording, to advance the time.
+    @State private var now = Date()
+    private let tick = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     func body(content: Content) -> some View {
         content
             .navigationTitle(engine.cameras.first { $0.id == engine.currentCameraID }?.name
                              ?? String(localized: "No camera"))
-            .navigationSubtitle(model.isRecording ? String(localized: "● Recording")
-                                                  : engine.activeFormat?.label ?? "")
+            .navigationSubtitle(subtitle)
+            .onReceive(tick) { date in if model.isRecording { now = date } }
+    }
+
+    private var subtitle: String {
+        if model.isRecording, let started = model.recordingStartedAt {
+            let seconds = max(0, Int(now.timeIntervalSince(started)))
+            let time = String(format: "%d:%02d:%02d", seconds / 3600, seconds / 60 % 60, seconds % 60)
+            var text = String(localized: "● Recording \(time)")
+            if model.droppedFrames > 0 { text += " · " + String(localized: "Dropped frames: \(model.droppedFrames)") }
+            return text
+        }
+        if model.isFinalizingRecording { return String(localized: "Saving video…") }
+        return engine.activeFormat?.label ?? ""
     }
 }
 
