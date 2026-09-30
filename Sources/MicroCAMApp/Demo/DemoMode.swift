@@ -224,6 +224,15 @@ final class DemoDriver {
             if let settings = settingsWindow(besides: main) {
                 capture(settings, withChildren: false, as: String(format: "10-settings-%d-%@", index + 1, tab), in: dir)
             }
+            if tab == "general", let other = model.languageChoices.first(where: { $0 != model.language }) {
+                // A language change offers a restart (the demo keeps it in memory only).
+                model.language = other
+                await pause(1)
+                if let settings = settingsWindow(besides: main) {
+                    capture(settings, withChildren: false, as: "10-settings-1-general-restart", in: dir)
+                }
+                model.language = model.launchLanguage
+            }
         }
         NSApp.terminate(nil)
     }

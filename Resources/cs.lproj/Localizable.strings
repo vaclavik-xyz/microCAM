@@ -58,6 +58,7 @@
 "Finishing the previous video" = "Dokončuji ukládání předchozího videa";
 "Folder" = "Složka";
 "For developers: each file is sent as a multipart/form-data POST with the fields file, job, kind, capturedAt and idempotencyKey. The token goes in the Authorization: Bearer header." = "Pro vývojáře: každý soubor se pošle jako multipart/form-data POST s poli file, job, kind, capturedAt a idempotencyKey. Token jde v hlavičce Authorization: Bearer.";
+"For microCAM and the names of new folders. Existing files keep their names." = "Pro microCAM a názvy nových složek. Existující soubory si své názvy ponechají.";
 "For" = "Po dobu";
 "Format" = "Formát";
 "Found a recording that wasn't finished. Opening its folder." = "Našel jsem nedokončený záznam. Otevírám jeho složku.";
@@ -81,6 +82,7 @@
 "Job:" = "Zakázka:";
 "Keep the Mac awake while recording" = "Nenechat Mac usnout během nahrávání";
 "Keyboard shortcuts" = "Klávesové zkratky";
+"Language" = "Jazyk";
 "Live stream" = "Živý přenos";
 "Looking for microCAM on the network…" = "Hledám microCAM v síti…";
 "microCAM is recording a video" = "microCAM nahrává video";
@@ -183,6 +185,7 @@
 "Storage" = "Ukládání";
 "Stream" = "Přenos";
 "System default" = "Výchozí systémový";
+"System" = "Podle systému";
 "Take a photo (Space)" = "Vyfotit (mezerník)";
 "Take photo (Space)" = "Vyfotit (mezerník)";
 "Take photo" = "Vyfotit";

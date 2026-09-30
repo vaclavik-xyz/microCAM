@@ -51,7 +51,16 @@ struct GeneralSettingsTab: View {
                     Text("A viewer only watches. It finds the camera computer on the network by itself.")
                 }
                 .pickerStyle(.radioGroup)
-                if model.settings.appMode != model.launchMode {
+                Picker(selection: $model.language) {
+                    Text("System").tag(String?.none)
+                    ForEach(model.languageChoices, id: \.self) { code in
+                        Text(verbatim: Self.name(of: code)).tag(Optional(code))
+                    }
+                } label: {
+                    Text("Language")
+                    Text("For microCAM and the names of new folders. Existing files keep their names.")
+                }
+                if model.settings.appMode != model.launchMode || model.language != model.launchLanguage {
                     RestartRow()
                 }
             }
@@ -68,6 +77,14 @@ struct GeneralSettingsTab: View {
                 }
             }
         }
+    }
+}
+
+extension GeneralSettingsTab {
+    /// A language's name in that language itself, e.g. "English" for en.
+    static func name(of code: String) -> String {
+        let locale = Locale(identifier: code)
+        return (locale.localizedString(forLanguageCode: code) ?? code).capitalized(with: locale)
     }
 }
 

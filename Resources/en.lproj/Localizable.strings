@@ -59,6 +59,7 @@
 "Finishing the previous video" = "Finishing the previous video";
 "Folder" = "Folder";
 "For developers: each file is sent as a multipart/form-data POST with the fields file, job, kind, capturedAt and idempotencyKey. The token goes in the Authorization: Bearer header." = "For developers: each file is sent as a multipart/form-data POST with the fields file, job, kind, capturedAt and idempotencyKey. The token goes in the Authorization: Bearer header.";
+"For microCAM and the names of new folders. Existing files keep their names." = "For microCAM and the names of new folders. Existing files keep their names.";
 "For" = "For";
 "Format" = "Format";
 "Found a recording that wasn't finished. Opening its folder." = "Found a recording that wasn't finished. Opening its folder.";
@@ -82,6 +83,7 @@
 "Job:" = "Job:";
 "Keep the Mac awake while recording" = "Keep the Mac awake while recording";
 "Keyboard shortcuts" = "Keyboard shortcuts";
+"Language" = "Language";
 "Live stream" = "Live stream";
 "Looking for microCAM on the network…" = "Looking for microCAM on the network…";
 "microCAM is recording a video" = "microCAM is recording a video";
@@ -184,6 +186,7 @@
 "Storage" = "Storage";
 "Stream" = "Stream";
 "System default" = "System default";
+"System" = "System";
 "Take a photo (Space)" = "Take a photo (Space)";
 "Take photo (Space)" = "Take photo (Space)";
 "Take photo" = "Take photo";

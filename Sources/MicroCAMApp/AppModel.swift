@@ -114,6 +114,7 @@ final class AppModel: ObservableObject {
         settings = loaded
         launchMode = loaded.appMode
         showFirstRun = settings.storageRoot == nil && launchMode == .camera
+        language = launchLanguage   // no didSet in init: nothing is written
         let renderer = previewRenderer
         let adjusted = adjustedMode
         let recorder = self.recorder
@@ -721,6 +722,32 @@ final class AppModel: ObservableObject {
     /// address so screenshots never reveal a real network.
     func streamAddresses() -> [String] {
         demo == nil ? NetworkAddresses.streamIPv4() : ["192.0.2.10"]
+    }
+
+    // MARK: Language
+
+    /// Languages the bundle offers, e.g. `["cs", "en"]`.
+    let languageChoices = LanguagePreference.choices(bundleLocalizations: Bundle.main.localizations)
+    /// The language picked in Settings (nil = follow the system), as stored at launch.
+    private(set) lazy var launchLanguage = storedLanguage()
+    /// Current pick; takes effect after `relaunch()`.
+    @Published var language: String? {
+        didSet {
+            guard demo == nil else { return }   // the demo never changes the real setting
+            if let value = LanguagePreference.appleLanguages(for: language) {
+                UserDefaults.standard.set(value, forKey: LanguagePreference.defaultsKey)
+            } else {
+                UserDefaults.standard.removeObject(forKey: LanguagePreference.defaultsKey)
+            }
+        }
+    }
+
+    /// Only the app's own value, not the system-wide list `UserDefaults` would merge in.
+    private func storedLanguage() -> String? {
+        guard let id = Bundle.main.bundleIdentifier,
+              let domain = UserDefaults.standard.persistentDomain(forName: id) else { return nil }
+        return LanguagePreference.choice(appleLanguages: domain[LanguagePreference.defaultsKey] as? [String],
+                                         available: languageChoices)
     }
 
     // MARK: Viewer mode
