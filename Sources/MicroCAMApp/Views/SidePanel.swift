@@ -101,9 +101,9 @@ struct SidePanel: View {
                 Button { compare = comparePair } label: { BarIcon("rectangle.split.2x1") }
                     .help("Compare the two photos")
             }
-            // The share symbol's box sits low under its arrow; lift it so the
-            // boxes line up optically with the other icons.
-            ShareLink(items: library.selectedFiles) { BarIcon("square.and.arrow.up", lift: 1.5) }
+            // The share symbol's box sits low under its arrow; lift it so the centres of the
+            // boxes line up with the other icons.
+            ShareLink(items: library.selectedFiles) { BarIcon("square.and.arrow.up", lift: 2.5) }
                 .help("Share (AirDrop, Mail, Messages…)")
             if model.settings.jobsEnabled || model.webhookEndpoint != nil {
                 Menu {
