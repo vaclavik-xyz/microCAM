@@ -109,7 +109,9 @@ private struct WindowTitle: ViewModifier {
     @ObservedObject var engine: CaptureEngine
     /// Ticks once a second while recording, to advance the time.
     @State private var now = Date()
-    private let tick = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+    /// In @State so one timer survives re-evaluation; a `let` would create a
+    /// new one on every redraw and could keep resetting it before it fires.
+    @State private var tick = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     func body(content: Content) -> some View {
         content
