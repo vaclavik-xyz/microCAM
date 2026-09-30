@@ -8,6 +8,7 @@ Date: … · macOS … · commit … · Cam Link 4K, 1920×1080 @ 60 fps
 |---|----------|--------|----------|------|
 | 1 | Plugable Digital Viewer, preview (baseline) | — | … % CPU, … MB | — |
 | 2 | microCAM preview, no adjustments | low single-digit % CPU | 2026-09-30, bench Mac, Cam Link 1080p60, macOS 26.5: ~12 % with only `NSCameraReactionEffectsEnabled` off (sample showed Reactions hand-gesture detection on every frame); ~7.7 % with `NSCameraReactionEffectGesturesEnabledDefault` off too, no detection left in the sample | partly: better than the baseline, above target |
+| 2a | Format chosen in Settings is kept (e.g. 640×480 @ 25 fps) | photos have that size; stays after window hide/show | 2026-09-30, bench Mac: before the fix the session reset it to 1920×1080 @ 60 (photo 1920×1080, UVCAssistant ~22 %); with the device lock held, photo 640×480, UVCAssistant ~5.5 % | yes |
 | 3 | microCAM preview, adjustments on | clearly below baseline | | |
 | 4 | Window minimized / covered | ~0 % | | |
 | 5 | Screen locked 1 min | ~0 % | | |
