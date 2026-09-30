@@ -52,6 +52,18 @@ final class AnnotationTests: XCTestCase {
         XCTAssertEqual(clean.shapes[0].color, "#ff3b30")
         XCTAssertEqual(clean.shapes[0].width, 0.05)
     }
+    func testPointBudgetDropsShapesThatDoNotFit() {
+        let many = (0..<4_999).map { AnnotationPoint(x: Double($0) / 5_000, y: 0.5) }
+        let clean = AnnotationRequest(source: "x", shapes: [
+            AnnotationShape(kind: .pen, points: many, color: "#123456", width: 0.01),
+            AnnotationShape(kind: .pen, points: [.init(x: 0, y: 0), .init(x: 1, y: 1)], color: "#123456", width: 0.01),
+            AnnotationShape(kind: .pen, points: Array(repeating: .init(x: 0.5, y: 0.5), count: 6_000),
+                            color: "#123456", width: 0.01),
+        ]).sanitized()
+        XCTAssertEqual(clean.shapes.map(\.points.count), [4_999])
+        let total = clean.shapes.reduce(0) { $0 + $1.points.count }
+        XCTAssertLessThanOrEqual(total, AnnotationRequest.maxPoints)
+    }
     func testDropsDegenerateShapes() {
         let clean = AnnotationRequest(source: "x", shapes: [
             AnnotationShape(kind: .pen, points: [.init(x: 0.5, y: 0.5)], color: "#123456", width: 0.01),

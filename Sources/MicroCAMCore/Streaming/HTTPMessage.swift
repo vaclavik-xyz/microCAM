@@ -25,7 +25,7 @@ public enum HTTPRequestParser {
         guard let end = data.range(of: separator) else {
             return data.count > maxHeaderBytes ? .invalid : .incomplete
         }
-        guard end.lowerBound <= maxHeaderBytes,
+        guard end.lowerBound - data.startIndex <= maxHeaderBytes,
               let head = String(data: data[data.startIndex..<end.lowerBound], encoding: .utf8) else { return .invalid }
         var lines = head.components(separatedBy: "\r\n")
         let requestLine = lines.removeFirst().split(separator: " ")

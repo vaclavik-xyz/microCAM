@@ -19,10 +19,11 @@ final class CaptureNameGuardTests: XCTestCase {
             XCTAssertNil(CaptureNameGuard.resolve(name, in: folders), name)
         }
     }
+    /// A name whose encoded and decoded forms differ exercises the decode path.
     func testPercentEncodedValidNameResolves() {
         let tmp = TempDir()
         tmp.touch("PR-1/PR-1_2026-09-21_10-00-00_2.jpg")
-        XCTAssertNotNil(CaptureNameGuard.resolve("PR-1_2026-09-21_10-00-00_2.jpg",
+        XCTAssertNotNil(CaptureNameGuard.resolve("PR%2D1_2026-09-21_10-00-00%5F2.jpg",
                                                  in: [tmp.url.appendingPathComponent("PR-1")]))
     }
 }

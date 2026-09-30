@@ -25,6 +25,14 @@ final class HTTPMessageTests: XCTestCase {
         XCTAssertEqual(HTTPRequestParser.parse(raw("POST / HTTP/1.1\nContent-Length: 5000000\n\n")), .invalid)
         XCTAssertEqual(HTTPRequestParser.parse(raw("NONSENSE\n\n")), .invalid)
     }
+    /// Receive buffers may be slices whose indices do not start at 0; the
+    /// header limit must count bytes, not indices.
+    func testParsesSliceWithNonZeroStartIndex() {
+        let padded = Data(repeating: 0x20, count: 20_000) + raw("GET /status HTTP/1.1\nHost: m\n\n")
+        let slice = padded[20_000...]
+        guard case .complete(let req) = HTTPRequestParser.parse(slice) else { return XCTFail() }
+        XCTAssertEqual(req.path, "/status")
+    }
     func testResponseSerialization() {
         let text = String(decoding: HTTPResponse.text(404, "nope").serialized(), as: UTF8.self)
         XCTAssertTrue(text.hasPrefix("HTTP/1.1 404 Not Found\r\n"))

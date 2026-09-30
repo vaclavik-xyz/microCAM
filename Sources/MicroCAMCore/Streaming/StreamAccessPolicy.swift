@@ -1,8 +1,11 @@
 import Darwin
 
-/// The stream is for the shop network only: loopback, private LAN,
-/// link-local and Tailscale (CGNAT 100.64/10, ULA fd7a:115c:a1e0::/48 ⊂ fc00::/7).
-/// Anything else is refused before any HTTP is read.
+/// The stream is for the shop network only: loopback, private LAN (RFC 1918
+/// and the whole IPv6 ULA range fc00::/7), link-local and Tailscale (CGNAT
+/// 100.64/10; its IPv6 fd7a:115c:a1e0::/48 lies inside fc00::/7). ULA is the
+/// IPv6 counterpart of 10/8 — not routable on the internet — and routers hand
+/// it out on ordinary LANs, so it is allowed as a whole rather than only the
+/// Tailscale /48. Anything else is refused before any HTTP is read.
 public enum StreamAccessPolicy {
     public static func isAllowed(_ host: String) -> Bool {
         let bare = host.split(separator: "%", maxSplits: 1).first.map(String.init) ?? host
