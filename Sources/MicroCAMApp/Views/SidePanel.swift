@@ -117,15 +117,17 @@ struct SidePanel: View {
                     }
                 } label: { BarIcon("ellipsis.circle") }
                 .menuStyle(.button).menuIndicator(.hidden).fixedSize()
-                // A menu ignores the label's colour and draws it in the primary
-                // colour; dim it to match the secondary-coloured icons.
-                .opacity(0.55)
                 .help("More actions for the selected files")
             }
-            Button { library.grid = GridSelection() } label: { BarIcon("xmark.circle.fill") }
+            // Grey filled circle, like the clear button of a search field.
+            Button { library.grid = GridSelection() } label: {
+                Image(systemName: "xmark.circle.fill").font(.system(size: 15)).foregroundStyle(.secondary)
+                    .frame(width: 22, height: 22).contentShape(Rectangle())
+            }
                 .help("Clear selection")
         }
-        .buttonStyle(.borderless)
+        // .plain keeps the label colour; .borderless draws icons grey here.
+        .buttonStyle(.plain)
         .padding(.horizontal, 12).padding(.vertical, 8)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
         .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.primary.opacity(0.08)))
@@ -166,7 +168,8 @@ struct SidePanel: View {
     }
 }
 
-/// Same size, box and colour for every icon in the selection bar.
+/// Same size and box for every icon in the selection bar. Active controls
+/// use the normal label colour; grey (secondary) reads as disabled on macOS.
 private struct BarIcon: View {
     let name: String
     var lift: CGFloat = 0
@@ -179,7 +182,7 @@ private struct BarIcon: View {
     var body: some View {
         Image(systemName: name)
             .font(.system(size: 15))
-            .foregroundStyle(.secondary)
+            .foregroundStyle(.primary)
             .offset(y: -lift)
             .frame(width: 22, height: 22)
             .contentShape(Rectangle())
