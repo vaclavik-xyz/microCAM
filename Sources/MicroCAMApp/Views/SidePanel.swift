@@ -26,7 +26,7 @@ struct SidePanel: View {
                     .padding().frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 ScrollView {
-                    LazyVGrid(columns: columns, alignment: .leading, spacing: 10, pinnedViews: .sectionHeaders) {
+                    LazyVGrid(columns: columns, alignment: .leading, spacing: 10) {
                         ForEach(CaptureDays.group(library.files), id: \.day) { day in
                             Section {
                                 ForEach(day.files, id: \.self) { url in
@@ -125,7 +125,6 @@ private struct DayHeader: View {
             .font(.caption.weight(.semibold)).foregroundStyle(.secondary)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.top, 8).padding(.bottom, 2)
-            .background(.bar)
     }
 
     private var title: String {

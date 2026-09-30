@@ -625,7 +625,9 @@ final class AppModel: ObservableObject {
         guard let dir = try? Recorder.stagingDirectory(),
               let files = try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil),
               !files.isEmpty else { return }
-        message = StatusMessage(text: String(localized: "Found a recording that wasn't finished. Opening its folder."), isError: true)
+        // Information, not an error: the folder opens right away, so the
+        // message may hide on its own instead of covering the preview.
+        message = StatusMessage(text: String(localized: "Found a recording that wasn't finished. Opening its folder."), isError: false)
         NSWorkspace.shared.open(dir)
     }
 
