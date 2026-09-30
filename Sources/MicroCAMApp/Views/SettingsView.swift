@@ -87,8 +87,8 @@ struct StorageSettingsTab: View {
 
     private var layoutExample: String {
         let job = model.settings.jobsEnabled ? "PR-260042/" : ""
-        let type = model.settings.sortByType ? "Fotky/" : ""
-        let prefix = model.settings.jobsEnabled ? "PR-260042" : "microcam"
+        let type = model.settings.sortByType ? FolderLanguage.app.typeFolderName(for: .photo) + "/" : ""
+        let prefix = model.settings.jobsEnabled ? "PR-260042" : StorageLayout.jobsDisabledPrefix
         return "Příklad: …/\(job)\(type)\(prefix)_2026-09-29_14-03-12.jpg"
     }
 }

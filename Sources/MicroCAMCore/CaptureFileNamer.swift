@@ -19,10 +19,10 @@ public struct CaptureFileNamer {
         }
     }
 
-    public func nextURL(in folder: URL, context: JobContext, kind: CaptureKind, date: Date,
+    public func nextURL(in folder: URL, prefix: String, kind: CaptureKind, date: Date,
                         timeZone: TimeZone = .current) -> URL {
         availableURL(in: folder,
-                     prefix: StorageLayout.prefix(for: context),
+                     prefix: prefix,
                      timestamp: CaptureFileName.timestampString(date, timeZone: timeZone),
                      ext: kind.fileExtension)
     }

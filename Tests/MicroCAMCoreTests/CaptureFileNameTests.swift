@@ -34,9 +34,9 @@ final class CaptureFileNameTests: XCTestCase {
         XCTAssertEqual(CaptureKind.photo.fileExtension, "jpg")
         XCTAssertEqual(CaptureKind.timelapse.fileExtension, "jpg")
         XCTAssertEqual(CaptureKind.video.fileExtension, "mov")
-        XCTAssertEqual(CaptureKind.photo.typeFolderName, "Fotky")
-        XCTAssertEqual(CaptureKind.video.typeFolderName, "Videa")
-        XCTAssertEqual(CaptureKind.timelapse.typeFolderName, "Časosběr")
+        XCTAssertEqual(FolderLanguage.czech.typeFolderName(for: .photo), "Fotky")
+        XCTAssertEqual(FolderLanguage.czech.typeFolderName(for: .video), "Videa")
+        XCTAssertEqual(FolderLanguage.czech.typeFolderName(for: .timelapse), "Časosběr")
         XCTAssertEqual(CaptureKind.fromTypeFolder("Časosběr"), .timelapse)
         XCTAssertNil(CaptureKind.fromTypeFolder("PR-1"))
     }

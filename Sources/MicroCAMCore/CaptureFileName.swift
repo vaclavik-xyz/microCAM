@@ -10,17 +10,9 @@ public enum CaptureKind: CaseIterable, Sendable {
         }
     }
 
-    /// Subfolder name used only when the user enables "Třídit podle typu".
-    public var typeFolderName: String {
-        switch self {
-        case .photo: "Fotky"
-        case .video: "Videa"
-        case .timelapse: "Časosběr"
-        }
-    }
-
+    /// The kind a type folder stands for, in any supported language.
     public static func fromTypeFolder(_ name: String) -> CaptureKind? {
-        allCases.first { $0.typeFolderName == name }
+        allCases.first { kind in FolderLanguage.allCases.contains { $0.typeFolderName(for: kind) == name } }
     }
 
     /// Best guess from the extension when the folder does not tell.

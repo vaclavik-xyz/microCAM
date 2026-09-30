@@ -56,11 +56,11 @@ final class SettingsStoreTests: XCTestCase {
     }
     func testLayoutFollowsSettings() {
         var s = AppSettings()
-        XCTAssertNil(s.layout)
+        XCTAssertNil(s.layout(language: .english))
         s.storageRootPath = "/tmp/root"
         s.sortByType = true
-        XCTAssertEqual(s.layout?.root.path, "/tmp/root")
-        XCTAssertEqual(s.layout?.sortByType, true)
+        XCTAssertEqual(s.layout(language: .english)?.root.path, "/tmp/root")
+        XCTAssertEqual(s.layout(language: .english)?.sortByType, true)
     }
     func testFormatLabel() {
         XCTAssertEqual(FormatChoice(width: 1920, height: 1080, fps: 59.94).label, "1920×1080 @ 60 fps")

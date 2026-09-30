@@ -272,18 +272,21 @@ final class AppModel: ObservableObject {
     /// Names handed out but not yet on disk, so two captures in one second never collide.
     private var pendingURLs = Set<URL>()
 
+    /// Where captures go, named in the app's language.
+    var layout: StorageLayout? { settings.layout(language: .app) }
+
     var captureFolder: URL? {
-        settings.layout?.baseFolder(for: settings.jobContext)
+        layout?.baseFolder(for: settings.jobContext)
     }
 
     func reserveURL(kind: CaptureKind) throws -> URL {
-        guard let layout = settings.layout else { throw CaptureError.noStorageRoot }
+        guard let layout else { throw CaptureError.noStorageRoot }
         let folder = try layout.prepareFolder(for: settings.jobContext, kind: kind)
         let pending = pendingURLs
         let namer = CaptureFileNamer(fileExists: {
             pending.contains($0) || FileManager.default.fileExists(atPath: $0.path)
         })
-        let url = namer.nextURL(in: folder, context: settings.jobContext, kind: kind, date: Date())
+        let url = namer.nextURL(in: folder, prefix: layout.prefix(for: settings.jobContext), kind: kind, date: Date())
         pendingURLs.insert(url)
         return url
     }
@@ -292,7 +295,7 @@ final class AppModel: ObservableObject {
 
     func capturesChanged() {
         captureRevision += 1
-        library.reload(folders: settings.layout?.listedFolders(for: settings.jobContext) ?? [])
+        library.reload(folders: layout?.listedFolders(for: settings.jobContext) ?? [])
     }
 
     /// `remote` marks a photo requested from the stream page; `completion`
@@ -626,7 +629,7 @@ final class AppModel: ObservableObject {
 
     /// Runs off the main thread: a move to another volume copies whole videos.
     func moveFiles(_ urls: [URL], to target: JobContext) {
-        guard let layout = settings.layout else { showFirstRun = true; return }
+        guard let layout else { showFirstRun = true; return }
         guard !isMovingFiles else {
             message = StatusMessage(text: "Počkej, předchozí přesun ještě běží.", isError: false)
             return
