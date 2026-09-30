@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 @main
@@ -18,6 +19,21 @@ struct MicroCAMApp: App {
                 Divider()
                 Button("Mřížka (G)") { model.handle(.toggleGrid) }
                 Button("Zrušit zoom (0)") { model.handle(.resetZoom) }
+            }
+            CommandGroup(replacing: .help) {
+                Button("Klávesové zkratky") {
+                    let alert = NSAlert()
+                    alert.messageText = "Klávesové zkratky"
+                    alert.informativeText = """
+                    Mezerník – vyfotit
+                    R – nahrávat / zastavit
+                    G – mřížka
+                    0 – zrušit zoom (nebo dvojklik do obrazu)
+                    Kolečko / sevření – zoom, tažení – posun
+                    ⌘, – nastavení
+                    """
+                    alert.runModal()
+                }
             }
         }
         Settings {

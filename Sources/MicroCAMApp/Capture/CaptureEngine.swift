@@ -45,6 +45,19 @@ final class CaptureEngine: NSObject, ObservableObject {
     private let audioOutput = AVCaptureAudioDataOutput()
     private var videoInput: AVCaptureDeviceInput?
     private var audioInput: AVCaptureDeviceInput?
+    private var demoActive = false
+
+    /// Screenshot demo: pretend a Cam Link is attached; frames are pushed by `DemoDriver`.
+    func activateDemo() {
+        demoActive = true
+        let device = DeviceInfo(id: "demo", name: "Cam Link 4K")
+        let format = FormatChoice(width: 1920, height: 1080, fps: 60)
+        cameras = [device]
+        currentCameraID = device.id
+        formats = [format]
+        activeFormat = format
+        isRunning = true
+    }
 
     override init() {
         super.init()
@@ -103,6 +116,7 @@ final class CaptureEngine: NSObject, ObservableObject {
         let cams = Self.videoDevices().map { DeviceInfo(id: $0.uniqueID, name: $0.localizedName) }
         let mics = Self.audioDevices().map { DeviceInfo(id: $0.uniqueID, name: $0.localizedName) }
         DispatchQueue.main.async {
+            guard !self.demoActive else { return }
             self.cameras = cams
             self.microphones = mics
             self.onCamerasChanged?()

@@ -81,18 +81,23 @@ use; camera and microphone usage descriptions in `Info.plist`).
 (same filter chain as the preview), encodes JPEG at the configured quality and
 writes it to the active job folder. Shortcut: `Space`.
 
-**Recorder** — two paths matching the preview:
-- *Passthrough*: `AVCaptureMovieFileOutput` with the camera and microphone
-  inputs; hardware encoder; HEVC or H.264 per settings. No size or duration
-  limit.
-- *Adjusted*: `AVAssetWriter` fed from the data output; frames are rendered by
-  the Metal `CIContext` into buffers from the adaptor's pixel-buffer pool, audio
-  sample buffers appended alongside; `expectsMediaDataInRealTime = true`.
-- The path is fixed at recording start; changing adjustments mid-recording
-  updates the image only in the adjusted path (switching path mid-file is not
-  supported; the UI states this).
-- While recording, an `IOPMAssertion` prevents idle system sleep.
-- Shortcut: `R` start/stop. The window shows elapsed time and a red indicator.
+**Recorder** — one `AVAssetWriter` (HEVC or H.264 per settings, hardware
+encoder), fed from the video data output plus an audio data output that is
+attached only while recording.
+- Neutral adjustments: the camera's own pixel buffers are appended (zero copy).
+- Adjusted: frames are rendered on the GPU into buffers from the adaptor's
+  pool. Adjustments are read per frame, so a change mid-recording shows up in
+  the video from that moment; there is no path switch.
+- `movieFragmentInterval` 10 s keeps a crashed recording playable up to the
+  last fragment. The file is written to
+  `~/Library/Application Support/microCAM/Recording/` and moved to its final
+  name when finished, so iCloud never uploads a half-written file; leftovers
+  are reported on the next launch.
+- No size or duration limit. While recording, an `IOPMAssertion` prevents idle
+  system sleep; explicit sleep, camera unplug, writer failure or critically low
+  disk space stop and finalize the recording.
+- Shortcut: `R` start/stop. The status bar shows elapsed time, a red indicator
+  and dropped frames (if any).
 
 **Timelapse** — takes a photo every N seconds/minutes for a total duration,
 into the active job folder. Secondary control, off by default.
@@ -138,7 +143,7 @@ selected.
 
 | Section | Items |
 |---|---|
-| Device | camera, format (resolution, fps), microphone |
+| Device | camera, format (resolution, fps), record microphone audio (on), microphone |
 | Image | adjustments, per-camera preset, reset |
 | Storage | root folder, sort by type (off), JPEG quality, video codec (HEVC / H.264), video quality |
 | Timelapse | interval, total duration |

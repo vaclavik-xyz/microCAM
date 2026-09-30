@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject private var model: AppModel
-    @State private var showAdjustments = false
+    @Environment(\.openSettings) private var openSettings
 
     var body: some View {
         VStack(spacing: 0) {
@@ -10,6 +10,9 @@ struct ContentView: View {
                 JobBar()
                 Divider()
             }
+            HSplitView {
+                SidePanel(library: model.library, compare: $model.comparePair)
+                    .frame(minWidth: 200, idealWidth: 240, maxWidth: 360)
             ZStack {
                 PreviewView()
                 CameraStateOverlay(engine: model.engine)
@@ -21,6 +24,8 @@ struct ContentView: View {
                 }
             }
             .background(Color.black)
+            .frame(minWidth: 400)
+            }
             .background(WindowAccessor { model.attachMainWindow($0) })
             Divider()
             StatusBar()
@@ -29,18 +34,30 @@ struct ContentView: View {
             ToolbarItemGroup {
                 Button { model.takePhoto() } label: { Label("Vyfotit", systemImage: "camera") }
                     .help("Vyfotit (mezerník)")
+                RecordButton()
                 Button { model.revealCaptureFolder() } label: { Label("Složka", systemImage: "folder") }
                     .help("Otevřít složku, kam se teď ukládá")
-                Button { showAdjustments.toggle() } label: {
+                TimelapseToolbarButton(runner: model.timelapse, show: $model.showTimelapse)
+                Button { model.showAdjustments.toggle() } label: {
                     Label("Úpravy obrazu", systemImage: "slider.horizontal.3")
                 }
-                .popover(isPresented: $showAdjustments) {
+                .popover(isPresented: $model.showAdjustments) {
                     AdjustmentsForm().padding().frame(width: 360)
                 }
             }
         }
+        .onChange(of: model.openSettingsRequest) { openSettings() }
         .sheet(isPresented: $model.showFirstRun) {
             FirstRunView().interactiveDismissDisabled()
+        }
+        .sheet(item: Binding(
+            get: { model.filesToMove.map { MoveRequest(files: $0) } },
+            set: { if $0 == nil { model.filesToMove = nil } }
+        )) { request in
+            MoveToJobSheet(files: request.files)
+        }
+        .sheet(item: $model.comparePair) { pair in
+            CompareView(before: pair.before, after: pair.after, initialMode: model.compareInitialMode)
         }
     }
 }
@@ -64,6 +81,50 @@ struct CameraStateOverlay: View {
             Text(error).foregroundStyle(.red)
                 .padding(12).background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
                 .frame(maxHeight: .infinity, alignment: .top).padding(.top, 12)
+        }
+    }
+}
+
+struct TimelapseToolbarButton: View {
+    @ObservedObject var runner: TimelapseRunner
+    @Binding var show: Bool
+
+    var body: some View {
+        Button { show.toggle() } label: {
+            Label("Časosběr", systemImage: runner.isRunning ? "timer.circle.fill" : "timer")
+        }
+        .help("Časosběr")
+        .popover(isPresented: $show) {
+            TimelapseForm(runner: runner).padding().frame(width: 340)
+        }
+    }
+}
+
+struct MoveRequest: Identifiable {
+    let files: [URL]
+    var id: String { files.map(\.path).joined(separator: "|") }
+}
+
+/// Record/stop, with visible "starting" (waiting for the microphone; pressing
+/// again cancels) and "saving" (previous file still finalizing) states.
+struct RecordButton: View {
+    @EnvironmentObject private var model: AppModel
+
+    var body: some View {
+        if model.isFinalizingRecording {
+            Label("Ukládám video…", systemImage: "hourglass")
+                .help("Dokončuji ukládání předchozího videa")
+        } else {
+            Button { model.toggleRecording() } label: {
+                if model.isStartingRecording {
+                    Label("Zrušit spuštění", systemImage: "xmark.circle")
+                } else {
+                    Label(model.isRecording ? "Zastavit" : "Nahrávat",
+                          systemImage: model.isRecording ? "stop.circle.fill" : "record.circle")
+                }
+            }
+            .tint(model.isRecording ? .red : nil)
+            .help(model.isStartingRecording ? "Čekám na mikrofon – kliknutím nahrávání zrušíš" : "Nahrávat / zastavit (R)")
         }
     }
 }
