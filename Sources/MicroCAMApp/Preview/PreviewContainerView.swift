@@ -26,6 +26,9 @@ final class PreviewContainerView: NSView {
         previewLayer = AVCaptureVideoPreviewLayer(session: session)
         previewLayer.videoGravity = .resizeAspect
         super.init(frame: .zero)
+        connectionObservation = previewLayer.observe(\.connection) { [weak self] _, _ in
+            DispatchQueue.main.async { if let self, let mode = self.mode { self.setMode(mode) } }
+        }
         wantsLayer = true
         layer?.backgroundColor = NSColor.black.cgColor
 
@@ -87,6 +90,14 @@ final class PreviewContainerView: NSView {
     private var mode: RenderMode?
     private var windowVisible = true
     private var occlusionObserver: NSObjectProtocol?
+    /// The layer's connection appears only once the session runs; re-apply
+    /// the enabled state then, or a camera started while the window is
+    /// hidden would feed the preview again.
+    private var connectionObservation: NSKeyValueObservation?
+
+    deinit {
+        if let occlusionObserver { NotificationCenter.default.removeObserver(occlusionObserver) }
+    }
 
     func setMode(_ mode: RenderMode) {
         self.mode = mode

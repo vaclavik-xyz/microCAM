@@ -152,9 +152,8 @@ final class Recorder {
     /// missing from the file all the same, so it counts while recording.
     func noteDroppedFrame() {
         lock.lock()
-        let recording = writer != nil && startTime != nil
-        lock.unlock()
-        if recording { stats.update { $0.framesDropped += 1 } }
+        defer { lock.unlock() }
+        if writer != nil && startTime != nil { stats.update { $0.framesDropped += 1 } }
     }
 
     func appendAudio(_ sampleBuffer: CMSampleBuffer) {
