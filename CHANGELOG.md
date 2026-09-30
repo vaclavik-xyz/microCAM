@@ -1,8 +1,15 @@
 # Changelog
 
-## Unreleased
+## 0.2.0 — 2026-09-30
 
-A tidier main window.
+Signed releases that update themselves, and a tidier main window.
+
+- Releases are signed with Developer ID and notarized by Apple. macOS no
+  longer warns on first launch and keeps the camera and microphone
+  permission across updates.
+- microCAM updates itself with Sparkle: *microCAM → Check for Updates…*,
+  and automatic checks in *Settings → General*. It asks before installing.
+  Coming from 0.1.x, install 0.2.0 by hand once.
 
 - The side panel is a grid of thumbnails grouped by day and remembers its
   width. Hide it with the sidebar button.
