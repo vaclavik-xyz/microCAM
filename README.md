@@ -269,11 +269,15 @@ camera computer via Bonjour.
 
 - *Only watch*: just the picture, for a customer-facing screen.
 - *Watch, draw and take photos*: full screen, drawing over the live image
-  (arrow, circle, freehand, four colours) and **Take photo**. The photo is
+  (arrow, circle, freehand, text, four colours) and **Take photo**. The photo is
   taken on the camera computer, into its current folder. Draw on it and
   **Save as photo** saves a copy with the drawing (`…_2.jpg`); the original
   stays untouched. Remote photos need the *PIN for photos* set on the camera
   computer; a wrong PIN locks the device out for a while.
+- **Text:** pick **T**, tap where the label goes, type, and press Enter
+  or tap elsewhere; Esc cancels. Tap a label to change it, drag it to move
+  it. Three sizes appear next to the tools; the colour is the current one.
+  Labels get a dark outline, so they read on any board.
 - Made for touch: on a phone the buttons sit at the bottom in portrait and in
   a rail beside the picture in landscape, and every control is at least
   44 px (`scripts/stream-page-shots.py` checks that on phones, iPad and
