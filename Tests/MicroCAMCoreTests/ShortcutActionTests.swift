@@ -19,4 +19,11 @@ final class ShortcutActionTests: XCTestCase {
         XCTAssertNil(ShortcutAction.from(characters: "x", hasModifiers: false, isEditingText: false))
         XCTAssertNil(ShortcutAction.from(characters: nil, hasModifiers: false, isEditingText: false))
     }
+
+    func testSpaceInSidePanelPreviewsInsteadOfTakingAPhoto() {
+        XCTAssertEqual(ShortcutAction.from(characters: " ", hasModifiers: false, isEditingText: false, inSidePanel: true), .quickLook)
+        XCTAssertEqual(ShortcutAction.from(characters: " ", hasModifiers: false, isEditingText: false, inSidePanel: false), .photo)
+        // Other single keys keep working while the panel has focus.
+        XCTAssertEqual(ShortcutAction.from(characters: "r", hasModifiers: false, isEditingText: false, inSidePanel: true), .toggleRecording)
+    }
 }

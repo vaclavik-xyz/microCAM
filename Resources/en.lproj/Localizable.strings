@@ -91,6 +91,10 @@
 "Live picture, photos and video from a microscope camera." = "Live picture, photos and video from a microscope camera.";
 "Live stream" = "Live stream";
 "Looking for microCAM on the network…" = "Looking for microCAM on the network…";
+"Mark up (arrows, shapes, text) and save as a copy" = "Mark up (arrows, shapes, text) and save as a copy";
+"Mark up…" = "Mark up…";
+"Marked-up copy not saved" = "Marked-up copy not saved";
+"Marked-up copy saved: %@" = "Marked-up copy saved: %@";
 "microCAM asks before it installs anything. You can also check in the microCAM menu." = "microCAM asks before it installs anything. You can also check in the microCAM menu.";
 "microCAM is recording a video" = "microCAM is recording a video";
 "microCAM isn't allowed to use the camera." = "microCAM isn't allowed to use the camera.";
@@ -141,6 +145,7 @@
 "Press G to show or hide it. The grid is never saved in photos or videos." = "Press G to show or hide it. The grid is never saved in photos or videos.";
 "Press Return to apply. The stream restarts and viewers reconnect." = "Press Return to apply. The stream restarts and viewers reconnect.";
 "Preview" = "Preview";
+"Quick Look" = "Quick Look";
 "Quit microCAM and open it again. The change applies on the next start." = "Quit microCAM and open it again. The change applies on the next start.";
 "R – start or stop recording" = "R – start or stop recording";
 "Record sound" = "Record sound";
@@ -190,6 +195,7 @@
 "Slider" = "Slider";
 "Sort by type" = "Sort by type";
 "Source code on GitHub" = "Source code on GitHub";
+"Space in the side panel – Quick Look of the selected files" = "Space in the side panel – Quick Look of the selected files";
 "Space – take a photo" = "Space – take a photo";
 "Standard" = "Standard";
 "Start or stop recording (R)" = "Start or stop recording (R)";

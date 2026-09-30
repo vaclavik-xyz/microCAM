@@ -64,6 +64,7 @@ struct MicroCAMApp: App {
                     alert.messageText = String(localized: "Keyboard shortcuts")
                     alert.informativeText = [
                         String(localized: "Space – take a photo"),
+                        String(localized: "Space in the side panel – Quick Look of the selected files"),
                         String(localized: "R – start or stop recording"),
                         String(localized: "G – show or hide the grid"),
                         String(localized: "0 – reset zoom (or double-click the image)"),

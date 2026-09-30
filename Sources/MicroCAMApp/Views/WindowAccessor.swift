@@ -21,3 +21,17 @@ struct WindowAccessor: NSViewRepresentable {
         }
     }
 }
+
+/// Reports a plain NSView covering the SwiftUI view it backs, to tell in
+/// AppKit whether a click landed there.
+struct ViewAccessor: NSViewRepresentable {
+    let onView: (NSView) -> Void
+
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        DispatchQueue.main.async { onView(view) }
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {}
+}

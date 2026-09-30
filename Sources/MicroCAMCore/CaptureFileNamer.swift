@@ -26,4 +26,21 @@ public struct CaptureFileNamer {
                      timestamp: CaptureFileName.timestampString(date, timeZone: timeZone),
                      ext: kind.fileExtension)
     }
+
+    /// Where an edited photo goes: next to the original, as the next free
+    /// index of its timestamp (`…_2.jpg`), always JPEG. The original is never
+    /// the answer. Files with another name get `<name>_2.jpg`, `_3`, …
+    public func editedCopyURL(of source: URL) -> URL {
+        let folder = source.deletingLastPathComponent()
+        if let name = CaptureFileName.parse(source.lastPathComponent) {
+            return availableURL(in: folder, prefix: name.prefix, timestamp: name.timestamp, ext: "jpg")
+        }
+        let stem = source.deletingPathExtension().lastPathComponent
+        var index = 2
+        while true {
+            let url = folder.appendingPathComponent("\(stem)_\(index).jpg", isDirectory: false)
+            if !fileExists(url) { return url }
+            index += 1
+        }
+    }
 }

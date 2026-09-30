@@ -28,4 +28,15 @@ public struct GridSelection<Item: Hashable> {
     public func targets(forContextClickOn item: Item, in order: [Item]) -> [Item] {
         selected.contains(item) ? order.filter(selected.contains) : [item]
     }
+
+    /// What Space shows in Quick Look, as in Finder: one selected item opens
+    /// the whole grid there (arrows move on), several show only those. Starts
+    /// at the last clicked item. Nil when nothing in `order` is selected.
+    public func previewItems(in order: [Item]) -> (items: [Item], start: Int)? {
+        let chosen = order.filter(selected.contains)
+        guard let first = chosen.first else { return nil }
+        let items = chosen.count == 1 ? order : chosen
+        let current = anchor.flatMap { selected.contains($0) ? $0 : nil } ?? first
+        return (items, items.firstIndex(of: current) ?? 0)
+    }
 }
