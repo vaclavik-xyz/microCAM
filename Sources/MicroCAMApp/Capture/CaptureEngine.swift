@@ -44,6 +44,8 @@ final class CaptureEngine: NSObject, ObservableObject {
     private let videoOutput = AVCaptureVideoDataOutput()
     private let audioOutput = AVCaptureAudioDataOutput()
     private var videoInput: AVCaptureDeviceInput?
+    /// The camera whose configuration lock we hold (see `apply`).
+    private var lockedDevice: AVCaptureDevice?
     private var audioInput: AVCaptureDeviceInput?
     private var demoActive = false
 
@@ -150,6 +152,7 @@ final class CaptureEngine: NSObject, ObservableObject {
             var applied: FormatChoice?
             var errorText: String?
             self.session.beginConfiguration()
+            self.releaseDeviceLock()
             if let old = self.videoInput { self.session.removeInput(old); self.videoInput = nil }
             do {
                 let input = try AVCaptureDeviceInput(device: device)
@@ -159,6 +162,7 @@ final class CaptureEngine: NSObject, ObservableObject {
                 }
                 if let target {
                     try Self.apply(target, to: device)
+                    self.lockedDevice = device
                     applied = target
                 }
             } catch {
@@ -175,6 +179,12 @@ final class CaptureEngine: NSObject, ObservableObject {
         }
     }
 
+    /// Sets the format and frame rate and keeps the device locked. On macOS
+    /// the session re-picks a format for its preset each time it starts
+    /// unless the device stays locked, so an unlocked 640×480 @ 25 fps
+    /// silently came back as 1920×1080 @ 60 fps after the first
+    /// stop/start (window hidden, screen locked). `releaseDeviceLock`
+    /// unlocks when the camera is replaced or removed.
     private static func apply(_ choice: FormatChoice, to device: AVCaptureDevice) throws {
         let is420v = { (f: AVCaptureDevice.Format) in
             CMFormatDescriptionGetMediaSubType(f.formatDescription) == kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange
@@ -191,7 +201,12 @@ final class CaptureEngine: NSObject, ObservableObject {
         device.activeFormat = format
         device.activeVideoMinFrameDuration = range.minFrameDuration
         device.activeVideoMaxFrameDuration = range.minFrameDuration
-        device.unlockForConfiguration()
+    }
+
+    /// Call on `sessionQueue`.
+    private func releaseDeviceLock() {
+        lockedDevice?.unlockForConfiguration()
+        lockedDevice = nil
     }
 
     // MARK: Running
@@ -261,6 +276,7 @@ final class CaptureEngine: NSObject, ObservableObject {
     private func removeVideoInput(ofDeviceID deviceID: String?) {
         sessionQueue.async {
             guard let input = self.videoInput, input.device.uniqueID == deviceID else { return }
+            self.releaseDeviceLock()
             self.session.beginConfiguration()
             self.session.removeInput(input)
             self.videoInput = nil
