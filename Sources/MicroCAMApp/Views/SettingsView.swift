@@ -371,7 +371,7 @@ struct StreamSettingsTab: View {
                         Text("Only watch").tag(StreamMode.imageOnly)
                     } label: {
                         Text("Viewers can")
-                        Text("Photos taken from another device go to the active job on this Mac.")
+                        Text("Photos taken from another device are saved on this Mac, like your own.")
                     }
                     SecureField(text: $pin, prompt: Text("Not set")) {
                         Text("PIN for photos")

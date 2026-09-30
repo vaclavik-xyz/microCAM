@@ -75,12 +75,13 @@
 "High" = "Vysoká";
 "Higher quality makes bigger files." = "Vyšší kvalita znamená větší soubory.";
 "Image adjustments" = "Úpravy obrazu";
+"Image adjustments…" = "Úpravy obrazu…";
 "Image" = "Obraz";
 "Integrations" = "Integrace";
 "Interval" = "Interval";
 "Invalid address. Enter it as host:port, e.g. 192.168.1.20:8090." = "Neplatná adresa. Zadej ji jako počítač:port, např. 192.168.1.20:8090.";
+"Job" = "Zakázka";
 "Job: files go into its folder" = "Zakázka: soubory se ukládají do její složky";
-"Job:" = "Zakázka:";
 "Keep the Mac awake while recording" = "Nenechat Mac usnout během nahrávání";
 "Keyboard shortcuts" = "Klávesové zkratky";
 "Language" = "Jazyk";
@@ -127,7 +128,7 @@
 "Photo not saved" = "Fotka se neuložila";
 "Photo quality" = "Kvalita fotek";
 "Photos and videos you take appear here." = "Tady se objeví fotky a videa, která pořídíš.";
-"Photos taken from another device go to the active job on this Mac." = "Fotky z jiného zařízení se ukládají do aktivní zakázky na tomto Macu.";
+"Photos taken from another device are saved on this Mac, like your own." = "Fotky pořízené z jiného zařízení se uloží na tomto Macu, stejně jako tvoje.";
 "Photos: %lld · done around %@" = "Fotek: %lld · hotovo kolem %@";
 "Pick one that stands out against the board." = "Vyber barvu, která je na desce dobře vidět.";
 "Picture size and frames per second." = "Rozlišení obrazu a počet snímků za sekundu.";
@@ -227,6 +228,7 @@
 "Timelapse didn't start: the interval must be at least 1 second and the duration at least one interval (at most 7 days)." = "Časosběr nezačal: interval musí být aspoň 1 sekunda a délka aspoň jeden interval (nejvýš 7 dní).";
 "Timelapse finished. Photos taken: %lld." = "Časosběr skončil. Pořízeno snímků: %lld.";
 "Timelapse" = "Časosběr";
+"Timelapse…" = "Časosběr…";
 "Tint" = "Odstín";
 "Today" = "Dnes";
 "Token" = "Token";

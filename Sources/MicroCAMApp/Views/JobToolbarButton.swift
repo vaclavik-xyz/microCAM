@@ -27,7 +27,7 @@ private struct JobForm: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Job:").font(.headline)
+            Text("Job").font(.headline)
             TextField("e.g. PR-260042", text: $draft)
                 .textFieldStyle(.roundedBorder)
                 .onSubmit(apply)

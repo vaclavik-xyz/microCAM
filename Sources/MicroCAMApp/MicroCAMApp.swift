@@ -23,6 +23,10 @@ struct MicroCAMApp: App {
                 Button("Show or hide grid (G)") { model.handle(.toggleGrid) }
                 Button("Reset zoom (0)") { model.handle(.resetZoom) }
                 Divider()
+                // Every toolbar action is also in the menu bar.
+                Button("Timelapse…") { model.showTimelapse = true }
+                Button("Image adjustments…") { model.showAdjustments = true }
+                Divider()
                 Button("Open folder") { model.revealCaptureFolder() }
             }
             // Into the system View menu, next to Enter Full Screen.

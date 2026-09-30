@@ -75,7 +75,12 @@ struct ContentView: View {
                 }
                 .help("Image adjustments")
                 .popover(isPresented: $model.showAdjustments) {
-                    AdjustmentsForm().padding().frame(width: 360)
+                    // Titled like the timelapse and job popovers.
+                    VStack(alignment: .leading, spacing: 14) {
+                        Text("Image adjustments").font(.headline)
+                        AdjustmentsForm()
+                    }
+                    .padding(16).frame(width: 360)
                 }
                 SettingsLink { Label("Settings", systemImage: "gearshape") }
                     .help("Settings (⌘,)")
@@ -158,9 +163,17 @@ struct CameraStateOverlay: View {
             }
                 .padding(24).background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
         } else if let error = engine.lastError {
-            Text(error).foregroundStyle(.red)
-                .padding(12).background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
-                .frame(maxHeight: .infinity, alignment: .top).padding(.top, 12)
+            // Same look as an error toast; stays at the top while the camera fails.
+            HStack(spacing: 8) {
+                Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.red)
+                Text(error).lineLimit(3)
+            }
+            .font(.callout)
+            .padding(.horizontal, 14).padding(.vertical, 9)
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
+            .shadow(color: .black.opacity(0.2), radius: 8, y: 2)
+            .frame(maxWidth: 560)
+            .frame(maxHeight: .infinity, alignment: .top).padding(.top, 12)
         }
     }
 }

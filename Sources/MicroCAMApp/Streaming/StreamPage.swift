@@ -230,10 +230,10 @@ const STRINGS = {
     "drawing": "Drawing", "arrow": "Arrow", "circle": "Circle", "pen": "Pen",
     "undo": "Undo last stroke", "clear": "Clear drawing",
     "draw": "Draw", "drawTitle": "Draw on the picture",
-    "photo": "Take photo", "photoTitle": "Take a photo into the active job",
+    "photo": "Take photo", "photoTitle": "Take a photo on the camera Mac",
     "photoOff": "Taking photos is off: no PIN is set in microCAM on the camera computer (Settings → Stream).",
     "back": "Live view", "backTitle": "Back to the live picture",
-    "save": "Save", "saveSuffix": " to job", "saveTitle": "Save the drawing as a new photo in the job",
+    "save": "Save", "saveSuffix": " as photo", "saveTitle": "Save the drawing as a new photo on the camera Mac",
     "download": "Download", "fullScreen": "Full screen",
     "pinTitle": "PIN for photos",
     "pinText": "Enter the PIN from microCAM on the camera computer (Settings → Stream).",
@@ -244,7 +244,7 @@ const STRINGS = {
     "actionOff": "This is turned off in microCAM on the camera computer.",
     "error": "Something went wrong (error {code}).",
     "photoLoadFailed": "Couldn't load the photo.",
-    "photoTaken": "Photo taken", "drawFirst": "Draw something first", "savedToJob": "Saved to the job"
+    "photoTaken": "Photo taken", "drawFirst": "Draw something first", "savedToJob": "Saved as a photo"
   },
   "cs": {
     "offline": "Připojuji se k počítači s kamerou…",
@@ -253,10 +253,10 @@ const STRINGS = {
     "drawing": "Kreslení", "arrow": "Šipka", "circle": "Kruh", "pen": "Pero",
     "undo": "Vrátit poslední tah", "clear": "Smazat kresbu",
     "draw": "Kreslit", "drawTitle": "Kreslit do obrazu",
-    "photo": "Vyfotit", "photoTitle": "Vyfotit do aktivní zakázky",
+    "photo": "Vyfotit", "photoTitle": "Vyfotit na počítači s kamerou",
     "photoOff": "Focení je vypnuté: v microCAMu na počítači s kamerou není nastavený PIN (Nastavení → Přenos).",
     "back": "Živý obraz", "backTitle": "Zpět na živý obraz",
-    "save": "Uložit", "saveSuffix": " k zakázce", "saveTitle": "Uložit kresbu jako novou fotku k zakázce",
+    "save": "Uložit", "saveSuffix": " jako fotku", "saveTitle": "Uložit kresbu jako novou fotku na počítači s kamerou",
     "download": "Stáhnout", "fullScreen": "Celá obrazovka",
     "pinTitle": "PIN pro focení",
     "pinText": "Zadej PIN z microCAMu na počítači s kamerou (Nastavení → Přenos).",
@@ -267,7 +267,7 @@ const STRINGS = {
     "actionOff": "Tohle je v microCAMu na počítači s kamerou vypnuté.",
     "error": "Něco se pokazilo (chyba {code}).",
     "photoLoadFailed": "Fotku se nepodařilo načíst.",
-    "photoTaken": "Vyfoceno", "drawFirst": "Nejdřív něco nakresli", "savedToJob": "Uloženo k zakázce"
+    "photoTaken": "Vyfoceno", "drawFirst": "Nejdřív něco nakresli", "savedToJob": "Uloženo jako fotka"
   }
 }; // end STRINGS
 // ?lang= (the viewer app passes its own), then the browser's languages, else English.

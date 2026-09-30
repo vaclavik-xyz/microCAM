@@ -76,12 +76,13 @@
 "High" = "High";
 "Higher quality makes bigger files." = "Higher quality makes bigger files.";
 "Image adjustments" = "Image adjustments";
+"Image adjustments…" = "Image adjustments…";
 "Image" = "Image";
 "Integrations" = "Integrations";
 "Interval" = "Interval";
 "Invalid address. Enter it as host:port, e.g. 192.168.1.20:8090." = "Invalid address. Enter it as host:port, e.g. 192.168.1.20:8090.";
+"Job" = "Job";
 "Job: files go into its folder" = "Job: files go into its folder";
-"Job:" = "Job:";
 "Keep the Mac awake while recording" = "Keep the Mac awake while recording";
 "Keyboard shortcuts" = "Keyboard shortcuts";
 "Language" = "Language";
@@ -128,7 +129,7 @@
 "Photo not saved" = "Photo not saved";
 "Photo quality" = "Photo quality";
 "Photos and videos you take appear here." = "Photos and videos you take appear here.";
-"Photos taken from another device go to the active job on this Mac." = "Photos taken from another device go to the active job on this Mac.";
+"Photos taken from another device are saved on this Mac, like your own." = "Photos taken from another device are saved on this Mac, like your own.";
 "Photos: %lld · done around %@" = "Photos: %lld · done around %@";
 "Pick one that stands out against the board." = "Pick one that stands out against the board.";
 "Picture size and frames per second." = "Picture size and frames per second.";
@@ -228,6 +229,7 @@
 "Timelapse didn't start: the interval must be at least 1 second and the duration at least one interval (at most 7 days)." = "Timelapse didn't start: the interval must be at least 1 second and the duration at least one interval (at most 7 days).";
 "Timelapse finished. Photos taken: %lld." = "Timelapse finished. Photos taken: %lld.";
 "Timelapse" = "Timelapse";
+"Timelapse…" = "Timelapse…";
 "Tint" = "Tint";
 "Today" = "Today";
 "Token" = "Token";
