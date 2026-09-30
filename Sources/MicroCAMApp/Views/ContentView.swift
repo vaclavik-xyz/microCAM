@@ -49,7 +49,7 @@ struct ContentView: View {
             .frame(minWidth: 400)
             .background(WindowAccessor { model.attachMainWindow($0) })
         }
-        .modifier(WindowTitle(engine: model.engine))
+        .modifier(WindowTitle(engine: model.engine, timelapse: model.timelapse))
         .toolbar {
             if model.settings.jobsEnabled {
                 ToolbarItem(placement: .navigation) { JobToolbarButton() }
@@ -100,13 +100,15 @@ struct ContentView: View {
     }
 }
 
-/// Title: the camera the picture comes from. Subtitle: its format; while
-/// recording "● Recording 0:12:34" (and dropped frames), then "Saving video…".
+/// Title: the camera the picture comes from (the user's name for it, if set).
+/// Subtitle: its format; while recording "● Recording 0:12:34" (and dropped
+/// frames), then "Saving video…"; a running timelapse adds its progress.
 /// This is the only recording indicator besides the red stop button, so the
 /// picture stays clean. The app name stays in the menu bar and Dock.
 private struct WindowTitle: ViewModifier {
     @EnvironmentObject private var model: AppModel
     @ObservedObject var engine: CaptureEngine
+    @ObservedObject var timelapse: TimelapseRunner
     /// Ticks once a second while recording, to advance the time.
     @State private var now = Date()
     /// In @State so one timer survives re-evaluation; a `let` would create a
@@ -115,22 +117,28 @@ private struct WindowTitle: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .navigationTitle(engine.cameras.first { $0.id == engine.currentCameraID }?.name
-                             ?? String(localized: "No camera"))
+            .navigationTitle(engine.cameras.first { $0.id == engine.currentCameraID }
+                .map { model.settings.cameraName(for: $0.id, systemName: $0.name) }
+                ?? String(localized: "No camera"))
             .navigationSubtitle(subtitle)
             .onReceive(tick) { date in if model.isRecording { now = date } }
     }
 
     private var subtitle: String {
+        var parts: [String] = []
         if model.isRecording, let started = model.recordingStartedAt {
             let seconds = max(0, Int(now.timeIntervalSince(started)))
             let time = String(format: "%d:%02d:%02d", seconds / 3600, seconds / 60 % 60, seconds % 60)
-            var text = String(localized: "● Recording \(time)")
-            if model.droppedFrames > 0 { text += " · " + String(localized: "Dropped frames: \(model.droppedFrames)") }
-            return text
+            parts.append(String(localized: "● Recording \(time)"))
+            if model.droppedFrames > 0 { parts.append(String(localized: "Dropped frames: \(model.droppedFrames)")) }
+        } else if model.isFinalizingRecording {
+            parts.append(String(localized: "Saving video…"))
         }
-        if model.isFinalizingRecording { return String(localized: "Saving video…") }
-        return engine.activeFormat?.label ?? ""
+        if timelapse.isRunning, let schedule = timelapse.schedule {
+            parts.append(String(localized: "Timelapse \(timelapse.shotsTaken) of \(schedule.shotCount)"))
+        }
+        if parts.isEmpty, let format = engine.activeFormat { parts.append(format.label) }
+        return parts.joined(separator: " · ")
     }
 }
 

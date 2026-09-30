@@ -100,6 +100,7 @@
 "Move" = "Move";
 "Moved: %lld" = "Moved: %lld";
 "Moving files: %lld…" = "Moving files: %lld…";
+"Name" = "Name";
 "No camera connected." = "No camera connected.";
 "No camera" = "No camera";
 "No folder is chosen for saving. Choose one in Settings → Storage." = "No folder is chosen for saving. Choose one in Settings → Storage.";
@@ -171,6 +172,7 @@
 "Sharpening" = "Sharpening";
 "Show in Finder" = "Show in Finder";
 "Show or hide grid (G)" = "Show or hide grid (G)";
+"Shown in the window title. Leave it empty to use the camera's own name." = "Shown in the window title. Leave it empty to use the camera's own name.";
 "Shows the live picture in a browser on other devices on your network, or in microCAM on another Mac." = "Shows the live picture in a browser on other devices on your network, or in microCAM on another Mac.";
 "Side by side" = "Side by side";
 "Slider" = "Slider";
@@ -212,6 +214,7 @@
 "The stream can't start on port %lld: %@. Try another port." = "The stream can't start on port %lld: %@. Try another port.";
 "The webhook isn't set up. Set it up in Settings → Integrations." = "The webhook isn't set up. Set it up in Settings → Integrations.";
 "Thirds" = "Thirds";
+"Timelapse %lld of %lld" = "Timelapse %lld of %lld";
 "Timelapse didn't start: the interval must be at least 1 second and the duration at least one interval (at most 7 days)." = "Timelapse didn't start: the interval must be at least 1 second and the duration at least one interval (at most 7 days).";
 "Timelapse finished. Photos taken: %lld." = "Timelapse finished. Photos taken: %lld.";
 "Timelapse" = "Timelapse";

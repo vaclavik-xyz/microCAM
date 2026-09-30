@@ -248,10 +248,21 @@ struct DeviceSettingsForm: View {
                     get: { engine.currentCameraID ?? "" },
                     set: { model.selectCamera($0) }
                 )) {
-                    ForEach(engine.cameras) { Text(verbatim: $0.name).tag($0.id) }
+                    ForEach(engine.cameras) {
+                        Text(verbatim: model.settings.cameraName(for: $0.id, systemName: $0.name)).tag($0.id)
+                    }
                 } label: {
                     Text("Camera")
                     Text("A USB microscope, or an HDMI camera behind a capture card.")
+                }
+                if let camera = engine.cameras.first(where: { $0.id == engine.currentCameraID }) {
+                    TextField(text: Binding(
+                        get: { model.settings.cameraNames[camera.id] ?? "" },
+                        set: { model.settings.cameraNames[camera.id] = $0.isEmpty ? nil : $0 }
+                    ), prompt: Text(verbatim: camera.name)) {
+                        Text("Name")
+                        Text("Shown in the window title. Leave it empty to use the camera's own name.")
+                    }
                 }
                 Picker(selection: Binding(
                     get: { engine.activeFormat },

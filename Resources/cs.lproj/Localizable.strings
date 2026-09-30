@@ -99,6 +99,7 @@
 "Move" = "Přesunout";
 "Moved: %lld" = "Přesunuto: %lld";
 "Moving files: %lld…" = "Přesouvám soubory: %lld…";
+"Name" = "Název";
 "No camera connected." = "Není připojená žádná kamera.";
 "No camera" = "Bez kamery";
 "No folder is chosen for saving. Choose one in Settings → Storage." = "Není vybraná složka pro ukládání. Vyber ji v Nastavení → Ukládání.";
@@ -170,6 +171,7 @@
 "Sharpening" = "Doostření";
 "Show in Finder" = "Zobrazit ve Finderu";
 "Show or hide grid (G)" = "Zobrazit nebo skrýt mřížku (G)";
+"Shown in the window title. Leave it empty to use the camera's own name." = "Zobrazuje se v titulku okna. Když pole necháš prázdné, použije se název kamery.";
 "Shows the live picture in a browser on other devices on your network, or in microCAM on another Mac." = "Ukazuje živý obraz v prohlížeči na jiných zařízeních v síti nebo v microCAMu na jiném Macu.";
 "Side by side" = "Vedle sebe";
 "Slider" = "Posuvník";
@@ -211,6 +213,7 @@
 "The stream can't start on port %lld: %@. Try another port." = "Přenos nejde spustit na portu %lld: %@. Zkus jiný port.";
 "The webhook isn't set up. Set it up in Settings → Integrations." = "Webhook není nastavený. Nastav ho v Nastavení → Integrace.";
 "Thirds" = "Třetiny";
+"Timelapse %lld of %lld" = "Časosběr %lld z %lld";
 "Timelapse didn't start: the interval must be at least 1 second and the duration at least one interval (at most 7 days)." = "Časosběr nezačal: interval musí být aspoň 1 sekunda a délka aspoň jeden interval (nejvýš 7 dní).";
 "Timelapse finished. Photos taken: %lld." = "Časosběr skončil. Pořízeno snímků: %lld.";
 "Timelapse" = "Časosběr";

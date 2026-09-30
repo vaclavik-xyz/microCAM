@@ -14,7 +14,10 @@ A tidier main window.
   It stays black in full screen.
 - The window title shows the camera and its format. While recording, the
   subtitle shows the running time (and dropped frames) and the stop button
-  turns red; the picture itself stays clean.
+  turns red; the picture itself stays clean. A running timelapse shows its
+  progress there too.
+- Cameras can be renamed in *Settings → Device*; an empty name brings back
+  the camera's own.
 - The status bar is gone. Messages show briefly over the picture, and errors
   stay until closed.
 - Jobs are off by default. Turn them on in *Settings → Storage*; the active

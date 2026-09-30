@@ -100,8 +100,9 @@ The window:
   opens the folder; share and compare appear at the bottom once you select
   files. The panel remembers its
   width. Hide it with the button next to the window buttons.
-- **Title.** The camera and its format. While recording it shows the running
-  time instead, and the stop button is red.
+- **Title.** The camera (rename it in *Settings → Device*) and its format.
+  While recording it shows the running time instead, and the stop button is
+  red; a running timelapse shows its progress.
 - **Preview.** Short messages like *Saved: …* show at the bottom and hide on their own.
   Errors stay until you close them.
 
