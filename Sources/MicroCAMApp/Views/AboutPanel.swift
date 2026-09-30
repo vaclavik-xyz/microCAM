@@ -6,7 +6,6 @@ import AppKit
 enum AboutPanel {
     static let repository = URL(string: "https://github.com/vaclavik-xyz/microCAM")!
     static let issues = URL(string: "https://github.com/vaclavik-xyz/microCAM/issues")!
-    static let author = URL(string: "https://macdoktor.cz")!
 
     static func show() {
         NSApp.orderFrontStandardAboutPanel(options: [.credits: credits()])
@@ -23,19 +22,15 @@ enum AboutPanel {
             .paragraphStyle: paragraph,
         ]
         let text = NSMutableAttributedString()
-        func add(_ string: String, link: URL? = nil, color: NSColor? = nil) {
+        func add(_ string: String, link: URL? = nil) {
             var attributes = body
             if let link { attributes[.link] = link }
-            if let color { attributes[.foregroundColor] = color }
             text.append(NSAttributedString(string: string, attributes: attributes))
         }
         add(String(localized: "Live picture, photos and video from a microscope camera.") + "\n")
         add(String(localized: "Source code on GitHub"), link: repository)
         add("  ·  ")
         add(String(localized: "Report a problem"), link: issues)
-        add("\n")
-        add(String(localized: "Made by the repair shop") + " ", color: .secondaryLabelColor)
-        add("macdoktor.cz", link: author)
         return text
     }
 }
