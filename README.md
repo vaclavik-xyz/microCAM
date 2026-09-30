@@ -29,6 +29,8 @@ started to stutter after a while.
   alike, and cost nothing when switched off.
 - **Digital zoom, grid, timelapse and before/after compare** (side by side or
   with a slider).
+- **Live stream** to a browser or to microCAM on another Mac, with remote
+  photos and annotations for showing the customer their board.
 - **Integrations:** macOS share sheet, and an optional generic webhook for
   sending captures to your own system (CRM, n8n, Make, Zapier…).
 - **No third-party dependencies.** Swift, SwiftUI/AppKit and Apple
@@ -44,7 +46,8 @@ started to stutter after a while.
 ```sh
 scripts/make-app.sh                 # → build/microCAM.app (ad-hoc signed)
 open build/microCAM.app             # or copy it to /Applications
-scripts/deploy-bench.sh          # build → bench Mac:/Applications over ssh
+scripts/deploy.sh <ssh-host> [dir]  # build → another Mac over ssh (universal)
+scripts/deploy-bench.sh          # the same for bench Mac
 ```
 
 The app is ad-hoc signed for personal use, so macOS may ask for camera and
@@ -103,8 +106,24 @@ photos and videos are always full frame.
   | `idempotencyKey` | SHA-256 of the file, also sent as the `Idempotency-Key` header |
 
   An optional token is sent as `Authorization: Bearer …` and kept in the
-  Keychain. Any 2xx counts as success. Uploads stream from disk, so
-  hour-long videos are fine.
+  Keychain. Any 2xx counts as success. Videos are sent only when "Posílat i
+  videa" is on; uploads stream from disk, so hour-long videos are fine.
+
+## Live stream and viewer
+
+*Settings → Přenos*, off by default. It streams the live image to other
+devices on the shop network or tailnet. Open `http://<bench-ip>:8090/` in any
+browser, or switch microCAM on another Mac to **Prohlížeč** mode (*Settings →
+Režim appky*); it finds the bench via Bonjour.
+
+- *Jen obraz*: just the picture, for a customer-facing screen.
+- *S ovládáním*: job code, full screen, drawing over the live image, and
+  **Vyfotit**. The photo is taken on the bench into the active job. Draw on
+  it and **Uložit k zakázce** saves an annotated copy (`…_2.jpg`); the
+  original stays untouched. Remote photos need the PIN set on the bench.
+
+Only local-network and Tailscale clients are accepted. Nothing listens while
+the stream is off, and nothing is encoded while nobody watches.
 
 ## Development
 
@@ -112,7 +131,13 @@ photos and videos are always full frame.
 swift test                          # unit tests for MicroCAMCore
 scripts/make-app.sh                 # app bundle
 scripts/make-screenshots.sh <dir>   # screenshots in demo mode (no camera needed)
+scripts/stream-smoke.sh <host> [port] [pin]   # check a running stream
 ```
+
+Demo mode without a camera can also serve the stream on 127.0.0.1: set
+`MICROCAM_DEMO_STREAM_PORT` (and optionally `MICROCAM_DEMO_STREAM_PIN`,
+`MICROCAM_DEMO_STREAM_MODE=imageOnly`). The smoke script adapts to *Jen obraz*
+and to a bench without a PIN.
 
 - `Sources/MicroCAMCore` holds the pure logic: naming, storage, moving,
   settings, the image pipeline and policies. It is fully unit-tested.

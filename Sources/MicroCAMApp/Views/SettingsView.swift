@@ -1,3 +1,4 @@
+import AppKit
 import MicroCAMCore
 import SwiftUI
 
@@ -5,17 +6,49 @@ struct SettingsView: View {
     @EnvironmentObject private var model: AppModel
 
     var body: some View {
+        Group {
+            if model.launchMode == .viewer {
+                ModeSettingsTab()
+            } else {
+                cameraTabs
+            }
+        }
+        .frame(width: 540)
+        .padding(20)
+    }
+
+    private var cameraTabs: some View {
         TabView(selection: $model.settingsTab) {
+            ModeSettingsTab().tabItem { Label("Režim", systemImage: "rectangle.on.rectangle") }.tag("mode")
             DeviceSettingsTab().tabItem { Label("Zařízení", systemImage: "camera") }.tag("device")
             AdjustmentsForm().padding(.horizontal).tabItem { Label("Obraz", systemImage: "slider.horizontal.3") }.tag("image")
             StorageSettingsTab().tabItem { Label("Ukládání", systemImage: "folder") }.tag("storage")
             TimelapseSettingsTab().tabItem { Label("Časosběr", systemImage: "timer") }.tag("timelapse")
             PreviewSettingsTab().tabItem { Label("Náhled", systemImage: "grid") }.tag("preview")
             IntegrationSettingsTab().tabItem { Label("Integrace", systemImage: "arrow.up.forward.app") }.tag("integrations")
+            StreamSettingsTab().tabItem { Label("Přenos", systemImage: "dot.radiowaves.left.and.right") }.tag("stream")
             BehaviourSettingsTab().tabItem { Label("Chování", systemImage: "gearshape") }.tag("behaviour")
         }
-        .frame(width: 540)
-        .padding(20)
+    }
+}
+
+struct ModeSettingsTab: View {
+    @EnvironmentObject private var model: AppModel
+
+    var body: some View {
+        Form {
+            Picker("Režim appky", selection: $model.settings.appMode) {
+                Text("Kamera – mikroskop je připojený k tomuto Macu").tag(AppMode.camera)
+                Text("Prohlížeč – zobrazuje přenos z jiného Macu").tag(AppMode.viewer)
+            }
+            .pickerStyle(.radioGroup)
+            if model.settings.appMode != model.launchMode {
+                HStack {
+                    Text("Změna se projeví po restartu.").foregroundStyle(.secondary)
+                    Button("Restartovat") { model.relaunch() }
+                }
+            }
+        }
     }
 }
 
@@ -171,5 +204,74 @@ struct IntegrationSettingsTab: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
+    }
+}
+
+struct StreamSettingsTab: View {
+    @EnvironmentObject private var model: AppModel
+    @State private var pin = ""
+    @State private var pinInvalid = false
+    /// Edited text; the port is applied only on Enter or when leaving the tab,
+    /// because every change restarts the server and drops the viewers.
+    @State private var portText = ""
+
+    var body: some View {
+        Form {
+            Toggle("Živý přenos obrazu do sítě", isOn: $model.settings.streamingEnabled)
+            if model.settings.streamingEnabled {
+                Picker("Stránka", selection: $model.settings.streamingMode) {
+                    Text("S ovládáním (focení, kreslení)").tag(StreamMode.controls)
+                    Text("Jen obraz").tag(StreamMode.imageOnly)
+                }
+                TextField("Port", text: $portText)
+                    .onSubmit(commitPort)
+                    .onDisappear(perform: commitPort)
+                if StreamPort.parse(portText) == nil {
+                    Text("Port musí být číslo 1024–65535 (potvrď Enterem).").font(.caption).foregroundStyle(.red)
+                } else if StreamPort.parse(portText) != model.settings.streamingPort {
+                    Text("Potvrď Enterem – přenos se restartuje a diváci se znovu připojí.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+                SecureField("PIN pro focení (4–8 číslic)", text: $pin)
+                    .onSubmit(savePIN)
+                    .onDisappear(perform: savePIN)
+                if pinInvalid { Text("PIN musí mít 4–8 číslic.").font(.caption).foregroundStyle(.red) }
+                if model.streamPIN == nil, model.settings.streamingMode == .controls {
+                    Text("Bez PINu je focení z jiného zařízení vypnuté.").font(.caption).foregroundStyle(.secondary)
+                }
+                if let error = model.streamError { Text(error).font(.caption).foregroundStyle(.red) }
+                if model.streamError == nil, StreamPort.isValid(model.settings.streamingPort) {
+                    LabeledContent("Otevřít na jiném zařízení") {
+                        VStack(alignment: .leading, spacing: 4) {
+                            ForEach(NetworkAddresses.streamIPv4(), id: \.self) { address in
+                                let url = "http://\(address):\(model.settings.streamingPort)/"
+                                HStack {
+                                    Text(url).textSelection(.enabled).monospaced()
+                                    Button("Kopírovat") {
+                                        NSPasteboard.general.clearContents()
+                                        NSPasteboard.general.setString(url, forType: .string)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                Text("Sleduje: \(model.streamViewers)").font(.caption).foregroundStyle(.secondary)
+            }
+        }
+        .onAppear {
+            pin = model.streamPIN ?? ""
+            portText = String(model.settings.streamingPort)
+        }
+    }
+
+    private func commitPort() {
+        guard let port = StreamPort.parse(portText), port != model.settings.streamingPort else { return }
+        model.settings.streamingPort = port
+    }
+
+    private func savePIN() {
+        pinInvalid = !pin.isEmpty && !PinGuard.isValidPIN(pin)
+        if !pinInvalid, pin != (model.streamPIN ?? "") { model.setStreamPIN(pin.isEmpty ? nil : pin) }
     }
 }

@@ -1,5 +1,6 @@
 import AVFoundation
 import AppKit
+import ImageIO
 import MicroCAMCore
 
 struct StatusMessage: Equatable {
@@ -18,12 +19,19 @@ final class AppModel: ObservableObject {
             }
             if settings.jobContext != oldValue.jobContext || settings.storageRootPath != oldValue.storageRootPath
                 || settings.sortByType != oldValue.sortByType { capturesChanged() }
+            if settings.streamingEnabled != oldValue.streamingEnabled
+                || settings.streamingPort != oldValue.streamingPort { applyStreaming() }
         }
     }
     @Published private(set) var cameraAuthorized: Bool?
     @Published var message: StatusMessage?
 
     let engine = CaptureEngine()
+    /// Camera or viewer, fixed for the life of the process; a change in
+    /// Settings takes effect after `relaunch()`.
+    let launchMode: AppMode
+    lazy var viewer = ViewerModel(settings: { [unowned self] in self.settings },
+                                  update: { [unowned self] body in body(&self.settings) })
     let lifecycle = LifecycleMonitor()
     weak var mainWindow: NSWindow?
     private let store: SettingsStore
@@ -68,6 +76,7 @@ final class AppModel: ObservableObject {
     private var keyboard: KeyboardMonitor?
 
     func handle(_ action: ShortcutAction) {
+        guard launchMode == .camera else { return }
         switch action {
         case .toggleGrid: gridVisible.toggle()
         case .resetZoom: previewView?.resetZoom()
@@ -101,17 +110,26 @@ final class AppModel: ObservableObject {
     init() {
         previewRenderer = MetalPreviewRenderer(adjustments: adjustmentsBox)
         store = demo?.settingsStore() ?? SettingsStore()
-        settings = store.load()
-        showFirstRun = settings.storageRoot == nil
+        let loaded = store.load()
+        settings = loaded
+        launchMode = loaded.appMode
+        showFirstRun = settings.storageRoot == nil && launchMode == .camera
         let renderer = previewRenderer
         let adjusted = adjustedMode
         let recorder = self.recorder
         let adjustments = adjustmentsBox
+        let hub = streamHub
         engine.onVideoSample = { sampleBuffer in
-            if adjusted.value, let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) {
-                renderer?.push(pixelBuffer)
+            if let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) {
+                if adjusted.value { renderer?.push(pixelBuffer) }
+                hub.offer(pixelBuffer, adjustments: adjustments.value)
             }
             recorder.appendVideo(sampleBuffer, adjustments: adjustments.value)
+        }
+        streamHub.onViewersChanged = { [weak self] count in
+            guard let self else { return }
+            self.streamViewers = count
+            self.lifecycle.update { $0.streamViewers = count > 0 }
         }
         engine.onAudioSample = { recorder.appendAudio($0) }
         recorder.onFailure = { [weak self] error in
@@ -160,13 +178,18 @@ final class AppModel: ObservableObject {
         if let demo {
             demoDriver = DemoDriver(model: self, config: demo)
             demoDriver?.start()
+        } else if launchMode == .viewer {
+            viewer.start()
         } else {
             Task { await start() }
         }
     }
 
     /// Demo mode: a fake camera fed with still photos, no permission prompts.
-    func activateDemo(root: URL, job: String?) {
+    /// With `streamPort` the stream runs too (no Bonjour, PIN only in memory),
+    /// so `scripts/stream-smoke.sh` can check it without a camera.
+    func activateDemo(root: URL, job: String?, streamPort: Int? = nil, streamPIN: String? = nil,
+                      streamMode: StreamMode? = nil) {
         cameraAuthorized = true
         engine.activateDemo()
         settings.storageRootPath = root.path
@@ -175,6 +198,12 @@ final class AppModel: ObservableObject {
         showFirstRun = false
         syncAdjustments()
         capturesChanged()
+        if let streamPort {
+            cachedStreamPIN = .some(streamPIN.flatMap { PinGuard.isValidPIN($0) ? $0 : nil })
+            settings.streamingPort = streamPort
+            if let streamMode { settings.streamingMode = streamMode }
+            settings.streamingEnabled = true
+        }
     }
 
     func attachMainWindow(_ window: NSWindow) {
@@ -192,11 +221,13 @@ final class AppModel: ObservableObject {
     }
 
     func start() async {
+        guard launchMode == .camera else { return }
         let granted = await AVCaptureDevice.requestAccess(for: .video)
         cameraAuthorized = granted
         guard granted else { return }
         selectCamera(settings.lastDeviceID)
         applyLifecycle()
+        applyStreaming()
     }
 
     func selectCamera(_ id: String?) {
@@ -264,9 +295,13 @@ final class AppModel: ObservableObject {
         library.reload(folders: settings.layout?.listedFolders(for: settings.jobContext) ?? [])
     }
 
-    func takePhoto(kind: CaptureKind = .photo) {
+    /// `remote` marks a photo requested from the stream page; `completion`
+    /// reports the saved file (main queue).
+    func takePhoto(kind: CaptureKind = .photo, remote: Bool = false,
+                   completion: ((Result<URL, Error>) -> Void)? = nil) {
         guard let frame = engine.latestFrame.value, Date().timeIntervalSince(frame.receivedAt) < 1 else {
             report(CaptureError.noFrame, prefix: "Fotka neuložena")
+            completion?(.failure(CaptureError.noFrame))
             return
         }
         let url: URL
@@ -274,6 +309,7 @@ final class AppModel: ObservableObject {
             url = try reserveURL(kind: kind)
         } catch {
             report(error, prefix: "Fotka neuložena")
+            completion?(.failure(error))
             return
         }
         photoCapturer.capture(frame.pixelBuffer, adjustments: adjustmentsBox.value,
@@ -282,10 +318,52 @@ final class AppModel: ObservableObject {
             self.releaseURL(url)
             switch result {
             case .success:
-                self.message = StatusMessage(text: "Uloženo: \(url.lastPathComponent)", isError: false)
+                let name = url.lastPathComponent
+                self.message = StatusMessage(text: remote ? "Vyfoceno z recepce: \(name)" : "Uloženo: \(name)",
+                                             isError: false)
                 self.capturesChanged()
+                completion?(.success(url))
             case .failure(let error):
                 self.report(error, prefix: "Fotka neuložena")
+                completion?(.failure(error))
+            }
+        }
+    }
+
+    /// Renders shapes onto a saved capture and stores the result as the next
+    /// index of the same timestamp (`…_2.jpg`); the original stays untouched.
+    func saveAnnotatedCopy(of source: URL, shapes: [AnnotationShape],
+                           completion: @escaping (Result<URL, Error>) -> Void) {
+        guard let name = CaptureFileName.parse(source.lastPathComponent) else {
+            return completion(.failure(CocoaError(.fileReadInvalidFileName)))
+        }
+        let pending = pendingURLs
+        let destination = CaptureFileNamer(fileExists: {
+            pending.contains($0) || FileManager.default.fileExists(atPath: $0.path)
+        }).availableURL(in: source.deletingLastPathComponent(), prefix: name.prefix, timestamp: name.timestamp, ext: "jpg")
+        pendingURLs.insert(destination)
+        let quality = settings.jpegQuality
+        Task.detached(priority: .userInitiated) {
+            let result: Result<URL, Error> = Result {
+                guard let src = CGImageSourceCreateWithURL(source as CFURL, nil),
+                      let image = CGImageSourceCreateImageAtIndex(src, 0, nil),
+                      let rendered = AnnotationRenderer.render(shapes, onto: image),
+                      let dest = CGImageDestinationCreateWithURL(destination as CFURL, "public.jpeg" as CFString, 1, nil)
+                else { throw CocoaError(.fileWriteUnknown) }
+                CGImageDestinationAddImage(dest, rendered, [kCGImageDestinationLossyCompressionQuality: quality] as CFDictionary)
+                guard CGImageDestinationFinalize(dest) else { throw CocoaError(.fileWriteUnknown) }
+                return destination
+            }
+            await MainActor.run {
+                self.releaseURL(destination)
+                switch result {
+                case .success(let url):
+                    self.message = StatusMessage(text: "Anotace z recepce: \(url.lastPathComponent)", isError: false)
+                    self.capturesChanged()
+                case .failure(let error):
+                    self.report(error, prefix: "Anotace neuložena")
+                }
+                completion(result)
             }
         }
     }
@@ -575,6 +653,96 @@ final class AppModel: ObservableObject {
             message = StatusMessage(text: text + ".", isError: !failed.isEmpty)
             capturesChanged()
         }
+    }
+
+    // MARK: Streaming
+
+    let streamHub = StreamHub(queue: DispatchQueue(label: "microcam.stream"))
+    private var streamServer: StreamServer?
+    @Published private(set) var streamViewers = 0
+    @Published private(set) var streamError: String?
+    private var cachedStreamPIN: String?? = nil
+    private lazy var streamBackend = StreamBackendAdapter(model: self)
+
+    var streamPIN: String? {
+        if case .some(let value) = cachedStreamPIN { return value }
+        let value = KeychainToken.read(account: "stream-pin")
+        cachedStreamPIN = .some(value)
+        return value
+    }
+
+    func setStreamPIN(_ pin: String?) {
+        let value = pin.flatMap { PinGuard.isValidPIN($0) ? $0 : nil }
+        KeychainToken.write(value, account: "stream-pin")
+        cachedStreamPIN = .some(value)
+    }
+
+    /// Starts, restarts or stops the server to match settings (camera mode only;
+    /// a pending switch to viewer mode keeps streaming until the relaunch).
+    func applyStreaming() {
+        guard launchMode == .camera, settings.streamingEnabled else {
+            streamServer?.stop()
+            streamServer = nil
+            streamError = nil
+            return
+        }
+        if streamServer == nil {
+            // The server calls the router on the main queue, so these closures may assume the main actor.
+            let router = StreamRouter(backend: streamBackend, mode: { [weak self] in
+                MainActor.assumeIsolated { self?.settings.streamingMode ?? .imageOnly }
+            }, pin: { [weak self] in
+                MainActor.assumeIsolated { self?.streamPIN }
+            })
+            let server = StreamServer(router: router, hub: streamHub, queue: DispatchQueue(label: "microcam.stream.server"))
+            server.onError = { [weak self] in self?.streamError = $0 }
+            streamServer = server
+        }
+        guard StreamPort.isValid(settings.streamingPort) else {
+            streamServer?.stop()
+            streamError = "Port musí být 1024–65535."
+            return
+        }
+        // Demo mode stays on loopback and off Bonjour so it never shows up as a real bench.
+        streamServer?.start(port: UInt16(settings.streamingPort),
+                            serviceName: demo == nil ? (Host.current().localizedName ?? "microCAM") : nil,
+                            loopbackOnly: demo != nil)
+    }
+
+    // MARK: Viewer mode
+
+    /// Mode changes take effect on a fresh process. The helper waits for this
+    /// one to quit, opens the bundle again and, should `open` fail, starts the
+    /// executable directly. Quits only when the helper is running; otherwise
+    /// the user is told to restart by hand and the app stays open.
+    func relaunch() {
+        flushSettings()
+        let bundle = Bundle.main.bundleURL
+        guard bundle.pathExtension == "app", let executable = Bundle.main.executableURL else {
+            return relaunchFailed("microCAM neběží jako aplikace (.app).")
+        }
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/sh")
+        process.arguments = ["-c", "sleep 1; /usr/bin/open -n \"$0\" || exec \"$1\"", bundle.path, executable.path]
+        do {
+            try process.run()
+        } catch {
+            return relaunchFailed(error.localizedDescription)
+        }
+        NSApp.terminate(nil)
+    }
+
+    private func relaunchFailed(_ detail: String) {
+        let alert = NSAlert()
+        alert.messageText = "Restart se nepodařil"
+        alert.informativeText = "\(detail)\nUkonči microCAM a spusť ho znovu – nový režim se použije při dalším spuštění."
+        alert.runModal()
+    }
+
+    func showFullScreen(on screen: NSScreen) {
+        guard let window = mainWindow else { return }
+        if window.styleMask.contains(.fullScreen) { window.toggleFullScreen(nil) }
+        window.setFrame(screen.visibleFrame, display: true)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { window.toggleFullScreen(nil) }
     }
 
     // MARK: Integrations

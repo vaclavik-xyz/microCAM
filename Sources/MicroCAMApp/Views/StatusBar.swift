@@ -18,6 +18,10 @@ struct StatusBar: View {
                     Text("vypadlé snímky: \(model.droppedFrames)").foregroundStyle(.orange)
                 }
             }
+            if model.streamViewers > 0 {
+                Label("Sleduje \(model.streamViewers)", systemImage: "dot.radiowaves.left.and.right")
+                    .foregroundStyle(.secondary)
+            }
             Spacer()
             if let message = model.message {
                 Text(message.text)

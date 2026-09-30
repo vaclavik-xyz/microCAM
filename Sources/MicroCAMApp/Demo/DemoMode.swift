@@ -6,13 +6,18 @@ import MicroCAMCore
 /// Screenshot demo, enabled only by environment variables set by
 /// `scripts/make-screenshots.sh`. Still photos stand in for the camera and the
 /// app captures its own windows (own windows need no Screen Recording
-/// permission). Never active in normal use.
+/// permission). Never active in normal use. `MICROCAM_DEMO_STREAM_PORT` (and
+/// optionally `MICROCAM_DEMO_STREAM_PIN`, `MICROCAM_DEMO_STREAM_MODE=imageOnly`)
+/// also serves the frames as a live stream for `scripts/stream-smoke.sh`.
 struct DemoConfig {
     let frames: [URL]
     let root: URL
     let job: String?
     let compare: (URL, URL)?
     let shotsDir: URL?
+    var streamPort: Int? = nil
+    var streamPIN: String? = nil
+    var streamMode: StreamMode? = nil
 
     static func fromEnvironment(_ env: [String: String] = ProcessInfo.processInfo.environment) -> DemoConfig? {
         let urls = { (key: String) in
@@ -25,7 +30,10 @@ struct DemoConfig {
                           root: URL(fileURLWithPath: root, isDirectory: true),
                           job: env["MICROCAM_DEMO_JOB"],
                           compare: pair.count == 2 ? (pair[0], pair[1]) : nil,
-                          shotsDir: env["MICROCAM_DEMO_SHOTS"].map { URL(fileURLWithPath: $0, isDirectory: true) })
+                          shotsDir: env["MICROCAM_DEMO_SHOTS"].map { URL(fileURLWithPath: $0, isDirectory: true) },
+                          streamPort: env["MICROCAM_DEMO_STREAM_PORT"].flatMap { Int($0) },
+                          streamPIN: env["MICROCAM_DEMO_STREAM_PIN"],
+                          streamMode: env["MICROCAM_DEMO_STREAM_MODE"].flatMap(StreamMode.init(rawValue:)))
     }
 
     /// Separate, freshly reset settings domain: the demo never touches real settings.
@@ -50,7 +58,8 @@ final class DemoDriver {
     }
 
     func start() {
-        model.activateDemo(root: config.root, job: config.job)
+        model.activateDemo(root: config.root, job: config.job, streamPort: config.streamPort, streamPIN: config.streamPIN,
+                           streamMode: config.streamMode)
         NSApp.activate(ignoringOtherApps: true)
         show(config.frames[0])
         timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
@@ -79,6 +88,7 @@ final class DemoDriver {
         guard let frame else { return }
         model.engine.latestFrame.value = LatestFrame(pixelBuffer: frame, receivedAt: Date())
         model.previewRenderer?.push(frame)
+        model.streamHub.offer(frame, adjustments: model.adjustmentsBox.value)
         var format: CMVideoFormatDescription?
         CMVideoFormatDescriptionCreateForImageBuffer(allocator: nil, imageBuffer: frame, formatDescriptionOut: &format)
         guard let format else { return }
