@@ -133,6 +133,7 @@ final class AppModel: ObservableObject {
             self.lifecycle.update { $0.streamViewers = count > 0 }
         }
         engine.onAudioSample = { recorder.appendAudio($0) }
+        engine.onVideoDropped = { recorder.noteDroppedFrame() }
         recorder.onFailure = { [weak self] error in
             self?.stopRecording(reason: error.localizedDescription)
         }

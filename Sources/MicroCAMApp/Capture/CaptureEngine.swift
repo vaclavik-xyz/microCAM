@@ -32,6 +32,9 @@ final class CaptureEngine: NSObject, ObservableObject {
     /// Set once before the session starts; called on the video/audio queue.
     var onVideoSample: ((CMSampleBuffer) -> Void)?
     var onAudioSample: ((CMSampleBuffer) -> Void)?
+    /// A video frame the capture pipeline discarded before it reached us
+    /// (late frames are discarded, see `alwaysDiscardsLateVideoFrames`).
+    var onVideoDropped: (() -> Void)?
     /// Called on the main queue.
     var onCamerasChanged: (() -> Void)?
     var onCameraDisconnected: (() -> Void)?
@@ -302,5 +305,10 @@ extension CaptureEngine: AVCaptureVideoDataOutputSampleBufferDelegate, AVCapture
         } else {
             onAudioSample?(sampleBuffer)
         }
+    }
+
+    func captureOutput(_ output: AVCaptureOutput, didDrop sampleBuffer: CMSampleBuffer,
+                       from connection: AVCaptureConnection) {
+        if output === videoOutput { onVideoDropped?() }
     }
 }
