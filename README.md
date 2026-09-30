@@ -46,9 +46,8 @@ also pick one in *Settings → General → Language*.
   viewer.
 - **MCP server for AI agents:** agents on your network can look through the
   microscope, take photos and record, and you see everything they do.
-- **Integrations:** macOS share sheet, an optional generic webhook for
-  sending captures to your own system (your CRM, n8n, Make, Zapier…), and
-  an optional MCP server so AI agents can see and use the camera.
+- **Integrations:** macOS share sheet, and an optional generic webhook for
+  sending captures to your own system (your CRM, n8n, Make, Zapier…).
 - **Almost no dependencies.** Swift, SwiftUI/AppKit and Apple frameworks,
   plus [Sparkle](https://sparkle-project.org) for updates.
 
