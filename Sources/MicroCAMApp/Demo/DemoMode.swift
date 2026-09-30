@@ -136,9 +136,11 @@ final class DemoDriver {
         await pause(1.5)
         capture(main, withChildren: true, as: "01-main-window", in: dir)
 
-        // 1b. Side panel scrolled half-way in a shorter window.
+        // 1b. Side panel scrolled half-way in a shorter window, two photos selected.
         main.setFrame(NSRect(x: 80, y: 80, width: 1100, height: 560), display: true)
         model.message = nil
+        let photos = model.library.files.filter { $0.pathExtension.lowercased() == "jpg" }
+        model.library.grid = GridSelection(selected: Set(photos.dropFirst(2).prefix(2)))
         await pause(1)
         if let scroll = scrollViews(in: main.contentView).first(where: { $0.convert($0.bounds, to: nil).minX < 50 }) {
             let clip = scroll.contentView
@@ -147,6 +149,7 @@ final class DemoDriver {
         }
         await pause(1)
         capture(main, withChildren: true, as: "01b-side-panel-scrolled", in: dir)
+        model.library.grid = GridSelection()
         main.setFrame(NSRect(x: 80, y: 80, width: 1440, height: 860), display: true)
         await pause(1)
 

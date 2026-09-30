@@ -1,6 +1,7 @@
 /* microCAM – English (source language). Keys are the English texts used in
    Sources/MicroCAMApp. Every key must also exist in every other *.lproj;
    `swift test` (LocalizationTests) checks it. */
+
 "%@ isn't reachable. Trying again…" = "%@ isn't reachable. Trying again…";
 "0 – reset zoom (or double-click the image)" = "0 – reset zoom (or double-click the image)";
 "4–8 digits. Other devices need it to take photos." = "4–8 digits. Other devices need it to take photos.";
@@ -30,7 +31,9 @@
 "Choose folder…" = "Choose folder…";
 "Choose the folder where microCAM saves photos and videos" = "Choose the folder where microCAM saves photos and videos";
 "Choose" = "Choose";
+"Clear selection" = "Clear selection";
 "Close" = "Close";
+"Compare the two photos" = "Compare the two photos";
 "Connect a USB microscope or a capture card." = "Connect a USB microscope or a capture card.";
 "Connect to %@" = "Connect to %@";
 "Connect" = "Connect";
@@ -50,7 +53,6 @@
 "Example: %@" = "Example: %@";
 "failed: %lld (%@)" = "failed: %lld (%@)";
 "Files sent: %lld" = "Files sent: %lld";
-"Files: %lld" = "Files: %lld";
 "Fine" = "Fine";
 "Finishing the previous video" = "Finishing the previous video";
 "Folder" = "Folder";
@@ -151,8 +153,8 @@
 "Saves energy while the window is minimized or covered, or the screen is locked. Recording, timelapse and viewers of the live stream keep it on." = "Saves energy while the window is minimized or covered, or the screen is locked. Recording, timelapse and viewers of the live stream keep it on.";
 "Saving video…" = "Saving video…";
 "Scroll or pinch – zoom, drag – move the image" = "Scroll or pinch – zoom, drag – move the image";
-"Select two photos to compare them" = "Select two photos to compare them";
 "Selected files: %lld" = "Selected files: %lld";
+"Selected: %lld" = "Selected: %lld";
 "Send to a webhook" = "Send to a webhook";
 "Send to webhook" = "Send to webhook";
 "Send videos too" = "Send videos too";

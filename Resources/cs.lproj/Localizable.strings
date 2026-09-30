@@ -1,5 +1,6 @@
 /* microCAM – Czech. Same keys as en.lproj/Localizable.strings.
    Informal "ty", as in the rest of the app. */
+
 "%@ isn't reachable. Trying again…" = "%@ není dostupný. Zkouším to znovu…";
 "0 – reset zoom (or double-click the image)" = "0 – zrušit zoom (nebo dvojklik do obrazu)";
 "4–8 digits. Other devices need it to take photos." = "4–8 číslic. Jiná zařízení ho potřebují k focení.";
@@ -29,7 +30,9 @@
 "Choose folder…" = "Vybrat složku…";
 "Choose the folder where microCAM saves photos and videos" = "Vyber složku, do které bude microCAM ukládat fotky a videa";
 "Choose" = "Vybrat";
+"Clear selection" = "Zrušit výběr";
 "Close" = "Zavřít";
+"Compare the two photos" = "Porovnat obě fotky";
 "Connect a USB microscope or a capture card." = "Připoj USB mikroskop nebo záznamovou kartu.";
 "Connect to %@" = "Připojit k %@";
 "Connect" = "Připojit";
@@ -49,7 +52,6 @@
 "Example: %@" = "Příklad: %@";
 "failed: %lld (%@)" = "nepodařilo se: %lld (%@)";
 "Files sent: %lld" = "Odesláno souborů: %lld";
-"Files: %lld" = "Souborů: %lld";
 "Fine" = "Jemná";
 "Finishing the previous video" = "Dokončuji ukládání předchozího videa";
 "Folder" = "Složka";
@@ -150,8 +152,8 @@
 "Saves energy while the window is minimized or covered, or the screen is locked. Recording, timelapse and viewers of the live stream keep it on." = "Šetří energii, když je okno minimalizované, zakryté nebo je obrazovka zamčená. Nahrávání, časosběr a diváci přenosu ji nechají zapnutou.";
 "Saving video…" = "Ukládám video…";
 "Scroll or pinch – zoom, drag – move the image" = "Kolečko nebo sevření – zoom, tažení – posun obrazu";
-"Select two photos to compare them" = "Vyber dvě fotky, které chceš porovnat";
 "Selected files: %lld" = "Vybráno souborů: %lld";
+"Selected: %lld" = "Vybráno: %lld";
 "Send to a webhook" = "Odesílat přes webhook";
 "Send to webhook" = "Odeslat přes webhook";
 "Send videos too" = "Posílat i videa";

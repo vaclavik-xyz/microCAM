@@ -7,7 +7,9 @@ A tidier main window.
 - The side panel is a grid of thumbnails grouped by day and remembers its
   width. Hide it with the sidebar button.
 - Photo, video and timelapse are one group in the middle of the toolbar.
-  Settings has its own button; the folder button moved to the side panel.
+  Settings has its own button. The side panel shows the current folder at
+  the top (click to open it) and a bar with share, compare and more only
+  while files are selected.
 - The area around the picture follows the window colour instead of black.
   It stays black in full screen.
 - While recording, a red *REC* badge with the time shows over the picture,

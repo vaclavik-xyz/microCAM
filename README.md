@@ -96,7 +96,9 @@ The window:
   left when jobs are on.
 - **Side panel.** The captures of the current folder as thumbnails, grouped
   by day. Click selects, ⌘-click adds, ⇧-click selects a range, double-click
-  opens, and you can drag a file into another app. The panel remembers its
+  opens, and you can drag a file into another app. The folder name at the top
+  opens the folder; share and compare appear at the bottom once you select
+  files. The panel remembers its
   width. Hide it with the button next to the window buttons.
 - **Preview.** A red *REC* badge with the running time shows while recording.
   Short messages like *Saved: …* show at the bottom and hide on their own.

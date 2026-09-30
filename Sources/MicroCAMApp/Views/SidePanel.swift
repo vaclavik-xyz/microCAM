@@ -19,13 +19,17 @@ struct SidePanel: View {
     private let columns = [GridItem(.adaptive(minimum: 84, maximum: 160), spacing: 8)]
 
     var body: some View {
-        VStack(spacing: 0) {
+        Group {
             if library.files.isEmpty {
-                Text("Photos and videos you take appear here.")
-                    .font(.callout).foregroundStyle(.secondary).multilineTextAlignment(.center)
-                    .padding().frame(maxWidth: .infinity, maxHeight: .infinity)
+                VStack(spacing: 0) {
+                    folderRow.padding(.horizontal, 10)
+                    Text("Photos and videos you take appear here.")
+                        .font(.callout).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                        .padding().frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
             } else {
                 ScrollView {
+                    folderRow
                     LazyVGrid(columns: columns, alignment: .leading, spacing: 10) {
                         ForEach(CaptureDays.group(library.files), id: \.day) { day in
                             Section {
@@ -40,29 +44,65 @@ struct SidePanel: View {
                             }
                         }
                     }
-                    .padding(.horizontal, 10).padding(.bottom, 10)
+                    .padding(.bottom, 10)
                 }
+                .contentMargins(.horizontal, 10, for: .scrollContent)
                 // A click next to the tiles clears the selection.
                 .background(Color.clear.contentShape(Rectangle()).onTapGesture { library.grid = GridSelection() })
             }
-            Divider()
-            footer
         }
+        .safeAreaInset(edge: .bottom) {
+            if !library.selection.isEmpty {
+                selectionBar
+                    .padding(8)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
+        .animation(.easeOut(duration: 0.15), value: library.selection.isEmpty)
     }
 
-    private var footer: some View {
-        HStack(spacing: 8) {
-            Text("Files: \(library.files.count)").font(.caption).foregroundStyle(.secondary)
-                .fixedSize()
+    /// Where captures go now, with the file count; click opens it in Finder.
+    private var folderRow: some View {
+        Button { model.revealCaptureFolder() } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "folder.fill").foregroundStyle(.tint)
+                Group {
+                    if let name = model.captureFolder?.lastPathComponent {
+                        Text(verbatim: name)
+                    } else {
+                        Text("Not chosen")
+                    }
+                }
+                .font(.headline).lineLimit(1).truncationMode(.middle)
+                Spacer(minLength: 4)
+                Text(verbatim: "\(library.files.count)")
+                    .font(.callout.monospacedDigit()).foregroundStyle(.secondary)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .padding(.vertical, 6)
+        .help("Open the folder where captures are saved now")
+    }
+
+    /// Actions for the selected files; shown only while something is selected.
+    private var selectionBar: some View {
+        HStack(spacing: 12) {
+            // Count in the selection colour; the full text is in the tooltip,
+            // "Selected: 2" doesn't fit a narrow panel.
+            HStack(spacing: 4) {
+                Image(systemName: "checkmark.circle.fill").foregroundStyle(.tint)
+                Text(verbatim: "\(library.selection.count)").monospacedDigit()
+            }
+            .font(.callout.weight(.medium)).fixedSize()
+            .help("Selected: \(library.selection.count)")
             Spacer(minLength: 4)
-            Button { model.revealCaptureFolder() } label: { Image(systemName: "folder") }
-                .help("Open the folder where captures are saved now")
+            if comparePair != nil {
+                Button { compare = comparePair } label: { Image(systemName: "rectangle.split.2x1") }
+                    .help("Compare the two photos")
+            }
             ShareLink(items: library.selectedFiles) { Image(systemName: "square.and.arrow.up") }
-                .disabled(library.selection.isEmpty)
                 .help("Share (AirDrop, Mail, Messages…)")
-            Button { compare = comparePair } label: { Image(systemName: "rectangle.split.2x1") }
-                .disabled(comparePair == nil)
-                .help("Select two photos to compare them")
             if model.settings.jobsEnabled || model.webhookEndpoint != nil {
                 Menu {
                     if model.settings.jobsEnabled {
@@ -75,12 +115,17 @@ struct SidePanel: View {
                     }
                 } label: { Image(systemName: "ellipsis.circle") }
                 .menuIndicator(.hidden).fixedSize()
-                .disabled(library.selection.isEmpty)
                 .help("More actions for the selected files")
             }
+            Button { library.grid = GridSelection() } label: { Image(systemName: "xmark.circle.fill") }
+                .foregroundStyle(.secondary)
+                .help("Clear selection")
         }
         .buttonStyle(.borderless)
-        .padding(.horizontal, 10).padding(.vertical, 7)
+        .padding(.horizontal, 12).padding(.vertical, 8)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.primary.opacity(0.08)))
+        .shadow(color: .black.opacity(0.12), radius: 6, y: 2)
     }
 
     @ViewBuilder
