@@ -1,94 +1,148 @@
 # microCAM
 
-Small native macOS app for a microscope camera at the repair bench: live
-preview, photos, long recordings with narration, timelapse, and files sorted
-per repair order. Works with any camera macOS sees (USB/UVC, HDMI capture
-cards such as Elgato Cam Link).
+**A small, native macOS app for the microscope camera at a repair bench.**
+Live preview, photos, hour-long recordings with narration, timelapse, and
+every capture filed under the repair order it belongs to.
 
-## Screenshots
+![microCAM main window: live microscope image, repair order bar and the side panel with the order's photos and videos](docs/images/microcam-window.jpg)
 
-Screenshots are not committed (they show photos of customer boards). Generate
-them locally into `docs/screenshots/` (git-ignored) with
-`scripts/make-screenshots.sh <photos>` — demo mode, no camera or permissions
-needed; see the script header for the expected photo folder layout.
+microCAM works with any camera macOS can see: USB/UVC microscopes and HDMI
+cameras behind a capture card such as the Elgato Cam Link 4K. It was built
+to replace Plugable Digital Viewer on an Apple Silicon Mac. That app is
+Intel-only, left running all week it used ~20 % CPU, and its recordings
+started to stutter after a while.
+
+## Highlights
+
+- **Light enough to leave open for days.** The preview goes from the camera
+  straight to the GPU. The camera stops while the window is hidden, the
+  screen is locked or the Mac sleeps. microCAM also opts out of macOS camera
+  effects (Reactions, Center Stage) that would otherwise analyse every frame.
+- **Recordings that don't stutter.** Hardware HEVC/H.264 encoding, narration
+  from any microphone, no length limit. A crash-safe file is written while
+  recording.
+- **Files sorted per repair order.** Type the order number (`PR-260412`) and
+  every photo and video lands in that order's folder. Misfiled shots can be
+  moved later without overwriting anything.
+- **Image adjustments per camera:** brightness, contrast, saturation, white
+  balance, gamma and sharpening. They apply to the preview, photos and video
+  alike, and cost nothing when switched off.
+- **Digital zoom, grid, timelapse and before/after compare** (side by side or
+  with a slider).
+- **Live stream** to a browser or to microCAM on another Mac, with remote
+  photos and annotations for showing the customer their board.
+- **Integrations:** macOS share sheet, and an optional generic webhook for
+  sending captures to your own system (CRM, n8n, Make, Zapier…).
+- **No third-party dependencies.** Swift, SwiftUI/AppKit and Apple
+  frameworks only.
+
+## Requirements
+
+- macOS 14 or later, Apple Silicon or Intel
+- Xcode command-line tools to build (`xcode-select --install`)
 
 ## Build and install
 
-    scripts/make-app.sh              # build/microCAM.app (Apple Silicon, ad-hoc signed)
-    scripts/deploy-bench.sh       # copy to bench Mac:/Applications
+```sh
+scripts/make-app.sh                 # → build/microCAM.app (ad-hoc signed)
+open build/microCAM.app             # or copy it to /Applications
+scripts/deploy.sh <ssh-host> [dir]  # build → another Mac over ssh (universal)
+scripts/deploy-bench.sh          # the same for bench Mac
+```
 
-Requires macOS 14+ and Xcode command-line tools. Ad-hoc signing means macOS
-may ask for camera/microphone access again after an update.
+The app is ad-hoc signed for personal use, so macOS may ask for camera and
+microphone access again after an update.
 
 ## Using it
 
-- Space – photo · R – record/stop · G – grid · 0 – reset zoom
-- Scroll or pinch to zoom the preview, drag to pan (photos and videos are always full frame)
-- Toolbar: photo, record, timelapse, image adjustments (saved per camera)
-- Side panel: captures of the active job; double-click opens, "Přesunout…" moves to another job, "Porovnat" compares two photos
+On first launch microCAM asks where to store captures. It never picks a
+folder on its own.
+
+| Key | Action |
+|---|---|
+| `Space` | take a photo |
+| `R` | start / stop recording |
+| `G` | toggle the grid |
+| `0` | reset zoom (or double-click the image) |
+| scroll / pinch, drag | zoom the preview, pan |
+| `⌘ ,` | settings |
+
+Shortcuts are ignored while you type in a text field, so a job code like
+`PR-2600` never triggers anything. Zoom and grid affect only the preview:
+photos and videos are always full frame.
+
+### Where files go
+
+```
+<root>/PR-260412/PR-260412_2026-09-25_14-02-11.jpg
+<root>/PR-260412/PR-260412_2026-09-25_14-30-00.mov
+<root>/_Nezařazeno/bez-zakazky_2026-09-25_15-00-00.jpg      # no job set
+```
+
+- Two captures in the same second get `_2`, `_3`. Nothing is ever
+  overwritten.
+- **Settings → Storage** has two switches:
+  - Turn repair orders off, and everything goes straight into `<root>` as
+    `microcam_…`.
+  - Turn on sorting by type, and each order gets `Fotky/`, `Videa/` and
+    `Časosběr/` subfolders.
+- Recordings are written to `~/Library/Application Support/microCAM/Recording/`
+  and moved into place when finished, so iCloud never uploads a half-written
+  file. If a leftover file is found after a crash, microCAM opens that folder.
 
 ## Integrations
 
-- **Sdílet** (side panel, always available): the macOS share sheet — AirDrop,
-  Mail, Messages, Notes and any app that accepts files.
-- **Webhook** (Settings → Integrace, off by default): selected captures are
-  sent one by one as `multipart/form-data` `POST` to your URL:
+- **Share.** The side panel's share button (AirDrop, Mail, Messages, …) is
+  always available.
+- **Webhook.** *Settings → Integrations*, off by default. Selected captures
+  are sent one by one as a `multipart/form-data` `POST`:
 
-  | field | value |
+  | Field | Value |
   |---|---|
-  | `file` | the JPEG / MOV (`image/jpeg`, `video/quicktime`) |
-  | `job` | repair-order code from the file name (omitted without a job) |
+  | `file` | the JPEG / MOV |
+  | `job` | repair-order code from the file name (omitted without one) |
   | `kind` | `photo`, `video` or `timelapse` |
-  | `capturedAt` | ISO 8601 from the file name |
-  | `idempotencyKey` | SHA-256 of the file (also the `Idempotency-Key` header) |
+  | `capturedAt` | ISO 8601 |
+  | `idempotencyKey` | SHA-256 of the file, also sent as the `Idempotency-Key` header |
 
-  An optional token is sent as `Authorization: Bearer <token>` and stored in
-  the Keychain. Any 2xx counts as success. Videos are sent only when
-  "Posílat i videa" is on. Works with an own server, n8n, Make, Zapier, or a
-  receiving endpoint in the CRM.
+  An optional token is sent as `Authorization: Bearer …` and kept in the
+  Keychain. Any 2xx counts as success. Videos are sent only when "Posílat i
+  videa" is on; uploads stream from disk, so hour-long videos are fine.
 
 ## Live stream and viewer
 
-Settings → Přenos: stream the live image to other devices on the shop
-network or tailnet (off by default). Open `http://<bench-ip>:8090/` in any
-browser, or run microCAM in **Prohlížeč** mode on another Mac (Settings →
-Režim appky) — it finds the bench via Bonjour.
+*Settings → Přenos*, off by default. It streams the live image to other
+devices on the shop network or tailnet. Open `http://<bench-ip>:8090/` in any
+browser, or switch microCAM on another Mac to **Prohlížeč** mode (*Settings →
+Režim appky*); it finds the bench via Bonjour.
 
-- *Jen obraz* — just the picture (for a customer-facing screen).
-- *S ovládáním* — job, full screen, drawing over the live image, and
-  **Vyfotit**: the photo is taken on the bench into the active job; draw on
-  it and **Uložit k zakázce** saves an annotated copy (`…_2.jpg`), the
-  original stays untouched. Remote photos (and reading them back) need the
-  PIN set on the bench.
+- *Jen obraz*: just the picture, for a customer-facing screen.
+- *S ovládáním*: job code, full screen, drawing over the live image, and
+  **Vyfotit**. The photo is taken on the bench into the active job. Draw on
+  it and **Uložit k zakázce** saves an annotated copy (`…_2.jpg`); the
+  original stays untouched. Remote photos need the PIN set on the bench.
 
 Only local-network and Tailscale clients are accepted. Nothing listens while
-the toggle is off, and nothing is encoded while nobody watches.
-`scripts/stream-smoke.sh <host> [port] [pin]` checks a running stream.
-Without a camera, run the demo mode with `MICROCAM_DEMO_STREAM_PORT` (and
-`MICROCAM_DEMO_STREAM_PIN`, `MICROCAM_DEMO_STREAM_MODE=imageOnly`) set: it
-serves the still frames on 127.0.0.1 only. The smoke script adapts to *Jen
-obraz* and to a bench without a PIN (expects 403 and skips the PIN checks).
-`scripts/deploy.sh <ssh-host> [dir]` installs the app on any Mac.
-
-## Where files go
-
-You choose the root folder on first launch; microCAM never picks one itself.
-
-    <root>/PR-260042/PR-260042_2026-09-29_14-03-12.jpg
-    <root>/_Nezařazeno/bez-zakazky_2026-09-29_14-05-00.mov
-
-Settings → Ukládání: turn jobs off (everything goes into `<root>` as
-`microcam_…`) or turn on sorting by type (`Fotky/`, `Videa/`, `Časosběr/`).
-Nothing is ever overwritten; same-second captures get `_2`, `_3`.
-
-Recordings are written to `~/Library/Application Support/microCAM/Recording/`
-and moved into place when finished. If microCAM finds a leftover file there on
-launch (crash, power loss) it opens that folder; the file is playable up to
-the last 10 seconds.
+the stream is off, and nothing is encoded while nobody watches.
 
 ## Development
 
-    swift test        # MicroCAMCore unit tests
+```sh
+swift test                          # unit tests for MicroCAMCore
+scripts/make-app.sh                 # app bundle
+scripts/make-screenshots.sh <dir>   # screenshots in demo mode (no camera needed)
+scripts/stream-smoke.sh <host> [port] [pin]   # check a running stream
+```
 
-Design: `docs/superpowers/specs/2026-09-29-microcam-design.md`.
-Measured results: `docs/acceptance.md`.
+Demo mode without a camera can also serve the stream on 127.0.0.1: set
+`MICROCAM_DEMO_STREAM_PORT` (and optionally `MICROCAM_DEMO_STREAM_PIN`,
+`MICROCAM_DEMO_STREAM_MODE=imageOnly`). The smoke script adapts to *Jen obraz*
+and to a bench without a PIN.
+
+- `Sources/MicroCAMCore` holds the pure logic: naming, storage, moving,
+  settings, the image pipeline and policies. It is fully unit-tested.
+- `Sources/MicroCAMApp` is the thin AVFoundation/SwiftUI layer.
+- Design and plans live in `docs/superpowers/`. Measurements from the bench
+  Mac go to `docs/acceptance.md`.
+- The README image lives in `docs/images/`. `docs/screenshots/` is
+  git-ignored because it may contain photos of customer boards.
