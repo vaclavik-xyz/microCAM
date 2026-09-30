@@ -42,7 +42,8 @@ final class NoDeviceNamesTests: XCTestCase {
             for (index, line) in text.components(separatedBy: .newlines).enumerated() {
                 let place = "\(path):\(index + 1)"
                 let lower = line.lowercased()
-                if path != ownPath {
+                // LICENSE names the copyright holder, which is the point of it.
+                if path != ownPath && path != "LICENSE" {
                     for name in Self.forbiddenNames where lower.contains(name) { hits.append("\(place): \(name)") }
                 }
                 let range = NSRange(line.startIndex..., in: line)
