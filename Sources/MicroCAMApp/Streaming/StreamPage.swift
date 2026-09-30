@@ -28,8 +28,8 @@ enum StreamPage {
 <style>
 :root{
   --bg:#07080a;--panel:rgba(22,24,29,.84);--raised:rgba(255,255,255,.07);--raised-hi:rgba(255,255,255,.14);
-  --on:rgba(255,255,255,.2);--line:rgba(255,255,255,.09);--text:#eef0f4;--muted:#9aa3b2;--accent:#ff3b30;
-  --hit:44px;--gap:4px;--edge:12px;
+  --on:#eef0f4;--on-ink:#0b0c0f;--line:rgba(255,255,255,.09);--text:#eef0f4;--muted:#9aa3b2;--accent:#ff3b30;
+  --hit:44px;--gap:4px;--edge:12px;--reserve-b:0px;--reserve-r:0px;
   --st:env(safe-area-inset-top,0px);--sr:env(safe-area-inset-right,0px);
   --sb:env(safe-area-inset-bottom,0px);--sl:env(safe-area-inset-left,0px);
 }
@@ -38,7 +38,8 @@ html,body{margin:0;position:fixed;inset:0;overflow:hidden;background:var(--bg);c
   font:15px/1.25 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
   touch-action:none;overscroll-behavior:none;-webkit-text-size-adjust:100%}
-#stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+/* the image is centred in the space the main panel leaves free, so it never sits under the controls */
+#stage{position:fixed;top:0;left:0;right:var(--reserve-r);bottom:var(--reserve-b);display:flex;align-items:center;justify-content:center}
 #stage img{max-width:100%;max-height:100%;display:block;-webkit-user-drag:none}
 #ink{position:fixed;touch-action:none;pointer-events:none}
 body.drawing #ink{pointer-events:auto;cursor:crosshair}
@@ -63,30 +64,33 @@ body.offline #status .dot{background:var(--muted);box-shadow:none}
 #dock{position:fixed;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;gap:8px;
   padding:0 calc(var(--sr) + var(--edge)) calc(var(--sb) + var(--edge)) calc(var(--sl) + var(--edge));
   pointer-events:none;transition:opacity .35s}
-.panel{display:flex;align-items:center;gap:var(--gap);padding:5px;border-radius:24px;max-width:100%;
+.panel{display:flex;align-items:center;gap:var(--gap);padding:5px;border-radius:28px;max-width:100%;
   background:var(--panel);border:1px solid var(--line);pointer-events:auto;
   -webkit-backdrop-filter:blur(20px) saturate(1.4);backdrop-filter:blur(20px) saturate(1.4);
-  box-shadow:0 12px 32px rgba(0,0,0,.4)}
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 14px 36px rgba(0,0,0,.45)}
 .group{display:flex;align-items:center;gap:var(--gap)}
 .sep{width:1px;height:26px;background:var(--line);margin:0 4px;flex:none}
 button,.btn{appearance:none;border:0;margin:0;font:inherit;color:var(--text);cursor:pointer;text-decoration:none;
   display:inline-flex;align-items:center;justify-content:center;gap:7px;flex:none;
-  min-width:var(--hit);height:var(--hit);padding:0 11px;border-radius:19px;background:transparent;
+  min-width:var(--hit);height:var(--hit);padding:0 13px;border-radius:999px;background:transparent;
   font-weight:600;white-space:nowrap;touch-action:manipulation;transition:background .15s,opacity .15s,transform .1s}
 button.icon,.btn.icon{width:var(--hit);padding:0}
 @media (hover:hover){button:hover:not(:disabled),.btn:hover{background:var(--raised-hi)}}
 button:active:not(:disabled),.btn:active{transform:scale(.94)}
 button:focus-visible,.btn:focus-visible{outline:2px solid #fff;outline-offset:2px}
-button.on{background:var(--on)}
+button.on,button.on:hover{background:var(--on)!important;color:var(--on-ink)}
 button:disabled{opacity:.38;cursor:default}
-button.primary{background:var(--accent);color:#fff;padding:0 22px;height:50px;border-radius:25px;font-size:16px;
-  box-shadow:0 6px 18px rgba(255,59,48,.35)}
+/* the main action reads as a shutter: solid red with a thin inner ring */
+button.primary{background:var(--accent);color:#fff;padding:0 24px;height:52px;border-radius:999px;font-size:16px;
+  letter-spacing:.01em;box-shadow:inset 0 0 0 2px rgba(255,255,255,.22),0 8px 22px rgba(255,59,48,.32)}
 @media (hover:hover){button.primary:hover:not(:disabled){background:#ff5247}}
 #photo{min-width:148px}
-.chip-color{width:24px;height:24px;border-radius:50%;background:var(--c,#ff3b30);box-shadow:inset 0 0 0 2px rgba(255,255,255,.85)}
+.chip-color{width:24px;height:24px;border-radius:50%;background:var(--c,#ff3b30);box-shadow:0 0 0 2px rgba(255,255,255,.9)}
+#colorBtn[aria-expanded=true]{background:var(--raised-hi)}
 .swatch{width:var(--hit);padding:0}
 .swatch i{width:26px;height:26px;border-radius:50%;background:var(--c)}
-.swatch.on i{box-shadow:0 0 0 2px var(--bg),0 0 0 4px #fff}
+.swatch.on,.swatch.on:hover{background:transparent!important}
+.swatch.on i{box-shadow:0 0 0 3px #16181d,0 0 0 5px #fff}
 .hidden{display:none!important}
 body.idle #dock,body.idle #status{opacity:0;pointer-events:none}
 body.idle #dock .panel{pointer-events:none}
@@ -119,7 +123,7 @@ body.image-only #dock,body.image-only #status,body.image-only #ink{display:none!
   .sep{width:26px;height:1px;margin:3px 0}
   .lbl{display:none}
   #draw{width:var(--hit);padding:0}
-  button.primary{width:64px;height:64px;min-width:0;padding:0;border-radius:32px;flex-direction:column;gap:1px;font-size:11px}
+  button.primary{width:64px;height:64px;min-width:0;padding:0;flex-direction:column;gap:1px;font-size:11px}
   #photo{min-width:0}
   #toast{position:fixed;left:50%;top:calc(var(--st) + var(--edge));bottom:auto;max-width:60vw}
 }
@@ -217,6 +221,23 @@ function layout() {
 window.addEventListener("resize", layout);
 window.addEventListener("orientationchange", () => setTimeout(layout, 250));
 shot.addEventListener("load", layout);
+// Keep the image clear of the main panel: below it in portrait, beside the rail in landscape.
+function reserve() {
+  const dock = $("dock"), rail = getComputedStyle(dock).flexDirection === "row";
+  const r = $("controls").getBoundingClientRect();
+  const hidden = MODE === "imageOnly" || r.width === 0;
+  root.style.setProperty("--reserve-b", hidden || rail ? "0px" : (innerHeight - r.top + 8) + "px");
+  root.style.setProperty("--reserve-r", hidden || !rail ? "0px" : (innerWidth - r.left + 8) + "px");
+  layout();
+}
+// Deferred to the next frame: resizing inside the observer callback would loop.
+let relayout = 0;
+function scheduleReserve() { cancelAnimationFrame(relayout); relayout = requestAnimationFrame(reserve); }
+if (window.ResizeObserver) {
+  new ResizeObserver(scheduleReserve).observe($("controls"));
+  new ResizeObserver(scheduleReserve).observe($("stage"));
+}
+window.addEventListener("resize", scheduleReserve);
 
 function norm(e) {
   const r = ink.getBoundingClientRect();
@@ -284,7 +305,7 @@ function setDrawing(v) {
 }
 function showSwatches(v) {
   $("swatches").classList.toggle("hidden", !v);
-  $("colorBtn").classList.toggle("on", v);
+  $("colorBtn").setAttribute("aria-expanded", v);
 }
 $("draw").onclick = () => setDrawing(!drawing);
 $("undo").onclick = () => { shapes.pop(); redraw(); };
