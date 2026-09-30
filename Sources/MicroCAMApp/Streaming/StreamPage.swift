@@ -84,6 +84,10 @@ button:disabled{opacity:.38;cursor:default}
 button.primary{background:var(--accent);color:#fff;padding:0 24px;height:52px;border-radius:999px;font-size:16px;
   letter-spacing:.01em;box-shadow:inset 0 0 0 2px rgba(255,255,255,.22),0 8px 22px rgba(255,59,48,.32)}
 @media (hover:hover){button.primary:hover:not(:disabled){background:#ff5247}}
+/* WebKit greys out disabled text; keep the words white and dim the whole button instead */
+button:disabled{color:var(--text)}
+button.primary:disabled{opacity:1;background:rgba(255,59,48,.28);color:rgba(255,255,255,.55);
+  -webkit-text-fill-color:rgba(255,255,255,.55);box-shadow:inset 0 0 0 1px rgba(255,59,48,.35)}
 #photo{min-width:148px}
 .chip-color{width:24px;height:24px;border-radius:50%;background:var(--c,#ff3b30);box-shadow:0 0 0 2px rgba(255,255,255,.9)}
 #colorBtn[aria-expanded=true]{background:var(--raised-hi)}
@@ -113,6 +117,29 @@ body.image-only #dock,body.image-only #status,body.image-only #ink{display:none!
 #toast small{display:block;margin-top:2px;font-size:12px;font-weight:500;color:var(--muted);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
 
+/* ---- PIN panel ---- */
+#pinDialog{position:fixed;inset:0;z-index:10;display:flex;justify-content:center;align-items:flex-start;
+  padding:calc(var(--st) + min(12vh, 88px)) calc(var(--sr) + 16px) 16px calc(var(--sl) + 16px);
+  background:rgba(4,5,7,.62);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.card{width:min(360px,100%);padding:22px 20px 18px;border-radius:28px;background:rgba(24,26,32,.96);
+  border:1px solid var(--line);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 24px 60px rgba(0,0,0,.55)}
+.card h2{margin:0 0 6px;font-size:18px;font-weight:700;letter-spacing:-.01em}
+.card p{margin:0 0 16px;color:var(--muted);font-size:14px;line-height:1.4}
+#pinInput{display:block;width:100%;height:58px;margin:0;border-radius:16px;border:1px solid var(--line);
+  background:rgba(255,255,255,.06);color:var(--text);text-align:center;outline:none;
+  font:600 26px/1 ui-monospace,"SF Mono",Menlo,monospace;letter-spacing:.4em;text-indent:.4em;
+  -webkit-user-select:text;user-select:text;touch-action:manipulation;transition:border-color .15s,background .15s}
+#pinInput::placeholder{color:rgba(255,255,255,.18)}
+#pinInput:focus{border-color:rgba(255,255,255,.45);background:rgba(255,255,255,.09)}
+#pinInput:disabled{opacity:.5}
+.card.error #pinInput{border-color:#ff6961}
+#pinNote{min-height:20px;margin:8px 2px 10px;font-size:13px;font-weight:600;color:#ff6961;font-variant-numeric:tabular-nums}
+.card .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.card .row button{height:50px;width:100%;border-radius:999px;font-size:16px}
+.card .row button.primary{padding:0}
+#pinCancel{background:var(--raised)}
+@media (hover:hover){#pinCancel:hover{background:var(--raised-hi)}}
+
 /* ---- phones in landscape: a vertical rail on the right, beside the image ---- */
 @media (orientation:landscape) and (max-height:500px){
   :root{--edge:8px}
@@ -126,6 +153,12 @@ body.image-only #dock,body.image-only #status,body.image-only #ink{display:none!
   button.primary{width:64px;height:64px;min-width:0;padding:0;flex-direction:column;gap:1px;font-size:11px}
   #photo{min-width:0}
   #toast{position:fixed;left:50%;top:calc(var(--st) + var(--edge));bottom:auto;max-width:60vw}
+  #pinDialog{padding-top:calc(var(--st) + 10px)}
+  .card{padding:16px 18px 14px}
+  .card p{margin-bottom:10px}
+  #pinInput{height:50px}
+  #pinNote{margin:6px 2px 8px}
+  .card .row button{height:46px}
 }
 @media (orientation:landscape) and (max-height:340px){ :root{--gap:2px} .sep{display:none} }
 </style>
@@ -156,7 +189,7 @@ body.image-only #dock,body.image-only #status,body.image-only #ink{display:none!
   <div id="controls" class="panel">
     <span id="liveTools" class="group">
       <button id="draw" aria-label="Kreslit" title="Kreslit do obrazu"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4Z"/><path d="m13.5 6.5 4 4"/></svg><span class="lbl">Kreslit</span></button>
-      <button id="photo" class="primary" title="Vyfotit na bench Macu"><svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13" r="3.5"/></svg><span>Vyfotit</span></button>
+      <button id="photo" class="primary" title="Vyfotit do zakázky"><svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13" r="3.5"/></svg><span>Vyfotit</span></button>
     </span>
     <span id="shotTools" class="group hidden">
       <button id="back" aria-label="Zpět na živý obraz" title="Zpět na živý obraz"><svg viewBox="0 0 24 24"><path d="M15 5 8 12l7 7"/></svg><span class="lbl">Živý obraz</span></button>
@@ -165,6 +198,19 @@ body.image-only #dock,body.image-only #status,body.image-only #ink{display:none!
     </span>
     <button id="fs" class="icon" aria-label="Celá obrazovka" title="Celá obrazovka"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
   </div>
+</div>
+<div id="pinDialog" class="hidden" role="dialog" aria-modal="true" aria-labelledby="pinTitle">
+  <form id="pinForm" class="card" autocomplete="off">
+    <h2 id="pinTitle">PIN pro focení</h2>
+    <p>Zadej PIN z microCAMu na počítači s kamerou (Nastavení → Přenos).</p>
+    <input id="pinInput" name="pin" type="password" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code"
+           minlength="4" maxlength="8" placeholder="••••" aria-describedby="pinNote">
+    <div id="pinNote" aria-live="polite"></div>
+    <div class="row">
+      <button id="pinCancel" type="button">Zrušit</button>
+      <button id="pinOk" type="submit" class="primary" disabled>Potvrdit</button>
+    </div>
+  </form>
 </div>
 <script>
 const MODE = "__MODE__", EMBEDDED = __EMBEDDED__;
@@ -203,7 +249,8 @@ async function poll() {
     $("job").textContent = s.job || "";
     $("job").classList.toggle("hidden", !s.job);
     $("photo").disabled = !s.photoEnabled;
-    $("photo").title = s.photoEnabled ? "Vyfotit na bench Macu" : "Focení je na bench Macu vypnuté (chybí PIN)";
+    $("photo").title = s.photoEnabled ? "Vyfotit do zakázky"
+      : "Focení je vypnuté – v microCAMu na počítači s kamerou není nastavený PIN (Nastavení → Přenos)";
     if (offline && !frozen) startStream();
   } catch (e) { if (!frozen) setOffline(true); }
   setTimeout(poll, 3000);
@@ -337,41 +384,92 @@ function toast(text, file) {
   t.classList.add("show");
   clearTimeout(toast.timer); toast.timer = setTimeout(() => t.classList.remove("show"), 2600);
 }
-function pin() {
-  let p = localStorage.getItem("microcamPin");
-  if (!p) { p = prompt("PIN pro focení (nastavený na bench Macu)"); if (p) localStorage.setItem("microcamPin", p.trim()); }
-  return p && p.trim();
+// ---- PIN: asked in a panel, remembered in localStorage once the camera computer accepts it ----
+const PIN_KEY = "microcamPin";
+let pinDone = null, pinTimer = 0;
+const validPin = v => /^[0-9]{4,8}$/.test(v);
+function pinNote(text, error) {
+  $("pinNote").textContent = text || "";
+  $("pinForm").classList.toggle("error", !!error);
+}
+/// Shows the panel; resolves with the PIN, or null when cancelled. `state` is
+/// {wrong: true} after a refused PIN or {locked: seconds, pin} during the lockout.
+function askPin(state) {
+  const input = $("pinInput");
+  clearInterval(pinTimer);
+  input.disabled = false;
+  input.value = state && state.pin || "";
+  pinNote(state && state.wrong ? "Špatný PIN. Zkus to znovu." : "", state && state.wrong);
+  if (state && state.locked) {
+    let left = state.locked;
+    input.disabled = true;
+    const tick = () => {
+      if (left <= 0) {
+        clearInterval(pinTimer); input.disabled = false;
+        pinNote("Můžeš to zkusit znovu.", false); pinChanged(); input.focus(); return;
+      }
+      pinNote("Příliš mnoho špatných pokusů. Znovu za " + left + " s.", true);
+      left -= 1;
+    };
+    tick(); pinTimer = setInterval(tick, 1000);
+  }
+  pinChanged();
+  $("pinDialog").classList.remove("hidden");
+  if (!input.disabled) setTimeout(() => input.focus(), 30);
+  return new Promise(resolve => { pinDone = resolve; });
+}
+function closePin(value) {
+  clearInterval(pinTimer);
+  $("pinDialog").classList.add("hidden");
+  $("pinInput").blur();
+  const done = pinDone; pinDone = null;
+  if (done) done(value);
+}
+function pinChanged() {
+  const input = $("pinInput"), digits = input.value.replace(/[^0-9]/g, "").slice(0, 8);
+  if (digits !== input.value) input.value = digits;
+  $("pinOk").disabled = input.disabled || !validPin(digits);
+}
+// Typing again clears the "wrong PIN" note (the input is disabled during a lockout).
+$("pinInput").addEventListener("input", () => { pinChanged(); if ($("pinForm").classList.contains("error")) pinNote("", false); });
+$("pinForm").addEventListener("submit", e => {
+  e.preventDefault();
+  const v = $("pinInput").value;
+  if (!$("pinOk").disabled && validPin(v)) closePin(v);
+});
+$("pinCancel").onclick = () => closePin(null);
+document.addEventListener("keydown", e => { if (e.key === "Escape" && pinDone) closePin(null); });
+
+/// Runs a remote action with the PIN header. Asks for the PIN when none is
+/// stored, again after a wrong one, and shows the lockout in the panel.
+/// Returns the accepted response, or null (cancelled or reported by a toast).
+async function withPin(send) {
+  let p = localStorage.getItem(PIN_KEY), state = null;
+  for (;;) {
+    if (!p || state) { p = await askPin(state); if (!p) return null; }
+    let r;
+    try { r = await send(p); } catch (e) { toast("Počítač s kamerou není dostupný"); return null; }
+    if (r.status === 401) { localStorage.removeItem(PIN_KEY); state = { wrong: true }; continue; }
+    if (r.status === 429) {
+      const j = await r.json().catch(() => ({}));
+      state = { locked: Math.max(1, j.retryAfter || 60), pin: p }; continue;
+    }
+    localStorage.setItem(PIN_KEY, p);
+    if (r.status === 403) { toast("Tahle akce je v microCAMu na počítači s kamerou vypnutá"); return null; }
+    if (!r.ok) { toast("Chyba " + r.status); return null; }
+    return r;
+  }
 }
 async function post(path, body) {
-  const p = pin(); if (!p) return null;
-  let r;
-  try {
-    r = await fetch(path, { method: "POST", headers: { "X-MicroCAM-PIN": p, "Content-Type": "application/json" },
-                            body: JSON.stringify(body || {}) });
-  } catch (e) { toast("bench Mac není dostupný"); return null; }
-  if (!(await accepted(r))) return null;
-  return r.json();
-}
-/// Shared handling of refused remote actions; false when `r` is an error.
-async function accepted(r) {
-  if (r.status === 401) { localStorage.removeItem("microcamPin"); toast("Špatný PIN"); return false; }
-  if (r.status === 429) {
-    const j = await r.json().catch(() => ({}));
-    toast("Příliš mnoho pokusů – zkus to za " + (j.retryAfter || 60) + " s"); return false;
-  }
-  if (r.status === 403) { toast("Tahle akce je na bench Macu vypnutá"); return false; }
-  if (!r.ok) { toast("Chyba " + r.status); return false; }
-  return true;
+  const r = await withPin(p => fetch(path, { method: "POST",
+    headers: { "X-MicroCAM-PIN": p, "Content-Type": "application/json" }, body: JSON.stringify(body || {}) }));
+  return r && r.json();
 }
 // Job photos need the PIN header, so they are fetched and shown as blob URLs.
 let shotURL = null, downloadURL = null;
 async function fetchCapture(ref) {
-  const p = pin(); if (!p) return null;   // prompt cancelled: nothing to report
-  let r;
-  try {
-    r = await fetch(ref.url, { headers: { "X-MicroCAM-PIN": p }, cache: "no-store" });
-  } catch (e) { toast("bench Mac není dostupný"); return null; }
-  if (!(await accepted(r))) return null;
+  const r = await withPin(p => fetch(ref.url, { headers: { "X-MicroCAM-PIN": p }, cache: "no-store" }));
+  if (!r) return null;
   try { return URL.createObjectURL(await r.blob()); }
   catch (e) { toast("Fotku se nepodařilo načíst"); return null; }
 }

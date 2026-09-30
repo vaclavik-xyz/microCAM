@@ -6,7 +6,8 @@ Usage: scripts/stream-page-shots.py <base-url> <out-dir> [--pin 1234]
 Run against the demo stream (see README, MICROCAM_DEMO_STREAM_PORT) — with --pin
 it also takes a photo, annotates it and saves the copy, so never point it with
 a PIN at a real bench. Needs Python Playwright with WebKit and Chromium.
-For every device and state (live, drawing, annotated photo) it checks that each
+For every device and state (live, PIN panel empty / wrong / locked, drawing,
+annotated photo) it checks that each
 visible control lies fully inside the viewport, is at least 44 px and does not
 overlap another control, and it writes <device>-<state>.png.
 """
@@ -21,7 +22,8 @@ DEVICES = ["iPhone SE", "iPhone SE landscape", "iPhone 15 Pro Max", "iPhone 15 P
 
 # offsetParent is null for position:fixed elements (the status chip), so visibility
 # is decided by layout boxes and computed style instead.
-CONTROLS = """() => [...document.querySelectorAll('#dock button, #dock a.btn, #status')]
+CONTROLS = """() => [...document.querySelectorAll(document.getElementById('pinDialog').classList.contains('hidden')
+    ? '#dock button, #dock a.btn, #status' : '#pinDialog button, #pinDialog input')]
   .filter(e => e.getClientRects().length > 0 && getComputedStyle(e).visibility !== 'hidden')
   .map(e => { const r = e.getBoundingClientRect();
               return {id: e.id || e.dataset.tool || e.dataset.color || e.className, x: r.left, y: r.top,
@@ -43,6 +45,10 @@ def check(page, name):
             if a["x"] < b["x"] + b["w"] - 0.5 and b["x"] < a["x"] + a["w"] - 0.5 \
                     and a["y"] < b["y"] + b["h"] - 0.5 and b["y"] < a["y"] + a["h"] - 0.5:
                 problems.append(f"{a['id']} overlaps {b['id']}")
+    if page.is_visible("#pinDialog"):
+        for p in problems:
+            print(f"FAIL {name}: {p}")
+        return not problems
     image = page.evaluate("""() => { const i = [live, shot].find(e => !e.classList.contains('hidden'));
                                       const r = i.getBoundingClientRect(); return {x: r.left, y: r.top, w: r.width, h: r.height}; }""")
     panels = page.evaluate("""() => ['palette', 'controls'].map(id => document.getElementById(id))
@@ -69,6 +75,41 @@ def tap(page, selector):
         page.click(selector, timeout=3000)
     except Exception as e:  # noqa: BLE001 — Playwright raises its own TimeoutError
         raise Unreachable(f"cannot tap {selector}: {str(e).splitlines()[0]}") from None
+
+
+def route_json(page, path, status, body):
+    page.unroute(path)
+    page.route(path, lambda r: r.fulfill(status=status, content_type="application/json", body=body))
+
+
+def pin_states(page, name, out, slug):
+    """The PIN panel empty, after a wrong PIN and during the lockout. 401/429 are
+    faked so the demo server never locks up; Esc must close without a toast."""
+    ok = True
+    page.evaluate("localStorage.removeItem('microcamPin')")
+    tap(page, "#photo")
+    page.wait_for_selector("#pinDialog:not(.hidden)", timeout=3000)
+    ok &= check(page, f"{name} pin empty")
+    page.screenshot(path=str(out / f"{slug}-4-pin-empty.png"))
+    route_json(page, "**/photo", 401, '{"error":"pin"}')
+    page.fill("#pinInput", "0000")
+    page.keyboard.press("Enter")
+    page.wait_for_function("document.getElementById('pinNote').textContent.includes('Špatný')", timeout=3000)
+    ok &= check(page, f"{name} pin wrong")
+    page.screenshot(path=str(out / f"{slug}-5-pin-wrong.png"))
+    route_json(page, "**/photo", 429, '{"error":"locked","retryAfter":42}')
+    page.fill("#pinInput", "1111")
+    tap(page, "#pinOk")
+    page.wait_for_function("document.getElementById('pinNote').textContent.includes('Znovu za')", timeout=3000)
+    ok &= check(page, f"{name} pin locked")
+    page.screenshot(path=str(out / f"{slug}-6-pin-locked.png"))
+    page.unroute("**/photo")
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(300)
+    if page.is_visible("#pinDialog") or "Špatný" in page.inner_text("#toast"):
+        print(f"FAIL {name}: Esc did not cancel the PIN panel quietly")
+        ok = False
+    return ok
 
 
 def draw(page):
@@ -115,6 +156,8 @@ def main():
                 page.mouse.move(10, 10)
                 ok &= check(page, f"{name} live")
                 page.screenshot(path=str(out / f"{slug}-1-live.png"))
+                if args.pin:
+                    ok &= pin_states(page, name, out, slug)
 
                 tap(page, "#draw")
                 draw(page)
@@ -124,8 +167,10 @@ def main():
                 tap(page, "[data-color='#ffd60a']")
 
                 if args.pin:
-                    page.once("dialog", lambda d: d.accept(args.pin))
                     tap(page, "#photo")
+                    page.wait_for_selector("#pinDialog:not(.hidden)", timeout=3000)
+                    page.fill("#pinInput", args.pin)
+                    page.keyboard.press("Enter")
                     page.wait_for_selector("#shot:not(.hidden)", timeout=10_000)
                     page.wait_for_timeout(1200)
                     draw(page)
