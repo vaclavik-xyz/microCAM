@@ -40,8 +40,12 @@ also pick one in *Settings → General → Language*.
   alike, and cost nothing when switched off.
 - **Digital zoom, grid, timelapse and before/after compare** (side by side or
   with a slider).
-- **Live stream** to a browser or to microCAM on another Mac, with remote
-  photos and drawing for showing the customer their board.
+- **Web UI for phones, tablets and other computers:** the live picture in
+  any browser on your network, with drawing over the image and remote photos
+  for showing the customer their board. Or microCAM on another Mac as a
+  viewer.
+- **MCP server for AI agents:** agents on your network can look through the
+  microscope, take photos and record, and you see everything they do.
 - **Integrations:** macOS share sheet, an optional generic webhook for
   sending captures to your own system (your CRM, n8n, Make, Zapier…), and
   an optional MCP server so AI agents can see and use the camera.
@@ -174,7 +178,10 @@ The window:
 *Settings → Integrations → MCP server for AI agents*, off by default. AI
 agents on other computers on your network (any client that speaks
 [MCP](https://modelcontextprotocol.io) over Streamable HTTP) can then look
-through the microscope, take photos and record.
+through the microscope, take photos and record. You can ask your agent
+things like *"look at the camera: which chip is under the probe, and is
+there corrosion around it?"* or *"take a photo of the board and record the
+next five minutes"*.
 
 1. Turn it on. microCAM creates a random token and keeps it in the Keychain.
    The port is 8091; change it only if another app uses it.
@@ -231,19 +238,34 @@ responses (no SSE, no sessions; `GET` answers 405). Both MCP eras work: the
 stateless 2026-07-28 revision (per-request `_meta`, mirrored headers,
 `server/discover`). `scripts/mcp-smoke.py` checks a running server.
 
-## Live stream and viewer
+## Web UI: live stream and viewer
 
-*Settings → Stream*, off by default. It streams the live image to other
-devices on the shop network or tailnet. Open `http://<bench-ip>:8090/` in any
-browser, or switch microCAM on another Mac to **Viewer** (*Settings → General
-→ Mode*); it finds the camera computer via Bonjour.
+*Settings → Stream*, off by default. It shows the live picture on other
+devices on the shop network or tailnet: open `http://<bench-ip>:8090/` in any
+browser (the address is in Settings, with a Copy button). Or switch microCAM
+on another Mac to **Viewer** (*Settings → General → Mode*); it finds the
+camera computer via Bonjour.
+
+![The web UI in a desktop browser: live picture with an arrow, a circle and a freehand line drawn over it, drawing tools and colours, and the Take photo button](docs/images/web-desktop.jpg)
+
+<table>
+  <tr>
+    <td width="36%"><img src="docs/images/web-iphone.jpg" alt="The web UI on an iPhone in portrait: live picture, job, Draw and Take photo at the bottom within thumb reach"></td>
+    <td width="64%"><img src="docs/images/web-iphone-landscape.jpg" alt="The web UI on an iPhone in landscape: the drawing tools and Take photo in a rail on the right"></td>
+  </tr>
+</table>
 
 - *Only watch*: just the picture, for a customer-facing screen.
-- *Watch, draw and take photos*: job code, full screen, drawing over the live
-  image, and **Take photo**. The photo is taken on the camera computer into
-  the active job. Draw on it and **Save to job** saves a copy with the drawing
-  (`…_2.jpg`); the original stays untouched. Remote photos need the *PIN for
-  photos* set on the camera computer.
+- *Watch, draw and take photos*: full screen, drawing over the live image
+  (arrow, circle, freehand, four colours) and **Take photo**. The photo is
+  taken on the camera computer, into its current folder. Draw on it and
+  **Save as photo** saves a copy with the drawing (`…_2.jpg`); the original
+  stays untouched. Remote photos need the *PIN for photos* set on the camera
+  computer; a wrong PIN locks the device out for a while.
+- Made for touch: on a phone the buttons sit at the bottom in portrait and in
+  a rail beside the picture in landscape, and every control is at least
+  44 px (`scripts/stream-page-shots.py` checks that on phones, iPad and
+  desktop).
 
 The page follows the browser's language (the viewer app passes its own).
 Only local-network and Tailscale clients are accepted. Nothing listens while
