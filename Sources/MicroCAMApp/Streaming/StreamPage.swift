@@ -395,6 +395,9 @@ function pinNote(text, error) {
 /// Shows the panel; resolves with the PIN, or null when cancelled. `state` is
 /// {wrong: true} after a refused PIN or {locked: seconds, pin} during the lockout.
 function askPin(state) {
+  // One panel at a time: a second caller cancels the first one's wait, so no
+  // caller is left awaiting a promise that never settles.
+  if (pinDone) closePin(null);
   const input = $("pinInput");
   clearInterval(pinTimer);
   input.disabled = false;
