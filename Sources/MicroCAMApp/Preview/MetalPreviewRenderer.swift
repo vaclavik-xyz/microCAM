@@ -27,7 +27,10 @@ final class MetalPreviewRenderer: NSObject, MTKViewDelegate {
         super.init()
         view.framebufferOnly = false
         view.colorPixelFormat = .bgra8Unorm
-        view.clearColor = MTLClearColor(red: 0, green: 0, blue: 0, alpha: 1)
+        // Transparent around the picture: the container's backdrop shows through.
+        view.clearColor = MTLClearColor(red: 0, green: 0, blue: 0, alpha: 0)
+        view.wantsLayer = true
+        view.layer?.isOpaque = false
         view.preferredFramesPerSecond = 60
         view.isPaused = true
         view.delegate = self
@@ -64,7 +67,7 @@ final class MetalPreviewRenderer: NSObject, MTKViewDelegate {
                                                y: (size.height - e.height * fit) / 2))
             .transformed(by: zoom.absoluteTransform(viewSize: size))
         let canvas = CGRect(origin: .zero, size: size)
-        let image = fitted.composited(over: CIImage(color: .black).cropped(to: canvas)).cropped(to: canvas)
+        let image = fitted.composited(over: CIImage(color: .clear).cropped(to: canvas)).cropped(to: canvas)
         let destination = CIRenderDestination(width: Int(size.width), height: Int(size.height),
                                               pixelFormat: view.colorPixelFormat, commandBuffer: buffer) {
             drawable.texture

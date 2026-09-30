@@ -10,11 +10,17 @@
 #   <photos>/compare/before.jpg, after.jpg   pair for the before/after screenshots
 #   language                 app language, e.g. en or cs (default: the system's)
 #   out-dir                  default docs/screenshots (git-ignored)
+# APPEARANCE=dark or light forces the look (default: the system's).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 PHOTOS="$(cd "${1:?usage: scripts/make-screenshots.sh <photos> [language] [out-dir]}" && pwd)"
 LANG_ARGS=()
-[ -n "${2:-}" ] && LANG_ARGS=(--args -AppleLanguages "($2)")
+[ -n "${2:-}" ] && LANG_ARGS=(-AppleLanguages "($2)")
+case "${APPEARANCE:-}" in
+    dark) LANG_ARGS+=(-AppleInterfaceStyle Dark) ;;
+    light) LANG_ARGS+=(-AppleInterfaceStyle Light) ;;
+esac
+[ ${#LANG_ARGS[@]} -gt 0 ] && LANG_ARGS=(--args "${LANG_ARGS[@]}")
 OUT="${3:-$PWD/docs/screenshots}"
 mkdir -p "$OUT"
 OUT="$(cd "$OUT" && pwd)"

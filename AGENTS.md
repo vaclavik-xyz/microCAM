@@ -1,6 +1,7 @@
 # microCAM – notes for coding agents
 
-- Swift, SwiftPM, no third-party dependencies. `swift test` must pass;
+- Swift, SwiftPM. The only third-party dependency is Sparkle (updates);
+  don't add others. `swift test` must pass;
   `scripts/make-app.sh` builds the app bundle.
 - Pure logic goes into `Sources/MicroCAMCore` with unit tests.
   `Sources/MicroCAMApp` is the thin AVFoundation/SwiftUI layer.

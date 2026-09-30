@@ -3,9 +3,12 @@ import AppKit
 import ImageIO
 import MicroCAMCore
 
-struct StatusMessage: Equatable {
+/// Shown as a toast over the preview. Each message is new (own `id`), so the
+/// same text twice restarts the auto-hide timer.
+struct StatusMessage: Equatable, Identifiable {
     let text: String
     let isError: Bool
+    let id = UUID()
 }
 
 @MainActor
@@ -86,6 +89,12 @@ final class AppModel: ObservableObject {
     }
 
     func zoomChanged(_ scale: CGFloat) { zoomScale = scale }
+
+    /// Menu zoom (⌘+ / ⌘−) around the centre of the picture.
+    func zoom(by factor: CGFloat) {
+        guard launchMode == .camera else { return }
+        previewView?.zoom(by: factor, anchor: CGPoint(x: 0.5, y: 0.5))
+    }
 
     /// Adjustments of the current camera; neutral values are not stored.
     var currentAdjustments: ImageAdjustments {
@@ -195,6 +204,7 @@ final class AppModel: ObservableObject {
         cameraAuthorized = true
         engine.activateDemo()
         settings.storageRootPath = root.path
+        settings.jobsEnabled = job != nil
         settings.activeJob = job.flatMap(JobCode.init)
         settings.recordAudio = false
         showFirstRun = false
@@ -621,7 +631,9 @@ final class AppModel: ObservableObject {
         guard let dir = try? Recorder.stagingDirectory(),
               let files = try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil),
               !files.isEmpty else { return }
-        message = StatusMessage(text: String(localized: "Found a recording that wasn't finished. Opening its folder."), isError: true)
+        // Information, not an error: the folder opens right away, so the
+        // message may hide on its own instead of covering the preview.
+        message = StatusMessage(text: String(localized: "Found a recording that wasn't finished. Opening its folder."), isError: false)
         NSWorkspace.shared.open(dir)
     }
 

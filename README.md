@@ -8,11 +8,11 @@
 # microCAM
 
 **A small, native macOS app for the microscope camera at a repair bench.**
-Live preview, photos, hour-long recordings with narration, timelapse, and
-every capture filed under the job it belongs to. A *job* is a repair order:
-the ticket or order number you already use for the repair.
+Live preview, photos, hour-long recordings with narration, timelapse and,
+if you want, every capture filed under the job it belongs to. A *job* is a
+repair order: the ticket or order number you already use for the repair.
 
-![microCAM main window: live microscope image, job bar and the side panel with the job's photos and videos](docs/images/microcam-window.jpg)
+![microCAM main window: live microscope image, the camera and its format in the title, and the side panel with the folder's photos and videos grouped by day](docs/images/microcam-window.jpg)
 
 microCAM works with any camera macOS can see: USB/UVC microscopes and HDMI
 cameras behind a capture card such as the Elgato Cam Link 4K. It was built
@@ -32,9 +32,9 @@ also pick one in *Settings → General → Language*.
 - **Recordings that don't stutter.** Hardware HEVC/H.264 encoding, narration
   from any microphone, no length limit. A crash-safe file is written while
   recording.
-- **Files sorted per job.** Type the job code (`PR-260412`) and every photo
-  and video lands in that job's folder. Misfiled shots can be moved later
-  without overwriting anything.
+- **Files sorted per job, if you want.** Turn on jobs, type the job code
+  (`PR-260412`) and every photo and video lands in that job's folder.
+  Misfiled shots can be moved later without overwriting anything.
 - **Image adjustments per camera:** brightness, contrast, saturation, white
   balance, gamma and sharpening. They apply to the preview, photos and video
   alike, and cost nothing when switched off.
@@ -44,8 +44,21 @@ also pick one in *Settings → General → Language*.
   photos and drawing for showing the customer their board.
 - **Integrations:** macOS share sheet, and an optional generic webhook for
   sending captures to your own system (your CRM, n8n, Make, Zapier…).
-- **No third-party dependencies.** Swift, SwiftUI/AppKit and Apple
-  frameworks only.
+- **Almost no dependencies.** Swift, SwiftUI/AppKit and Apple frameworks,
+  plus [Sparkle](https://sparkle-project.org) for updates.
+
+<table>
+  <tr>
+    <td width="33%"><img src="docs/images/microcam-adjustments.jpg" alt="Image adjustments popover with sliders for brightness, contrast, saturation, temperature, tint, gamma and sharpening"></td>
+    <td width="33%"><img src="docs/images/microcam-timelapse.jpg" alt="Running timelapse: shot count, progress, next photo and expected end"></td>
+    <td width="33%"><img src="docs/images/microcam-compare.jpg" alt="Before/after compare with a slider"></td>
+  </tr>
+  <tr>
+    <td align="center">Image adjustments</td>
+    <td align="center">Timelapse</td>
+    <td align="center">Before/after compare</td>
+  </tr>
+</table>
 
 ## Requirements
 
@@ -56,9 +69,10 @@ also pick one in *Settings → General → Language*.
 
 Download `microCAM-<version>.zip` from
 [Releases](https://github.com/vaclavik-xyz/microCAM/releases), unzip it and
-move `microCAM.app` to Applications. The app is not notarized, so the first
-time open it with right-click → **Open** (or allow it in *System Settings →
-Privacy & Security*).
+move `microCAM.app` to Applications. Releases from 0.2.0 on are signed with
+Developer ID and notarized by Apple, and microCAM updates itself: it checks
+for new versions (*Settings → General*, or *microCAM → Check for Updates…*)
+and asks before installing. Versions 0.1.x have to be replaced by hand once.
 
 ## Build from source
 
@@ -66,42 +80,65 @@ Privacy & Security*).
 scripts/make-app.sh                 # → build/microCAM.app (ad-hoc signed)
 open build/microCAM.app             # or copy it to /Applications
 scripts/deploy.sh <ssh-host> [dir]  # build → another Mac over ssh (universal)
+scripts/release.sh                  # maintainers: signed, notarized GitHub release + appcast
 ```
 
-Builds are ad-hoc signed, so macOS may ask for camera and microphone access
-again after an update.
+Local builds are ad-hoc signed, so macOS asks for camera and microphone access
+again after each build, and they don't update themselves (no update key).
+`scripts/release.sh` describes the one-time setup for releases.
 
 ## Using it
 
 On first launch microCAM asks where to save captures. It never picks a
 folder on its own.
 
-| Key | Action |
-|---|---|
-| `Space` | take a photo |
-| `R` | start or stop recording |
-| `G` | show or hide the grid |
-| `0` | reset zoom (or double-click the image) |
-| scroll / pinch, drag | zoom the preview, move the image |
-| `⌘ ,` | settings |
+| Quick key | Menu shortcut | Action |
+|---|---|---|
+| `Space` | `⌘ T` | take a photo |
+| `R` | `⌘ R` | start or stop recording |
+| `G` | `⌘ '` | show or hide the grid |
+| | `⌘ +` / `⌘ −` | zoom in / out |
+| `0` | `⌘ 0` | reset zoom (or double-click the image) |
+| | `⌘ ⇧ T` | timelapse |
+| | `⌘ I` | image adjustments |
+| scroll / pinch, drag | | zoom the preview, move the image |
+| | `⌘ ,` | settings |
 
-Shortcuts are ignored while you type in a text field, so a job code like
-`PR-2600` never triggers anything. Zoom and grid affect only the preview:
+The quick keys are ignored while you type in a text field, so a job code
+like `PR-2600` never triggers anything; the menu shortcuts work everywhere. Zoom and grid affect only the preview:
 photos and videos are always full frame.
+
+The window:
+
+- **Toolbar.** Photo, video and timelapse sit together in the middle. Image
+  adjustments and Settings are on the right, and the active job is on the
+  left when jobs are on.
+- **Side panel.** The captures of the current folder as thumbnails, grouped
+  by day. Click selects, ⌘-click adds, ⇧-click selects a range, double-click
+  opens, and you can drag a file into another app. The folder name at the top
+  opens the folder; share and compare appear at the bottom once you select
+  files. The panel remembers its
+  width. Hide it with the button next to the window buttons.
+- **Title.** The camera (rename it in *Settings → Device*) and its format.
+  While recording it shows the running time instead, and the stop button is
+  red; a running timelapse shows its progress.
+- **Preview.** Short messages like *Saved: …* show at the bottom and hide on their own.
+  Errors stay until you close them.
 
 ### Where files go
 
 ```
-<root>/PR-260412/PR-260412_2026-09-25_14-02-11.jpg
-<root>/PR-260412/PR-260412_2026-09-25_14-30-00.mov
-<root>/_Unsorted/no-job_2026-09-25_15-00-00.jpg       # no job set
+<root>/microcam_2026-09-25_14-02-11.jpg               # default: no jobs
+<root>/PR-260412/PR-260412_2026-09-25_14-30-00.mov    # jobs on, job PR-260412
+<root>/_Unsorted/no-job_2026-09-25_15-00-00.jpg       # jobs on, no job set
 ```
 
 - Two captures in the same second get `_2`, `_3`. Nothing is ever
   overwritten.
 - **Settings → Storage** has two switches:
-  - Turn off *Use jobs*, and everything goes straight into `<root>` as
-    `microcam_…`.
+  - *Use jobs* is off by default, and everything goes straight into
+    `<root>` as `microcam_…`. Turn it on to give each job (repair order)
+    its own folder; the job is then set from the toolbar.
   - Turn on *Sort by type*, and each job gets `Photos/`, `Videos/` and
     `Timelapse/` subfolders.
 - Folder names follow the app language (the Czech names are in
@@ -180,8 +217,8 @@ Playwright with WebKit) checks that every control is on screen, at least
 
 ## Contributing
 
-Bug reports and pull requests are welcome. Keep the app free of third-party
-dependencies, put logic that can be tested into `MicroCAMCore` with a test,
+Bug reports and pull requests are welcome. Don't add third-party dependencies
+(Sparkle is the only one), put logic that can be tested into `MicroCAMCore` with a test,
 and run `swift test` before you open a pull request.
 
 ### Localization

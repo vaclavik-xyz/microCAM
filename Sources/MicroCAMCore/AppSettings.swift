@@ -24,7 +24,7 @@ public struct FormatChoice: Codable, Hashable, Sendable {
 public struct AppSettings: Equatable, Sendable {
     public var storageRootPath: String? = nil
     public var sortByType = false
-    public var jobsEnabled = true
+    public var jobsEnabled = false
     public var activeJob: JobCode? = nil
     public var jpegQuality = 0.9
     public var videoCodec = VideoCodec.hevc
@@ -40,6 +40,8 @@ public struct AppSettings: Equatable, Sendable {
     public var lastMicrophoneID: String? = nil
     public var recordAudio = true
     public var adjustmentsByDevice: [String: ImageAdjustments] = [:]
+    /// The user's own names for cameras, by device ID (Settings → Device).
+    public var cameraNames: [String: String] = [:]
     /// Generic integration (off by default). The token lives in the Keychain.
     public var webhookEnabled = false
     public var webhookURL: String? = nil
@@ -69,6 +71,12 @@ public struct AppSettings: Equatable, Sendable {
         return activeJob.map(JobContext.job) ?? .unassigned
     }
 
+    /// The user's name for the camera, or the system name when none is set.
+    public func cameraName(for id: String, systemName: String) -> String {
+        let custom = cameraNames[id]?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return custom.isEmpty ? systemName : custom
+    }
+
     public func adjustments(forDevice id: String?) -> ImageAdjustments {
         id.flatMap { adjustmentsByDevice[$0] } ?? .neutral
     }
@@ -79,7 +87,7 @@ extension AppSettings: Codable {
         case storageRootPath, sortByType, jobsEnabled, activeJob, jpegQuality, videoCodec, videoQuality,
              timelapseInterval, timelapseDuration, gridType, gridColor, pauseWhenHidden,
              preventSleepWhileRecording, lastDeviceID, lastFormatByDevice, lastMicrophoneID,
-             recordAudio, adjustmentsByDevice, webhookEnabled, webhookURL, webhookSendVideos,
+             recordAudio, adjustmentsByDevice, cameraNames, webhookEnabled, webhookURL, webhookSendVideos,
              streamingEnabled, streamingPort, streamingMode, appMode, viewerSourceName, viewerManualURL
     }
 
@@ -110,6 +118,7 @@ extension AppSettings: Codable {
         lastMicrophoneID = value(.lastMicrophoneID, d.lastMicrophoneID)
         recordAudio = value(.recordAudio, d.recordAudio)
         adjustmentsByDevice = value(.adjustmentsByDevice, d.adjustmentsByDevice)
+        cameraNames = value(.cameraNames, d.cameraNames)
         webhookEnabled = value(.webhookEnabled, d.webhookEnabled)
         webhookURL = value(.webhookURL, d.webhookURL)
         webhookSendVideos = value(.webhookSendVideos, d.webhookSendVideos)

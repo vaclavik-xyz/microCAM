@@ -12,8 +12,14 @@
     <key>CFBundlePackageType</key><string>APPL</string>
     <key>CFBundleIconFile</key><string>AppIcon</string>
     <key>CFBundleIconName</key><string>AppIcon</string>
-    <key>CFBundleShortVersionString</key><string>0.1.2</string>
-    <key>CFBundleVersion</key><string>3</string>
+    <!-- Sparkle updates: the appcast is published with every GitHub release
+         (scripts/release.sh). Without SUPublicEDKey the updater stays off. -->
+    <key>SUFeedURL</key><string>https://github.com/vaclavik-xyz/microCAM/releases/latest/download/appcast.xml</string>
+    <key>SUPublicEDKey</key><string>kiDYGvLL1ztG0Mqn5Z+khTDelpzbq8oNqooPiOtAxUE=</string>
+    <key>SUEnableAutomaticChecks</key><true/>
+    <key>NSHumanReadableCopyright</key><string>© 2026 Filip Václavík · MIT License</string>
+    <key>CFBundleShortVersionString</key><string>0.2.0</string>
+    <key>CFBundleVersion</key><string>4</string>
     <key>LSMinimumSystemVersion</key><string>14.0</string>
     <key>LSApplicationCategoryType</key><string>public.app-category.utilities</string>
     <key>NSHighResolutionCapable</key><true/>

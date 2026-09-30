@@ -32,7 +32,7 @@ Rows 13–18 and the manual checks from the streaming plan (Tasks 6–8) need a
 camera Mac and the viewer devices; none ran yet. Pending on device:
 
 - Second Mac / bench Mac: incoming-connection and local-network prompts,
-  "Sleduje N" in the status bar, CPU with and without a viewer on the real camera.
+  "Sleduje N" in the toolbar, CPU with and without a viewer on the real camera.
 - Safari on Mac and iPad: page checks 1–6 (fade, drawing with touch, PIN
   prompt and lockout message, Jen obraz → 403, reconnect after a bench restart).
 - Reception Mac (Intel): viewer mode — Bonjour discovery, auto-reconnect after

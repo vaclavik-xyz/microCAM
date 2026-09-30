@@ -30,7 +30,7 @@ final class PreviewContainerView: NSView {
             DispatchQueue.main.async { if let self, let mode = self.mode { self.setMode(mode) } }
         }
         wantsLayer = true
-        layer?.backgroundColor = NSColor.black.cgColor
+        applyBackdrop()
 
         passthroughHost.layer = CALayer()
         passthroughHost.wantsLayer = true
@@ -95,8 +95,11 @@ final class PreviewContainerView: NSView {
     /// hidden would feed the preview again.
     private var connectionObservation: NSKeyValueObservation?
 
+    private var fullScreenObservers: [NSObjectProtocol] = []
+
     deinit {
         if let occlusionObserver { NotificationCenter.default.removeObserver(occlusionObserver) }
+        fullScreenObservers.forEach(NotificationCenter.default.removeObserver)
     }
 
     func setMode(_ mode: RenderMode) {
@@ -117,11 +120,37 @@ final class PreviewContainerView: NSView {
         super.viewDidMoveToWindow()
         if let occlusionObserver { NotificationCenter.default.removeObserver(occlusionObserver) }
         occlusionObserver = nil
+        fullScreenObservers.forEach(NotificationCenter.default.removeObserver)
+        fullScreenObservers = []
         guard let window else { return }
         occlusionObserver = NotificationCenter.default.addObserver(
             forName: NSWindow.didChangeOcclusionStateNotification, object: window, queue: .main
         ) { [weak self] _ in self?.updateWindowVisibility() }
+        fullScreenObservers = [NSWindow.didEnterFullScreenNotification, NSWindow.didExitFullScreenNotification].map {
+            NotificationCenter.default.addObserver(forName: $0, object: window, queue: .main) { [weak self] _ in
+                self?.isFullScreen = self?.window?.styleMask.contains(.fullScreen) ?? false
+            }
+        }
+        isFullScreen = window.styleMask.contains(.fullScreen)
         updateWindowVisibility()
+    }
+
+    /// Around the picture: the window colour (light in Light Mode), black only
+    /// in full screen, where the picture should be alone.
+    private var isFullScreen = false {
+        didSet { if isFullScreen != oldValue { applyBackdrop() } }
+    }
+
+    private func applyBackdrop() {
+        let color = isFullScreen ? NSColor.black : NSColor.windowBackgroundColor
+        effectiveAppearance.performAsCurrentDrawingAppearance {
+            layer?.backgroundColor = color.cgColor
+        }
+    }
+
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        applyBackdrop()
     }
 
     private func updateWindowVisibility() {

@@ -26,5 +26,8 @@ final class LanguagePreferenceTests: XCTestCase {
 
     func testChoicesSkipBaseAndAreSorted() {
         XCTAssertEqual(LanguagePreference.choices(bundleLocalizations: ["en", "Base", "cs"]), ["cs", "en"])
+        // The built app reports each language twice (lproj folders and
+        // CFBundleLocalizations); the picker listed "Čeština" and "English" twice.
+        XCTAssertEqual(LanguagePreference.choices(bundleLocalizations: ["en", "cs", "en", "cs"]), ["cs", "en"])
     }
 }

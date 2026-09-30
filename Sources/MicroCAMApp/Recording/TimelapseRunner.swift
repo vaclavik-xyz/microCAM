@@ -6,6 +6,8 @@ final class TimelapseRunner: ObservableObject {
     @Published private(set) var isRunning = false
     @Published private(set) var shotsTaken = 0
     @Published private(set) var schedule: TimelapseSchedule?
+    /// When the first photo was taken; the schedule's times count from it.
+    @Published private(set) var startedAt: Date?
 
     var onShot: (() -> Void)?
     var onFinish: (() -> Void)?
@@ -14,6 +16,7 @@ final class TimelapseRunner: ObservableObject {
     func start(_ schedule: TimelapseSchedule) {
         stop()
         self.schedule = schedule
+        startedAt = Date()
         shotsTaken = 0
         isRunning = true
         fire()

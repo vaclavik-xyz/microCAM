@@ -16,15 +16,23 @@ struct ContentView: View {
         .onChange(of: model.openSettingsRequest) { openSettings() }
     }
 
+    /// Sidebar width and visibility survive a relaunch.
+    @AppStorage("sidebarVisible") private var sidebarVisible = true
+    private let sidebarWidth = UserDefaults.standard.object(forKey: "sidebarWidth") as? Double ?? 200
+
     private var cameraBody: some View {
-        VStack(spacing: 0) {
-            if model.settings.jobsEnabled {
-                JobBar()
-                Divider()
-            }
-            HSplitView {
-                SidePanel(library: model.library, compare: $model.comparePair)
-                    .frame(minWidth: 200, idealWidth: 240, maxWidth: 360)
+        NavigationSplitView(columnVisibility: Binding(
+            get: { sidebarVisible ? .all : .detailOnly },
+            set: { sidebarVisible = $0 != .detailOnly }
+        )) {
+            SidePanel(library: model.library, compare: $model.comparePair)
+                .navigationSplitViewColumnWidth(min: 150, ideal: sidebarWidth, max: 420)
+                .background(GeometryReader { proxy in
+                    Color.clear.onChange(of: proxy.size.width) { _, width in
+                        if width >= 150 { UserDefaults.standard.set(Double(width), forKey: "sidebarWidth") }
+                    }
+                })
+        } detail: {
             ZStack {
                 PreviewView()
                 CameraStateOverlay(engine: model.engine)
@@ -32,31 +40,50 @@ struct ContentView: View {
                     Text(String(format: "%.1f×", model.zoomScale))
                         .font(.caption.monospacedDigit()).padding(6)
                         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 6))
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing).padding(10)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing).padding(12)
                 }
+                MessageToast()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom).padding(16)
             }
-            .background(Color.black)
+            .animation(.easeOut(duration: 0.2), value: model.message)
             .frame(minWidth: 400)
-            }
             .background(WindowAccessor { model.attachMainWindow($0) })
-            Divider()
-            StatusBar()
         }
+        .modifier(WindowTitle(engine: model.engine, timelapse: model.timelapse))
         .toolbar {
-            ToolbarItemGroup {
+            if model.settings.jobsEnabled {
+                ToolbarItem(placement: .navigation) { JobToolbarButton() }
+            }
+            // One item group, not a ControlGroup: macOS draws the three in one
+            // capsule anyway, and each button keeps its own popover anchor (a
+            // popover on a button inside a toolbar ControlGroup never appears,
+            // one on the group points at its middle, record).
+            ToolbarItemGroup(placement: .principal) {
                 Button { model.takePhoto() } label: { Label("Take photo", systemImage: "camera") }
                     .help("Take a photo (Space)")
                 RecordButton()
-                Button { model.revealCaptureFolder() } label: { Label("Open folder", systemImage: "folder") }
-                    .help("Open the folder where captures are saved now")
                 TimelapseToolbarButton(runner: model.timelapse, show: $model.showTimelapse)
+            }
+            ToolbarItemGroup(placement: .primaryAction) {
+                if model.streamViewers > 0 {
+                    Label("Watching: \(model.streamViewers)", systemImage: "dot.radiowaves.left.and.right")
+                        .labelStyle(.titleAndIcon).foregroundStyle(.secondary)
+                        .help("Watching now")
+                }
                 Button { model.showAdjustments.toggle() } label: {
                     Label("Image adjustments", systemImage: "slider.horizontal.3")
                 }
                 .help("Image adjustments")
                 .popover(isPresented: $model.showAdjustments) {
-                    AdjustmentsForm().padding().frame(width: 360)
+                    // Titled like the timelapse and job popovers.
+                    VStack(alignment: .leading, spacing: 14) {
+                        Text("Image adjustments").font(.headline)
+                        AdjustmentsForm()
+                    }
+                    .padding(16).frame(width: 360)
                 }
+                SettingsLink { Label("Settings", systemImage: "gearshape") }
+                    .help("Settings (⌘,)")
             }
         }
         .sheet(isPresented: $model.showFirstRun) {
@@ -71,6 +98,48 @@ struct ContentView: View {
         .sheet(item: $model.comparePair) { pair in
             CompareView(before: pair.before, after: pair.after, initialMode: model.compareInitialMode)
         }
+    }
+}
+
+/// Title: the camera the picture comes from (the user's name for it, if set).
+/// Subtitle: its format; while recording "● Recording 0:12:34" (and dropped
+/// frames), then "Saving video…"; a running timelapse adds its progress.
+/// This is the only recording indicator besides the red stop button, so the
+/// picture stays clean. The app name stays in the menu bar and Dock.
+private struct WindowTitle: ViewModifier {
+    @EnvironmentObject private var model: AppModel
+    @ObservedObject var engine: CaptureEngine
+    @ObservedObject var timelapse: TimelapseRunner
+    /// Ticks once a second while recording, to advance the time.
+    @State private var now = Date()
+    /// In @State so one timer survives re-evaluation; a `let` would create a
+    /// new one on every redraw and could keep resetting it before it fires.
+    @State private var tick = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+
+    func body(content: Content) -> some View {
+        content
+            .navigationTitle(engine.cameras.first { $0.id == engine.currentCameraID }
+                .map { model.settings.cameraName(for: $0.id, systemName: $0.name) }
+                ?? String(localized: "No camera"))
+            .navigationSubtitle(subtitle)
+            .onReceive(tick) { date in if model.isRecording { now = date } }
+    }
+
+    private var subtitle: String {
+        var parts: [String] = []
+        if model.isRecording, let started = model.recordingStartedAt {
+            let seconds = max(0, Int(now.timeIntervalSince(started)))
+            let time = String(format: "%d:%02d:%02d", seconds / 3600, seconds / 60 % 60, seconds % 60)
+            parts.append(String(localized: "● Recording \(time)"))
+            if model.droppedFrames > 0 { parts.append(String(localized: "Dropped frames: \(model.droppedFrames)")) }
+        } else if model.isFinalizingRecording {
+            parts.append(String(localized: "Saving video…"))
+        }
+        if timelapse.isRunning, let schedule = timelapse.schedule {
+            parts.append(String(localized: "Timelapse \(timelapse.shotsTaken) of \(schedule.shotCount)"))
+        }
+        if parts.isEmpty, let format = engine.activeFormat { parts.append(format.label) }
+        return parts.joined(separator: " · ")
     }
 }
 
@@ -94,9 +163,17 @@ struct CameraStateOverlay: View {
             }
                 .padding(24).background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
         } else if let error = engine.lastError {
-            Text(error).foregroundStyle(.red)
-                .padding(12).background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
-                .frame(maxHeight: .infinity, alignment: .top).padding(.top, 12)
+            // Same look as an error toast; stays at the top while the camera fails.
+            HStack(spacing: 8) {
+                Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.red)
+                Text(error).lineLimit(3)
+            }
+            .font(.callout)
+            .padding(.horizontal, 14).padding(.vertical, 9)
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
+            .shadow(color: .black.opacity(0.2), radius: 8, y: 2)
+            .frame(maxWidth: 560)
+            .frame(maxHeight: .infinity, alignment: .top).padding(.top, 12)
         }
     }
 }
@@ -106,12 +183,24 @@ struct TimelapseToolbarButton: View {
     @Binding var show: Bool
 
     var body: some View {
+        // Same symbol while running, in the accent colour: "timer.circle.fill"
+        // drew visibly smaller than "timer" next to it.
         Button { show.toggle() } label: {
-            Label("Timelapse", systemImage: runner.isRunning ? "timer.circle.fill" : "timer")
+            Label {
+                Text("Timelapse")
+            } icon: {
+                // Colour only while running: an explicit colour when idle kept
+                // the icon bright in an inactive window, unlike its neighbours.
+                if runner.isRunning {
+                    Image(systemName: "timer").foregroundStyle(.tint)
+                } else {
+                    Image(systemName: "timer")
+                }
+            }
         }
         .help("Timelapse")
-        .popover(isPresented: $show) {
-            TimelapseForm(runner: runner).padding().frame(width: 340)
+        .popover(isPresented: $show, arrowEdge: .bottom) {
+            TimelapseForm(runner: runner).padding(16).frame(width: 320)
         }
     }
 }
@@ -135,12 +224,16 @@ struct RecordButton: View {
                 if model.isStartingRecording {
                     Label("Cancel recording", systemImage: "xmark.circle")
                 } else if model.isRecording {
-                    Label("Stop recording", systemImage: "stop.circle.fill")
+                    Label {
+                        Text("Stop recording")
+                    } icon: {
+                        Image(systemName: "stop.circle.fill")
+                            .symbolRenderingMode(.palette).foregroundStyle(.white, .red)
+                    }
                 } else {
                     Label("Record", systemImage: "record.circle")
                 }
             }
-            .tint(model.isRecording ? .red : nil)
             .help(model.isStartingRecording ? String(localized: "Waiting for the microphone. Click to cancel.")
                                             : String(localized: "Start or stop recording (R)"))
         }

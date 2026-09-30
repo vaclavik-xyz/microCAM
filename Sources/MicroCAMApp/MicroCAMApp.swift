@@ -5,6 +5,8 @@ import SwiftUI
 struct MicroCAMApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var model = AppModel()
+    /// Never in the screenshot demo, which must not check the network.
+    @StateObject private var updater = Updater(enabled: DemoConfig.fromEnvironment() == nil)
 
     var body: some Scene {
         Window("microCAM", id: "main") {
@@ -13,12 +15,39 @@ struct MicroCAMApp: App {
                 .frame(minWidth: 640, minHeight: 420)
         }
         .commands {
+            CommandGroup(replacing: .appInfo) {
+                Button("About microCAM") { AboutPanel.show() }
+                if updater.isAvailable {
+                    Button("Check for Updates…") { updater.checkForUpdates() }
+                        .disabled(!updater.canCheck)
+                }
+            }
+            // Menu shortcuts use ⌘ like other Mac apps (⌘T is Take Photo in
+            // Photo Booth). The quick single keys (Space, R, G, 0) are handled by
+            // KeyboardMonitor instead: as menu shortcuts they would also fire
+            // while typing in a text field, e.g. R in a job code.
             CommandMenu("Camera") {
-                Button("Take photo (Space)") { model.handle(.photo) }
-                Button("Start or stop recording (R)") { model.handle(.toggleRecording) }
+                Button("Take photo") { model.handle(.photo) }
+                    .keyboardShortcut("t")
+                Button("Start or stop recording") { model.handle(.toggleRecording) }
+                    .keyboardShortcut("r")
                 Divider()
-                Button("Show or hide grid (G)") { model.handle(.toggleGrid) }
-                Button("Reset zoom (0)") { model.handle(.resetZoom) }
+                Button("Show or hide grid") { model.handle(.toggleGrid) }
+                    .keyboardShortcut("'")
+                Button("Zoom in") { model.zoom(by: 1.25) }
+                    .keyboardShortcut("+")
+                Button("Zoom out") { model.zoom(by: 0.8) }
+                    .keyboardShortcut("-")
+                Button("Reset zoom") { model.handle(.resetZoom) }
+                    .keyboardShortcut("0")
+                Divider()
+                // Every toolbar action is also in the menu bar.
+                Button("Timelapse…") { model.showTimelapse = true }
+                    .keyboardShortcut("t", modifiers: [.command, .shift])
+                Button("Image adjustments…") { model.showAdjustments = true }
+                    .keyboardShortcut("i")
+                Divider()
+                Button("Open folder") { model.revealCaptureFolder() }
             }
             // Into the system View menu, next to Enter Full Screen.
             CommandGroup(after: .toolbar) {
@@ -27,6 +56,9 @@ struct MicroCAMApp: App {
                 }
             }
             CommandGroup(replacing: .help) {
+                Button("microCAM on GitHub") { NSWorkspace.shared.open(AboutPanel.repository) }
+                Button("Report a problem…") { NSWorkspace.shared.open(AboutPanel.issues) }
+                Divider()
                 Button("Keyboard shortcuts") {
                     let alert = NSAlert()
                     alert.messageText = String(localized: "Keyboard shortcuts")
@@ -45,6 +77,7 @@ struct MicroCAMApp: App {
         Settings {
             SettingsView()
                 .environmentObject(model)
+                .environmentObject(updater)
         }
     }
 }

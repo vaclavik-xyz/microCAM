@@ -1,5 +1,40 @@
 # Changelog
 
+## 0.2.0 — 2026-09-30
+
+Signed releases that update themselves, and a tidier main window.
+
+- Releases are signed with Developer ID and notarized by Apple. macOS no
+  longer warns on first launch and keeps the camera and microphone
+  permission across updates.
+- microCAM updates itself with Sparkle: *microCAM → Check for Updates…*,
+  and automatic checks in *Settings → General*. It asks before installing.
+  Coming from 0.1.x, install 0.2.0 by hand once.
+
+- The side panel is a grid of thumbnails grouped by day and remembers its
+  width. Hide it with the sidebar button.
+- Photo, video and timelapse are one group in the middle of the toolbar.
+  Settings has its own button. The side panel shows the current folder at
+  the top (click to open it) and a bar with share, compare and more only
+  while files are selected.
+- The area around the picture follows the window colour instead of black.
+  It stays black in full screen.
+- The window title shows the camera and its format. While recording, the
+  subtitle shows the running time (and dropped frames) and the stop button
+  turns red; the picture itself stays clean. A running timelapse shows its
+  progress there too.
+- The About window has a short description, links to the source code and
+  to report a problem, and the copyright; the Help menu links to GitHub.
+- Cameras can be renamed in *Settings → Device*; an empty name brings back
+  the camera's own.
+- The status bar is gone. Messages show briefly over the picture, and errors
+  stay until closed.
+- Camera menu items have standard ⌘ shortcuts shown by macOS (⌘T photo,
+  ⌘R record, ⌘' grid, ⌘+ / ⌘− / ⌘0 zoom, ⌘⇧T timelapse, ⌘I adjustments); the quick
+  single keys still work.
+- Jobs are off by default. Turn them on in *Settings → Storage*; the active
+  job is then set from the toolbar. Existing settings keep their choice.
+
 ## 0.1.2 — 2026-09-30
 
 Fixes found in a one-hour test recording on a bench Mac.

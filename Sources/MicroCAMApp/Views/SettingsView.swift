@@ -39,6 +39,7 @@ struct SettingsView: View {
 /// what the camera does while the window is hidden or a recording runs.
 struct GeneralSettingsTab: View {
     @EnvironmentObject private var model: AppModel
+    @EnvironmentObject private var updater: Updater
 
     var body: some View {
         Form {
@@ -62,6 +63,15 @@ struct GeneralSettingsTab: View {
                 }
                 if model.settings.appMode != model.launchMode || model.language != model.launchLanguage {
                     RestartRow()
+                }
+            }
+            if updater.isAvailable {
+                Section {
+                    Toggle(isOn: Binding(get: { updater.automaticallyChecks },
+                                         set: { updater.automaticallyChecks = $0 })) {
+                        Text("Check for updates automatically")
+                        Text("microCAM asks before it installs anything. You can also check in the microCAM menu.")
+                    }
                 }
             }
             if model.launchMode == .camera {
@@ -196,7 +206,7 @@ struct TimelapseSettingsTab: View {
                 DurationField.interval($model.settings.timelapseInterval)
                 DurationField.duration($model.settings.timelapseDuration)
             } footer: {
-                Text("Takes a photo at a fixed interval into the active job. Start it from the toolbar.")
+                Text("Takes a photo at a fixed interval into the current folder. Start it from the toolbar.")
             }
         }
     }
@@ -248,10 +258,21 @@ struct DeviceSettingsForm: View {
                     get: { engine.currentCameraID ?? "" },
                     set: { model.selectCamera($0) }
                 )) {
-                    ForEach(engine.cameras) { Text(verbatim: $0.name).tag($0.id) }
+                    ForEach(engine.cameras) {
+                        Text(verbatim: model.settings.cameraName(for: $0.id, systemName: $0.name)).tag($0.id)
+                    }
                 } label: {
                     Text("Camera")
                     Text("A USB microscope, or an HDMI camera behind a capture card.")
+                }
+                if let camera = engine.cameras.first(where: { $0.id == engine.currentCameraID }) {
+                    TextField(text: Binding(
+                        get: { model.settings.cameraNames[camera.id] ?? "" },
+                        set: { model.settings.cameraNames[camera.id] = $0.isEmpty ? nil : $0 }
+                    ), prompt: Text(verbatim: camera.name)) {
+                        Text("Name")
+                        Text("Shown in the window title. Leave it empty to use the camera's own name.")
+                    }
                 }
                 Picker(selection: Binding(
                     get: { engine.activeFormat },
@@ -360,7 +381,7 @@ struct StreamSettingsTab: View {
                         Text("Only watch").tag(StreamMode.imageOnly)
                     } label: {
                         Text("Viewers can")
-                        Text("Photos taken from another device go to the active job on this Mac.")
+                        Text("Photos taken from another device are saved on this Mac, like your own.")
                     }
                     SecureField(text: $pin, prompt: Text("Not set")) {
                         Text("PIN for photos")
