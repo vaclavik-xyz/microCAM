@@ -76,6 +76,8 @@ final class AppModel: ObservableObject {
     weak var previewView: PreviewContainerView?
     @Published private(set) var renderMode = RenderMode.passthrough
     @Published var gridVisible = false
+    /// Drawing on the live picture: the palette shows and drags draw instead of panning.
+    @Published var isDrawing = false
     @Published private(set) var zoomScale: CGFloat = 1
     private var keyboard: KeyboardMonitor?
     let quickLook = QuickLookController()
@@ -90,6 +92,8 @@ final class AppModel: ObservableObject {
         case .photo: takePhoto()
         case .toggleRecording: toggleRecording()
         case .quickLook: previewSelection()
+        case .toggleDrawing: isDrawing.toggle()
+        case .leaveDrawing: isDrawing = false
         }
     }
 

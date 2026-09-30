@@ -33,4 +33,17 @@ final class ShortcutActionTests: XCTestCase {
         XCTAssertEqual(ShortcutAction.from(characters: " ", hasModifiers: false, isEditingText: false,
                                            inSidePanel: true, hasSelection: false), .photo)
     }
+
+    func testDrawingKeys() {
+        XCTAssertEqual(ShortcutAction.from(characters: "d", hasModifiers: false, isEditingText: false), .toggleDrawing)
+        XCTAssertEqual(ShortcutAction.from(characters: "D", hasModifiers: false, isEditingText: false), .toggleDrawing)
+        XCTAssertNil(ShortcutAction.from(characters: "d", hasModifiers: false, isEditingText: true))
+        XCTAssertEqual(ShortcutAction.from(characters: "\u{1b}", hasModifiers: false, isEditingText: false,
+                                           isDrawing: true), .leaveDrawing)
+        // Esc keeps its usual meaning (leave full screen, close a sheet) when not drawing,
+        // and cancels the label being typed while drawing.
+        XCTAssertNil(ShortcutAction.from(characters: "\u{1b}", hasModifiers: false, isEditingText: false))
+        XCTAssertNil(ShortcutAction.from(characters: "\u{1b}", hasModifiers: false, isEditingText: true,
+                                         isDrawing: true))
+    }
 }
