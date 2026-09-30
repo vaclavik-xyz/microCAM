@@ -116,4 +116,53 @@ final class AnnotationTests: XCTestCase {
         XCTAssertEqual(s.points.count, 200)
         XCTAssertEqual(s.points.last, pts.last)
     }
+
+    func testTextOriginStaysInsideTheImage() {
+        let size = CGSize(width: 200, height: 100)
+        let o = AnnotationTextLayout.origin(.init(x: 0.95, y: 0.98), textWidth: 60, fontPixels: 10, in: size)
+        XCTAssertEqual(o.x, 140, accuracy: 0.001)
+        XCTAssertEqual(o.y, 88, accuracy: 0.001)
+        XCTAssertEqual(AnnotationTextLayout.origin(.init(x: 0.1, y: 0.2), textWidth: 60, fontPixels: 10, in: size),
+                       CGPoint(x: 20, y: 20))
+        // Wider than the image: starts at the left edge.
+        XCTAssertEqual(AnnotationTextLayout.origin(.init(x: 0.5, y: 0), textWidth: 400, fontPixels: 10, in: size).x, 0)
+    }
+    func testTextIsRenderedInItsColourWithinItsFrame() {
+        let shape = AnnotationShape(kind: .text, points: [.init(x: 0.9, y: 0.9)], color: "#00ff00", width: 0.006,
+                                    text: "HHHH", fontSize: 0.3)
+        let out = AnnotationRenderer.render([shape], onto: whiteImage(400, 200))!
+        XCTAssertEqual(out.width, 400)
+        XCTAssertEqual(out.height, 200)
+        let frame = AnnotationTextLayout.frame(of: shape, in: CGSize(width: 400, height: 200))!
+        XCTAssertGreaterThan(frame.width, 50)
+        XCTAssertLessThanOrEqual(frame.maxX, 400)
+        XCTAssertLessThanOrEqual(frame.maxY, 200)
+        var green = 0, dark = 0
+        for x in stride(from: Int(frame.minX), to: Int(frame.maxX), by: 2) {
+            for y in stride(from: Int(frame.minY), to: Int(frame.maxY), by: 2) {
+                let p = pixel(out, x, y)
+                if p[1] > 200 && p[0] < 80 && p[2] < 80 { green += 1 }
+                if p[0] < 90 && p[1] < 90 && p[2] < 90 { dark += 1 }
+            }
+        }
+        XCTAssertGreaterThan(green, 20)
+        XCTAssertGreaterThan(dark, 5)                        // the outline
+        XCTAssertGreaterThan(pixel(out, 10, 10)[0], 240)     // far from the text: untouched
+    }
+    func testPointersAreNeverRenderedIntoFiles() {
+        let p = AnnotationShape(kind: .pointer, points: [.init(x: 0, y: 0.5), .init(x: 1, y: 0.5)],
+                                color: "#ff0000", width: 0.05)
+        let out = AnnotationRenderer.render([p], onto: whiteImage(100, 100))!
+        XCTAssertGreaterThan(pixel(out, 50, 50)[1], 240)
+    }
+    func testPointerIsDrawnWhenAnOpacityIsGiven() {
+        let p = AnnotationShape(kind: .pointer, points: [.init(x: 0, y: 0.5), .init(x: 1, y: 0.5)],
+                                color: "#ff0000", width: 0.05)
+        let ctx = CGContext(data: nil, width: 100, height: 100, bitsPerComponent: 8, bytesPerRow: 0,
+                            space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+        ctx.draw(whiteImage(100, 100), in: CGRect(x: 0, y: 0, width: 100, height: 100))
+        AnnotationRenderer.draw([p], in: ctx, size: CGSize(width: 100, height: 100), pointerOpacity: { _ in 1 })
+        XCTAssertLessThan(pixel(ctx.makeImage()!, 50, 50)[1], 60)
+    }
 }

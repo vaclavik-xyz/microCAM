@@ -1,4 +1,5 @@
 import CoreGraphics
+import CoreText
 import Foundation
 
 public struct AnnotationPoint: Codable, Equatable, Sendable {
@@ -132,25 +133,101 @@ public struct AnnotationRequest: Codable, Sendable {
     }
 }
 
+/// Where a text label sits. The same numbers are used by the stream page
+/// (`StreamPage.swift`), so a label lands where it was typed.
+public enum AnnotationTextLayout {
+    /// Height of the text box, as a multiple of the font size.
+    public static let lineHeight = 1.2
+    /// Baseline below the top of the box, as a multiple of the font size.
+    public static let baseline = 0.9
+    /// Width of the dark outline around the letters, as a multiple of the font size.
+    public static let outline = 0.12
+
+    /// Top-left of the text box in pixels (origin top-left), moved just enough
+    /// that a box of `textWidth` stays inside the image.
+    public static func origin(_ point: AnnotationPoint, textWidth: CGFloat, fontPixels: CGFloat,
+                              in size: CGSize) -> CGPoint {
+        let height = fontPixels * lineHeight
+        return CGPoint(x: min(max(point.x * size.width, 0), max(size.width - textWidth, 0)),
+                       y: min(max(point.y * size.height, 0), max(size.height - height, 0)))
+    }
+
+    /// The system font, semibold.
+    public static func font(pixels: CGFloat) -> CTFont {
+        let base = CTFontCreateUIFontForLanguage(.system, pixels, nil)
+            ?? CTFontCreateWithName("Helvetica" as CFString, pixels, nil)
+        let traits = [kCTFontWeightTrait: 0.3] as CFDictionary
+        let descriptor = CTFontDescriptorCreateCopyWithAttributes(CTFontCopyFontDescriptor(base),
+                                                                  [kCTFontTraitsAttribute: traits] as CFDictionary)
+        return CTFontCreateWithFontDescriptor(descriptor, pixels, nil)
+    }
+
+    static func line(_ text: String, font: CTFont) -> CTLine {
+        CTLineCreateWithAttributedString(NSAttributedString(string: text, attributes: [
+            NSAttributedString.Key(kCTFontAttributeName as String): font,
+            // Stroke and fill colours come from the context (outline, then letters).
+            NSAttributedString.Key(kCTForegroundColorFromContextAttributeName as String): true,
+        ]))
+    }
+
+    public static func width(of text: String, fontPixels: CGFloat) -> CGFloat {
+        CGFloat(CTLineGetTypographicBounds(line(text, font: font(pixels: fontPixels)), nil, nil, nil))
+    }
+
+    public static func fontPixels(of shape: AnnotationShape, imageHeight: CGFloat) -> CGFloat {
+        CGFloat(shape.fontSize ?? AnnotationTextSize.medium.fontSize) * imageHeight
+    }
+
+    /// Box of a text shape in pixels (origin top-left); nil for other kinds.
+    public static func frame(of shape: AnnotationShape, in size: CGSize) -> CGRect? {
+        guard shape.kind == .text, let text = shape.text, let point = shape.points.first else { return nil }
+        let px = fontPixels(of: shape, imageHeight: size.height)
+        let width = width(of: text, fontPixels: px)
+        return CGRect(origin: origin(point, textWidth: width, fontPixels: px, in: size),
+                      size: CGSize(width: width, height: px * lineHeight))
+    }
+}
+
 public enum AnnotationRenderer {
+    /// A copy of `image` with the shapes drawn in; pointers are left out.
     public static func render(_ shapes: [AnnotationShape], onto image: CGImage) -> CGImage? {
         let w = CGFloat(image.width), h = CGFloat(image.height)
         guard let ctx = CGContext(data: nil, width: image.width, height: image.height, bitsPerComponent: 8,
                                   bytesPerRow: 0, space: CGColorSpace(name: CGColorSpace.sRGB)!,
                                   bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
         ctx.draw(image, in: CGRect(x: 0, y: 0, width: w, height: h))
+        draw(shapes, in: ctx, size: CGSize(width: w, height: h))
+        return ctx.makeImage()
+    }
+
+    /// Draws into a context whose picture covers (0, 0, size) with the origin
+    /// bottom-left: a file, or the preview overlay on the Mac. A pointer is
+    /// drawn only with an opacity above 0; files always get 0.
+    public static func draw(_ shapes: [AnnotationShape], in ctx: CGContext, size: CGSize,
+                            pointerOpacity: (AnnotationShape) -> CGFloat = { _ in 0 }) {
+        let w = size.width, h = size.height
+        ctx.saveGState()
+        defer { ctx.restoreGState() }
         ctx.setLineCap(.round)
         ctx.setLineJoin(.round)
         let point = { (p: AnnotationPoint) in CGPoint(x: p.x * w, y: (1 - p.y) * h) }   // flip to bottom-left
         for shape in shapes {
+            if shape.kind == .text {
+                drawText(shape, in: ctx, size: size)
+                continue
+            }
+            var alpha: CGFloat = 1
+            if shape.kind == .pointer {
+                alpha = pointerOpacity(shape)
+                guard alpha > 0 else { continue }
+            }
+            ctx.setAlpha(alpha)
             ctx.setStrokeColor(color(shape.color))
             ctx.setLineWidth(shape.width * w)
             let pts = shape.points.map(point)
             guard pts.count >= 2 else { continue }
             switch shape.kind {
-            case .text, .pointer:
-                continue
-            case .pen:
+            case .pen, .pointer:
                 ctx.addLines(between: pts)
                 ctx.strokePath()
             case .ellipse:
@@ -166,9 +243,36 @@ public enum AnnotationRenderer {
                     ctx.addLine(to: CGPoint(x: b.x + head * cos(angle + side), y: b.y + head * sin(angle + side)))
                 }
                 ctx.strokePath()
+            case .text:
+                break
             }
         }
-        return ctx.makeImage()
+    }
+
+    /// Letters in the shape colour over a dark outline, so they read on any board.
+    private static func drawText(_ shape: AnnotationShape, in ctx: CGContext, size: CGSize) {
+        guard let text = shape.text, let point = shape.points.first else { return }
+        let px = AnnotationTextLayout.fontPixels(of: shape, imageHeight: size.height)
+        let line = AnnotationTextLayout.line(text, font: AnnotationTextLayout.font(pixels: px))
+        let width = CGFloat(CTLineGetTypographicBounds(line, nil, nil, nil))
+        let origin = AnnotationTextLayout.origin(point, textWidth: width, fontPixels: px, in: size)
+        ctx.saveGState()
+        defer { ctx.restoreGState() }
+        ctx.setAlpha(1)
+        ctx.textMatrix = .identity
+        ctx.textPosition = CGPoint(x: origin.x, y: size.height - origin.y - AnnotationTextLayout.baseline * px)
+        let start = ctx.textPosition
+        // The stroke is centred on the outline of each letter; the fill covers
+        // its inner half, so the visible outline is `outline` × the font size.
+        ctx.setTextDrawingMode(.stroke)
+        ctx.setLineJoin(.round)
+        ctx.setLineWidth(AnnotationTextLayout.outline * px * 2)
+        ctx.setStrokeColor(CGColor(srgbRed: 0, green: 0, blue: 0, alpha: 0.75))
+        CTLineDraw(line, ctx)
+        ctx.textPosition = start
+        ctx.setTextDrawingMode(.fill)
+        ctx.setFillColor(color(shape.color))
+        CTLineDraw(line, ctx)
     }
 
     private static func color(_ hex: String) -> CGColor {
