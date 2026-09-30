@@ -188,7 +188,8 @@ final class AppModel: ObservableObject {
     /// Demo mode: a fake camera fed with still photos, no permission prompts.
     /// With `streamPort` the stream runs too (no Bonjour, PIN only in memory),
     /// so `scripts/stream-smoke.sh` can check it without a camera.
-    func activateDemo(root: URL, job: String?, streamPort: Int? = nil, streamPIN: String? = nil) {
+    func activateDemo(root: URL, job: String?, streamPort: Int? = nil, streamPIN: String? = nil,
+                      streamMode: StreamMode? = nil) {
         cameraAuthorized = true
         engine.activateDemo()
         settings.storageRootPath = root.path
@@ -200,6 +201,7 @@ final class AppModel: ObservableObject {
         if let streamPort {
             cachedStreamPIN = .some(streamPIN.flatMap { PinGuard.isValidPIN($0) ? $0 : nil })
             settings.streamingPort = streamPort
+            if let streamMode { settings.streamingMode = streamMode }
             settings.streamingEnabled = true
         }
     }

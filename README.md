@@ -65,7 +65,9 @@ Only local-network and Tailscale clients are accepted. Nothing listens while
 the toggle is off, and nothing is encoded while nobody watches.
 `scripts/stream-smoke.sh <host> [port] [pin]` checks a running stream.
 Without a camera, run the demo mode with `MICROCAM_DEMO_STREAM_PORT` (and
-`MICROCAM_DEMO_STREAM_PIN`) set: it serves the still frames on 127.0.0.1 only.
+`MICROCAM_DEMO_STREAM_PIN`, `MICROCAM_DEMO_STREAM_MODE=imageOnly`) set: it
+serves the still frames on 127.0.0.1 only. The smoke script adapts to *Jen
+obraz* and to a bench without a PIN (expects 403 and skips the PIN checks).
 `scripts/deploy.sh <ssh-host> [dir]` installs the app on any Mac.
 
 ## Where files go
