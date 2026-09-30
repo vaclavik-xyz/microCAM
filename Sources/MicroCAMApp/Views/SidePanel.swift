@@ -98,10 +98,12 @@ struct SidePanel: View {
             .help("Selected: \(library.selection.count)")
             Spacer(minLength: 4)
             if comparePair != nil {
-                Button { compare = comparePair } label: { Image(systemName: "rectangle.split.2x1") }
+                Button { compare = comparePair } label: { BarIcon("rectangle.split.2x1") }
                     .help("Compare the two photos")
             }
-            ShareLink(items: library.selectedFiles) { Image(systemName: "square.and.arrow.up") }
+            // The share symbol's box sits low under its arrow; lift it so the
+            // boxes line up optically with the other icons.
+            ShareLink(items: library.selectedFiles) { BarIcon("square.and.arrow.up", lift: 1.5) }
                 .help("Share (AirDrop, Mail, Messages…)")
             if model.settings.jobsEnabled || model.webhookEndpoint != nil {
                 Menu {
@@ -113,12 +115,14 @@ struct SidePanel: View {
                         Button("Send to webhook") { model.sendToWebhook(library.selectedFiles) }
                             .disabled(model.isSending)
                     }
-                } label: { Image(systemName: "ellipsis.circle") }
-                .menuIndicator(.hidden).fixedSize()
+                } label: { BarIcon("ellipsis.circle") }
+                .menuStyle(.button).menuIndicator(.hidden).fixedSize()
+                // A menu ignores the label's colour and draws it in the primary
+                // colour; dim it to match the secondary-coloured icons.
+                .opacity(0.55)
                 .help("More actions for the selected files")
             }
-            Button { library.grid = GridSelection() } label: { Image(systemName: "xmark.circle.fill") }
-                .foregroundStyle(.secondary)
+            Button { library.grid = GridSelection() } label: { BarIcon("xmark.circle.fill") }
                 .help("Clear selection")
         }
         .buttonStyle(.borderless)
@@ -159,6 +163,26 @@ struct SidePanel: View {
         let key = { (url: URL) in CaptureFileName.parse(url.lastPathComponent)?.timestamp ?? url.lastPathComponent }
         let sorted = photos.sorted { key($0) < key($1) }
         return ComparePair(before: sorted[0], after: sorted[1])
+    }
+}
+
+/// Same size, box and colour for every icon in the selection bar.
+private struct BarIcon: View {
+    let name: String
+    var lift: CGFloat = 0
+
+    init(_ name: String, lift: CGFloat = 0) {
+        self.name = name
+        self.lift = lift
+    }
+
+    var body: some View {
+        Image(systemName: name)
+            .font(.system(size: 15))
+            .foregroundStyle(.secondary)
+            .offset(y: -lift)
+            .frame(width: 22, height: 22)
+            .contentShape(Rectangle())
     }
 }
 
