@@ -15,7 +15,7 @@ final class ViewerModel: ObservableObject {
 
     @Published private(set) var sources: [Source] = []
     @Published private(set) var url: URL?
-    @Published private(set) var status = "Hledám mikroskop v síti…"
+    @Published private(set) var status = String(localized: "Looking for microCAM on the network…")
 
     private let settings: () -> AppSettings
     private let update: ((inout AppSettings) -> Void) -> Void
@@ -51,15 +51,15 @@ final class ViewerModel: ObservableObject {
         } else if settings().viewerSourceName == nil, sources.count == 1 {
             connect(sources[0])
         } else if sources.isEmpty {
-            status = "Hledám mikroskop v síti…"
+            status = String(localized: "Looking for microCAM on the network…")
         } else {
-            status = "Vyber mikroskop"
+            status = String(localized: "Choose a camera computer")
         }
     }
 
     func connect(_ source: Source) {
         resolving?.cancel()
-        status = "Připojuji k \(source.name)…"
+        status = String(localized: "Connecting to \(source.name)…")
         let parameters = NWParameters.tcp
         if let ip = parameters.defaultProtocolStack.internetProtocol as? NWProtocolIP.Options { ip.version = .v4 }
         let connection = NWConnection(to: source.endpoint, using: parameters)
@@ -77,7 +77,7 @@ final class ViewerModel: ObservableObject {
                     connection.cancel()
                     self.resolving = nil
                 case .failed, .waiting:
-                    self.status = "\(source.name) není dostupný, zkouším znovu…"
+                    self.status = String(localized: "\(source.name) isn't reachable. Trying again…")
                     connection.cancel()
                     self.resolving = nil
                     DispatchQueue.main.asyncAfter(deadline: .now() + 3) {

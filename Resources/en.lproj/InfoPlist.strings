@@ -1,0 +1,4 @@
+/* Texts macOS shows when it asks for access. English is also in Info.plist. */
+"NSCameraUsageDescription" = "microCAM shows and records the picture from your microscope camera.";
+"NSMicrophoneUsageDescription" = "microCAM records your narration with videos.";
+"NSLocalNetworkUsageDescription" = "microCAM sends the live microscope picture to devices on your local network.";

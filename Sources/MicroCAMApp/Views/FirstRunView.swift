@@ -5,13 +5,13 @@ struct FirstRunView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Kam ukládat fotky a videa?").font(.title2.weight(.semibold))
-            Text("Vyber složku. microCAM do ní ukládá všechno a jinou si sám nevybere. Kdykoli ji změníš v Nastavení.")
+            Text("Where should microCAM save photos and videos?").font(.title2.weight(.semibold))
+            Text("Choose a folder. microCAM saves everything there and never picks a folder on its own. You can change it any time in Settings.")
                 .fixedSize(horizontal: false, vertical: true)
             HStack {
-                Button("Použít Obrázky/microCAM") { model.useDefaultStorageRoot() }
+                Button("Use Pictures/microCAM") { model.useDefaultStorageRoot() }
                 Spacer()
-                Button("Vybrat složku…") { model.chooseStorageRoot() }
+                Button("Choose folder…") { model.chooseStorageRoot() }
                     .keyboardShortcut(.defaultAction)
             }
         }

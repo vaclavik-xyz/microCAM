@@ -15,7 +15,7 @@ public enum StorageError: Error, Equatable {
 /// Default layout is flat: `<root>/<CODE>/`, `<root>/_Unsorted/`, or
 /// `<root>` itself when jobs are disabled. With `sortByType` (user opt-in) a
 /// type folder (`Photos`, `Videos`, `Timelapse`) is appended. Names follow
-/// `language` (Czech: `_Nezařazeno`, `Fotky`, `Videa`, `Časosběr`).
+/// `language` (see `FolderLanguage` for the Czech ones).
 public struct StorageLayout: Sendable {
     public static let jobsDisabledPrefix = "microcam"
 

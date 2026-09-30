@@ -9,6 +9,7 @@ import MicroCAMCore
 /// permission). Never active in normal use. `MICROCAM_DEMO_STREAM_PORT` (and
 /// optionally `MICROCAM_DEMO_STREAM_PIN`, `MICROCAM_DEMO_STREAM_MODE=imageOnly`)
 /// also serves the frames as a live stream for `scripts/stream-smoke.sh`.
+/// `MICROCAM_DEMO_VIEWER=1` starts in viewer mode instead (no network search).
 struct DemoConfig {
     let frames: [URL]
     let root: URL
@@ -18,6 +19,7 @@ struct DemoConfig {
     var streamPort: Int? = nil
     var streamPIN: String? = nil
     var streamMode: StreamMode? = nil
+    var viewer = false
 
     static func fromEnvironment(_ env: [String: String] = ProcessInfo.processInfo.environment) -> DemoConfig? {
         let urls = { (key: String) in
@@ -33,14 +35,21 @@ struct DemoConfig {
                           shotsDir: env["MICROCAM_DEMO_SHOTS"].map { URL(fileURLWithPath: $0, isDirectory: true) },
                           streamPort: env["MICROCAM_DEMO_STREAM_PORT"].flatMap { Int($0) },
                           streamPIN: env["MICROCAM_DEMO_STREAM_PIN"],
-                          streamMode: env["MICROCAM_DEMO_STREAM_MODE"].flatMap(StreamMode.init(rawValue:)))
+                          streamMode: env["MICROCAM_DEMO_STREAM_MODE"].flatMap(StreamMode.init(rawValue:)),
+                          viewer: env["MICROCAM_DEMO_VIEWER"] == "1")
     }
 
     /// Separate, freshly reset settings domain: the demo never touches real settings.
     func settingsStore() -> SettingsStore {
         let suite = "xyz.vaclavik.microcam.demo"
         UserDefaults.standard.removePersistentDomain(forName: suite)
-        return SettingsStore(defaults: UserDefaults(suiteName: suite) ?? .standard)
+        let store = SettingsStore(defaults: UserDefaults(suiteName: suite) ?? .standard)
+        if viewer {
+            var settings = AppSettings()
+            settings.appMode = .viewer
+            store.save(settings)
+        }
+        return store
     }
 }
 
@@ -58,6 +67,11 @@ final class DemoDriver {
     }
 
     func start() {
+        if model.launchMode == .viewer {
+            NSApp.activate(ignoringOtherApps: true)
+            if let dir = config.shotsDir { Task { await runViewerScript(into: dir) } }
+            return
+        }
         model.activateDemo(root: config.root, job: config.job, streamPort: config.streamPort, streamPIN: config.streamPIN,
                            streamMode: config.streamMode)
         NSApp.activate(ignoringOtherApps: true)
@@ -117,9 +131,10 @@ final class DemoDriver {
         await pause(1.5)
 
         // 1. Main window: live image, job, side panel.
-        model.message = StatusMessage(text: "Uloženo: \(config.job ?? "microcam")_2026-09-25_14-24-00.jpg", isError: false)
+        let name = "\(config.job ?? StorageLayout.jobsDisabledPrefix)_2026-09-25_14-24-00.jpg"
+        model.message = StatusMessage(text: String(localized: "Saved: \(name)"), isError: false)
         await pause(1.5)
-        capture(main, withChildren: true, as: "01-hlavni-okno", in: dir)
+        capture(main, withChildren: true, as: "01-main-window", in: dir)
 
         // 2. Image adjustments popover on a warmer, punchier picture.
         show(frame(1))
@@ -132,7 +147,7 @@ final class DemoDriver {
         model.message = nil
         model.showAdjustments = true
         await pause(2)
-        capture(main, withChildren: true, as: "02-upravy-obrazu", in: dir)
+        capture(main, withChildren: true, as: "02-image-adjustments", in: dir)
         model.showAdjustments = false
         model.currentAdjustments = .neutral
 
@@ -141,7 +156,7 @@ final class DemoDriver {
         model.gridVisible = true
         model.previewView?.zoom(by: 2.5, anchor: CGPoint(x: 0.55, y: 0.55))
         await pause(1.5)
-        capture(main, withChildren: true, as: "03-zoom-a-mrizka", in: dir)
+        capture(main, withChildren: true, as: "03-zoom-and-grid", in: dir)
         model.gridVisible = false
         model.previewView?.resetZoom()
 
@@ -149,7 +164,7 @@ final class DemoDriver {
         show(frame(0))
         model.startRecording()
         await pause(4)
-        capture(main, withChildren: true, as: "04-nahravani", in: dir)
+        capture(main, withChildren: true, as: "04-recording", in: dir)
         model.stopRecording(reason: nil)
         await pause(2)
         model.message = nil
@@ -161,7 +176,7 @@ final class DemoDriver {
         model.startTimelapse()
         model.showTimelapse = true
         await pause(2)
-        capture(main, withChildren: true, as: "05-casosber", in: dir)
+        capture(main, withChildren: true, as: "05-timelapse", in: dir)
         model.showTimelapse = false
         await pause(0.5)
         model.stopTimelapse()
@@ -172,27 +187,65 @@ final class DemoDriver {
             model.compareInitialMode = 1
             model.comparePair = ComparePair(before: before, after: after)
             await pause(2.5)
-            capture(main, withChildren: true, as: "06-porovnani-posuvnik", in: dir)
+            capture(main, withChildren: true, as: "06-compare-slider", in: dir)
             model.comparePair = nil
             await pause(1)
             model.compareInitialMode = 0
             model.comparePair = ComparePair(before: before, after: after)
             await pause(2.5)
-            capture(main, withChildren: true, as: "07-porovnani-vedle-sebe", in: dir)
+            capture(main, withChildren: true, as: "07-compare-side-by-side", in: dir)
             model.comparePair = nil
             await pause(1)
         }
 
-        // 8. Settings → storage.
-        model.settingsTab = "storage"
-        model.openSettingsRequest += 1
-        await pause(2)
-        if let settings = NSApp.windows.first(where: {
-            $0 !== main && $0.isVisible && !String(describing: type(of: $0)).contains("Popover")
-        }) {
-            capture(settings, withChildren: false, as: "08-nastaveni-ukladani", in: dir)
+        // 8. Move to job.
+        model.filesToMove = Array(model.library.files.prefix(2))
+        await pause(1.5)
+        capture(main, withChildren: true, as: "08-move-to-job", in: dir)
+        model.filesToMove = nil
+        await pause(1)
+
+        // 9. First launch: where to save.
+        model.showFirstRun = true
+        await pause(1.5)
+        capture(main, withChildren: true, as: "09-first-run", in: dir)
+        model.showFirstRun = false
+        await pause(1)
+
+        // 10. Every Settings tab, with the optional parts switched on.
+        model.settings.webhookEnabled = true
+        model.settings.webhookURL = "https://crm.example.com/microcam"
+        if !model.settings.streamingEnabled { model.settings.streamingEnabled = true }
+        let tabs = ["general", "device", "image", "storage", "timelapse", "preview", "integrations", "stream"]
+        for (index, tab) in tabs.enumerated() {
+            model.settingsTab = tab
+            if index == 0 { model.openSettingsRequest += 1 }
+            await pause(index == 0 ? 2 : 1.2)
+            if let settings = settingsWindow(besides: main) {
+                capture(settings, withChildren: false, as: String(format: "10-settings-%d-%@", index + 1, tab), in: dir)
+            }
         }
         NSApp.terminate(nil)
+    }
+
+    /// Viewer mode before a camera computer is found, and its Settings.
+    private func runViewerScript(into dir: URL) async {
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        await pause(1.5)
+        guard let main = model.mainWindow else { NSApp.terminate(nil); return }
+        main.setFrame(NSRect(x: 80, y: 80, width: 1280, height: 800), display: true)
+        await pause(1.5)
+        capture(main, withChildren: true, as: "11-viewer", in: dir)
+        model.openSettingsRequest += 1
+        await pause(2)
+        if let settings = settingsWindow(besides: main) {
+            capture(settings, withChildren: false, as: "12-viewer-settings", in: dir)
+        }
+        NSApp.terminate(nil)
+    }
+
+    private func settingsWindow(besides main: NSWindow) -> NSWindow? {
+        NSApp.windows.first { $0 !== main && $0.isVisible && !String(describing: type(of: $0)).contains("Popover") }
     }
 
     // MARK: Capture

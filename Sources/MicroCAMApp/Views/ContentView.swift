@@ -5,12 +5,15 @@ struct ContentView: View {
     @Environment(\.openSettings) private var openSettings
 
     var body: some View {
-        if model.launchMode == .viewer {
-            ViewerView(viewer: model.viewer)
-                .background(WindowAccessor { model.attachMainWindow($0) })
-        } else {
-            cameraBody
+        Group {
+            if model.launchMode == .viewer {
+                ViewerView(viewer: model.viewer)
+                    .background(WindowAccessor { model.attachMainWindow($0) })
+            } else {
+                cameraBody
+            }
         }
+        .onChange(of: model.openSettingsRequest) { openSettings() }
     }
 
     private var cameraBody: some View {
@@ -41,21 +44,21 @@ struct ContentView: View {
         }
         .toolbar {
             ToolbarItemGroup {
-                Button { model.takePhoto() } label: { Label("Vyfotit", systemImage: "camera") }
-                    .help("Vyfotit (mezerník)")
+                Button { model.takePhoto() } label: { Label("Take photo", systemImage: "camera") }
+                    .help("Take a photo (Space)")
                 RecordButton()
-                Button { model.revealCaptureFolder() } label: { Label("Složka", systemImage: "folder") }
-                    .help("Otevřít složku, kam se teď ukládá")
+                Button { model.revealCaptureFolder() } label: { Label("Open folder", systemImage: "folder") }
+                    .help("Open the folder where captures are saved now")
                 TimelapseToolbarButton(runner: model.timelapse, show: $model.showTimelapse)
                 Button { model.showAdjustments.toggle() } label: {
-                    Label("Úpravy obrazu", systemImage: "slider.horizontal.3")
+                    Label("Image adjustments", systemImage: "slider.horizontal.3")
                 }
+                .help("Image adjustments")
                 .popover(isPresented: $model.showAdjustments) {
                     AdjustmentsForm().padding().frame(width: 360)
                 }
             }
         }
-        .onChange(of: model.openSettingsRequest) { openSettings() }
         .sheet(isPresented: $model.showFirstRun) {
             FirstRunView().interactiveDismissDisabled()
         }
@@ -79,12 +82,16 @@ struct CameraStateOverlay: View {
     var body: some View {
         if model.cameraAuthorized == false {
             VStack(spacing: 12) {
-                Text("microCAM nemá přístup ke kameře.").font(.title3)
-                Button("Otevřít Nastavení systému") { model.openPrivacySettings("Privacy_Camera") }
+                Text("microCAM isn't allowed to use the camera.").font(.title3)
+                Text("Allow it in System Settings → Privacy & Security → Camera.").foregroundStyle(.secondary)
+                Button("Open System Settings") { model.openPrivacySettings("Privacy_Camera") }
             }
             .padding(24).background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
         } else if model.cameraAuthorized == true && engine.currentCameraID == nil {
-            Text("Není připojená žádná kamera.").font(.title3)
+            VStack(spacing: 8) {
+                Text("No camera connected.").font(.title3)
+                Text("Connect a USB microscope or a capture card.").foregroundStyle(.secondary)
+            }
                 .padding(24).background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
         } else if let error = engine.lastError {
             Text(error).foregroundStyle(.red)
@@ -100,9 +107,9 @@ struct TimelapseToolbarButton: View {
 
     var body: some View {
         Button { show.toggle() } label: {
-            Label("Časosběr", systemImage: runner.isRunning ? "timer.circle.fill" : "timer")
+            Label("Timelapse", systemImage: runner.isRunning ? "timer.circle.fill" : "timer")
         }
-        .help("Časosběr")
+        .help("Timelapse")
         .popover(isPresented: $show) {
             TimelapseForm(runner: runner).padding().frame(width: 340)
         }
@@ -121,19 +128,21 @@ struct RecordButton: View {
 
     var body: some View {
         if model.isFinalizingRecording {
-            Label("Ukládám video…", systemImage: "hourglass")
-                .help("Dokončuji ukládání předchozího videa")
+            Label("Saving video…", systemImage: "hourglass")
+                .help("Finishing the previous video")
         } else {
             Button { model.toggleRecording() } label: {
                 if model.isStartingRecording {
-                    Label("Zrušit spuštění", systemImage: "xmark.circle")
+                    Label("Cancel recording", systemImage: "xmark.circle")
+                } else if model.isRecording {
+                    Label("Stop recording", systemImage: "stop.circle.fill")
                 } else {
-                    Label(model.isRecording ? "Zastavit" : "Nahrávat",
-                          systemImage: model.isRecording ? "stop.circle.fill" : "record.circle")
+                    Label("Record", systemImage: "record.circle")
                 }
             }
             .tint(model.isRecording ? .red : nil)
-            .help(model.isStartingRecording ? "Čekám na mikrofon – kliknutím nahrávání zrušíš" : "Nahrávat / zastavit (R)")
+            .help(model.isStartingRecording ? String(localized: "Waiting for the microphone. Click to cancel.")
+                                            : String(localized: "Start or stop recording (R)"))
         }
     }
 }

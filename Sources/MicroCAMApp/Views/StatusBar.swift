@@ -15,11 +15,11 @@ struct StatusBar: View {
                         .foregroundStyle(.red).monospacedDigit()
                 }
                 if model.droppedFrames > 0 {
-                    Text("vypadlé snímky: \(model.droppedFrames)").foregroundStyle(.orange)
+                    Text("Dropped frames: \(model.droppedFrames)").foregroundStyle(.orange)
                 }
             }
             if model.streamViewers > 0 {
-                Label("Sleduje \(model.streamViewers)", systemImage: "dot.radiowaves.left.and.right")
+                Label("Watching: \(model.streamViewers)", systemImage: "dot.radiowaves.left.and.right")
                     .foregroundStyle(.secondary)
             }
             Spacer()

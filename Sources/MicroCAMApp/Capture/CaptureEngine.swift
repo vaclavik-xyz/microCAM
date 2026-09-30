@@ -13,7 +13,7 @@ struct LatestFrame {
 
 enum EngineError: LocalizedError {
     case formatUnavailable
-    var errorDescription: String? { "Zvolený formát kamera nepodporuje." }
+    var errorDescription: String? { String(localized: "The camera doesn't support this format. Choose another one in Settings → Device.") }
 }
 
 /// Owns the AVCaptureSession. All session mutations run on `sessionQueue`;
@@ -270,7 +270,7 @@ final class CaptureEngine: NSObject, ObservableObject {
 
     @objc private func runtimeError(_ note: Notification) {
         let error = note.userInfo?[AVCaptureSessionErrorKey] as? Error
-        DispatchQueue.main.async { self.lastError = error?.localizedDescription ?? "Chyba kamery" }
+        DispatchQueue.main.async { self.lastError = error?.localizedDescription ?? String(localized: "The camera reported an error.") }
     }
 }
 

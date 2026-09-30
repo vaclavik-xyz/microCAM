@@ -136,21 +136,21 @@ final class AppModel: ObservableObject {
             self?.stopRecording(reason: error.localizedDescription)
         }
         lifecycle.onWillSleep = { [weak self] in
-            self?.stopRecording(reason: "Mac usnul")
+            self?.stopRecording(reason: String(localized: "the Mac went to sleep"))
             self?.stopTimelapse()
         }
         timelapse.onShot = { [weak self] in self?.takePhoto(kind: .timelapse) }
         timelapse.onFinish = { [weak self] in
             guard let self else { return }
             self.lifecycle.update { $0.timelapseRunning = false }
-            self.message = StatusMessage(text: "Časosběr skončil (\(self.timelapse.shotsTaken) snímků).", isError: false)
+            self.message = StatusMessage(text: String(localized: "Timelapse finished. Photos taken: \(self.timelapse.shotsTaken)."), isError: false)
         }
         lifecycle.update { $0.pauseWhenHidden = settings.pauseWhenHidden }
         lifecycle.onChange = { [weak self] _ in self?.applyLifecycle() }
         engine.onCameraDisconnected = { [weak self] in
-            self?.stopRecording(reason: "kamera byla odpojena")
+            self?.stopRecording(reason: String(localized: "the camera was disconnected"))
             self?.stopTimelapse()
-            self?.message = StatusMessage(text: "Kamera byla odpojena. Po připojení se obraz obnoví.", isError: true)
+            self?.message = StatusMessage(text: String(localized: "The camera was disconnected. The picture comes back when you connect it again."), isError: true)
         }
         engine.onCamerasChanged = { [weak self] in
             guard let self, self.cameraAuthorized == true,
@@ -198,8 +198,9 @@ final class AppModel: ObservableObject {
         showFirstRun = false
         syncAdjustments()
         capturesChanged()
+        // The demo never reads or writes the real photo PIN.
+        cachedStreamPIN = .some(streamPIN.flatMap { PinGuard.isValidPIN($0) ? $0 : nil })
         if let streamPort {
-            cachedStreamPIN = .some(streamPIN.flatMap { PinGuard.isValidPIN($0) ? $0 : nil })
             settings.streamingPort = streamPort
             if let streamMode { settings.streamingMode = streamMode }
             settings.streamingEnabled = true
@@ -260,8 +261,8 @@ final class AppModel: ObservableObject {
         case noStorageRoot, noFrame
         var errorDescription: String? {
             switch self {
-            case .noStorageRoot: "Není vybraná složka pro ukládání."
-            case .noFrame: "Kamera právě nedává obraz."
+            case .noStorageRoot: String(localized: "No folder is chosen for saving. Choose one in Settings → Storage.")
+            case .noFrame: String(localized: "The camera isn't sending a picture. Check that it's connected.")
             }
         }
     }
@@ -303,7 +304,7 @@ final class AppModel: ObservableObject {
     func takePhoto(kind: CaptureKind = .photo, remote: Bool = false,
                    completion: ((Result<URL, Error>) -> Void)? = nil) {
         guard let frame = engine.latestFrame.value, Date().timeIntervalSince(frame.receivedAt) < 1 else {
-            report(CaptureError.noFrame, prefix: "Fotka neuložena")
+            report(CaptureError.noFrame, prefix: String(localized: "Photo not saved"))
             completion?(.failure(CaptureError.noFrame))
             return
         }
@@ -311,7 +312,7 @@ final class AppModel: ObservableObject {
         do {
             url = try reserveURL(kind: kind)
         } catch {
-            report(error, prefix: "Fotka neuložena")
+            report(error, prefix: String(localized: "Photo not saved"))
             completion?(.failure(error))
             return
         }
@@ -322,12 +323,13 @@ final class AppModel: ObservableObject {
             switch result {
             case .success:
                 let name = url.lastPathComponent
-                self.message = StatusMessage(text: remote ? "Vyfoceno z recepce: \(name)" : "Uloženo: \(name)",
+                self.message = StatusMessage(text: remote ? String(localized: "Photo from another device saved: \(name)")
+                                                    : String(localized: "Saved: \(name)"),
                                              isError: false)
                 self.capturesChanged()
                 completion?(.success(url))
             case .failure(let error):
-                self.report(error, prefix: "Fotka neuložena")
+                self.report(error, prefix: String(localized: "Photo not saved"))
                 completion?(.failure(error))
             }
         }
@@ -361,10 +363,10 @@ final class AppModel: ObservableObject {
                 self.releaseURL(destination)
                 switch result {
                 case .success(let url):
-                    self.message = StatusMessage(text: "Anotace z recepce: \(url.lastPathComponent)", isError: false)
+                    self.message = StatusMessage(text: String(localized: "Drawing from another device saved: \(url.lastPathComponent)"), isError: false)
                     self.capturesChanged()
                 case .failure(let error):
-                    self.report(error, prefix: "Anotace neuložena")
+                    self.report(error, prefix: String(localized: "Drawing not saved"))
                 }
                 completion(result)
             }
@@ -375,9 +377,9 @@ final class AppModel: ObservableObject {
         let detail: String
         switch error {
         case StorageError.rootUnavailable(let url):
-            detail = "složka \(url.path) není dostupná. Zkontroluj ji v Nastavení."
+            detail = String(localized: "the folder \(url.path) isn't available. Check it in Settings → Storage.")
         case StorageError.cannotCreateFolder(let url):
-            detail = "nelze vytvořit složku \(url.path)."
+            detail = String(localized: "can't create the folder \(url.path).")
         default:
             detail = error.localizedDescription
         }
@@ -401,8 +403,8 @@ final class AppModel: ObservableObject {
         panel.canChooseFiles = false
         panel.canCreateDirectories = true
         panel.allowsMultipleSelection = false
-        panel.prompt = "Vybrat"
-        panel.message = "Složka, do které bude microCAM ukládat fotky a videa"
+        panel.prompt = String(localized: "Choose")
+        panel.message = String(localized: "Choose the folder where microCAM saves photos and videos")
         panel.directoryURL = settings.storageRoot
             ?? FileManager.default.urls(for: .picturesDirectory, in: .userDomainMask).first
         if panel.runModal() == .OK, let url = panel.url {
@@ -422,7 +424,7 @@ final class AppModel: ObservableObject {
             showFirstRun = false
             capturesChanged()
         } catch {
-            report(error, prefix: "Složku nelze vytvořit")
+            report(error, prefix: String(localized: "Can't create the folder"))
         }
     }
 
@@ -431,7 +433,7 @@ final class AppModel: ObservableObject {
         let folder = captureFolder ?? root
         let target = FileManager.default.fileExists(atPath: folder.path) ? folder : root
         guard FileManager.default.fileExists(atPath: target.path) else {
-            report(StorageError.rootUnavailable(root), prefix: "Nelze otevřít")
+            report(StorageError.rootUnavailable(root), prefix: String(localized: "Can't open the folder"))
             return
         }
         NSWorkspace.shared.open(target)
@@ -478,16 +480,16 @@ final class AppModel: ObservableObject {
     func startRecording() {
         guard !isRecording, !isStartingRecording else { return }
         guard !isFinalizingRecording else {
-            message = StatusMessage(text: "Počkej, dokončuji ukládání předchozího videa…", isError: false)
+            message = StatusMessage(text: String(localized: "Still saving the previous video. Try again in a moment."), isError: false)
             return
         }
         guard settings.storageRoot != nil else { showFirstRun = true; return }
         guard let format = engine.activeFormat, engine.latestFrame.value != nil else {
-            report(CaptureError.noFrame, prefix: "Nahrávání nezačalo")
+            report(CaptureError.noFrame, prefix: String(localized: "Recording didn't start"))
             return
         }
         if diskStatus() == .critical {
-            message = StatusMessage(text: "Nahrávání nezačalo: na disku je méně než 500 MB.", isError: true)
+            message = StatusMessage(text: String(localized: "Recording didn't start: less than 500 MB free on the disk. Free up some space."), isError: true)
             return
         }
         let finalURL: URL
@@ -496,7 +498,7 @@ final class AppModel: ObservableObject {
             finalURL = try reserveURL(kind: .video)
             stagingURL = try Recorder.stagingDirectory().appendingPathComponent("\(UUID().uuidString).mov")
         } catch {
-            report(error, prefix: "Nahrávání nezačalo")
+            report(error, prefix: String(localized: "Recording didn't start"))
             return
         }
         isStartingRecording = true
@@ -508,14 +510,14 @@ final class AppModel: ObservableObject {
                 self.pendingStartCancelled = false
                 self.releaseURL(finalURL)
                 self.engine.setAudioCapture(microphoneID: nil) { _ in }
-                self.message = StatusMessage(text: "Nahrávání zrušeno.", isError: false)
+                self.message = StatusMessage(text: String(localized: "Recording cancelled."), isError: false)
                 return
             }
             // The camera may have stopped while waiting for the microphone.
             guard self.engine.latestFrame.value != nil else {
                 self.releaseURL(finalURL)
                 self.engine.setAudioCapture(microphoneID: nil) { _ in }
-                self.report(CaptureError.noFrame, prefix: "Nahrávání nezačalo")
+                self.report(CaptureError.noFrame, prefix: String(localized: "Recording didn't start"))
                 return
             }
             do {
@@ -525,7 +527,7 @@ final class AppModel: ObservableObject {
             } catch {
                 self.releaseURL(finalURL)
                 self.engine.setAudioCapture(microphoneID: nil) { _ in }
-                self.report(error, prefix: "Nahrávání nezačalo")
+                self.report(error, prefix: String(localized: "Recording didn't start"))
                 return
             }
             self.isRecording = true
@@ -534,10 +536,10 @@ final class AppModel: ObservableObject {
             self.droppedFrames = 0
             self.lifecycle.update { $0.recording = true }
             if self.settings.preventSleepWhileRecording {
-                self.sleepAssertion = SleepAssertion(reason: "microCAM nahrává video")
+                self.sleepAssertion = SleepAssertion(reason: String(localized: "microCAM is recording a video"))
             }
             if self.diskStatus() == .low {
-                self.message = StatusMessage(text: "Pozor: na disku dochází místo.", isError: true)
+                self.message = StatusMessage(text: String(localized: "The disk is almost full. Recording stops at 500 MB free."), isError: true)
             }
             self.recordingTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in
                 MainActor.assumeIsolated { self?.recordingTick() }
@@ -546,13 +548,13 @@ final class AppModel: ObservableObject {
         guard settings.recordAudio else { begin(false); return }
         Task {
             guard await AVCaptureDevice.requestAccess(for: .audio) else {
-                message = StatusMessage(text: "Bez přístupu k mikrofonu – nahrávám bez zvuku.", isError: true)
+                message = StatusMessage(text: String(localized: "Recording without sound: microCAM isn't allowed to use the microphone (System Settings → Privacy & Security)."), isError: true)
                 begin(false)
                 return
             }
             engine.setAudioCapture(microphoneID: settings.lastMicrophoneID) { [weak self] attached in
                 if !attached {
-                    self?.message = StatusMessage(text: "Mikrofon nelze použít – nahrávám bez zvuku.", isError: true)
+                    self?.message = StatusMessage(text: String(localized: "Recording without sound: the microphone can't be used."), isError: true)
                 }
                 begin(attached)
             }
@@ -561,7 +563,7 @@ final class AppModel: ObservableObject {
 
     private func recordingTick() {
         droppedFrames = recorder.stats.value.framesDropped
-        if diskStatus() == .critical { stopRecording(reason: "došlo místo na disku") }
+        if diskStatus() == .critical { stopRecording(reason: String(localized: "the disk is full")) }
     }
 
     func stopRecording(reason: String?) {
@@ -583,11 +585,13 @@ final class AppModel: ObservableObject {
             self.lifecycle.update { $0.recording = false }
             switch result {
             case .success(let url):
-                let suffix = reason.map { " (\($0))" } ?? ""
-                self.message = StatusMessage(text: "Video uloženo: \(url.lastPathComponent)\(suffix)", isError: reason != nil)
+                let name = url.lastPathComponent
+                let text = reason.map { String(localized: "Recording stopped (\($0)). Video saved: \(name)") }
+                    ?? String(localized: "Video saved: \(name)")
+                self.message = StatusMessage(text: text, isError: reason != nil)
                 self.capturesChanged()
             case .failure(let error):
-                self.report(error, prefix: "Video")
+                self.report(error, prefix: String(localized: "Video not saved"))
             }
         }
     }
@@ -597,7 +601,7 @@ final class AppModel: ObservableObject {
         guard let dir = try? Recorder.stagingDirectory(),
               let files = try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil),
               !files.isEmpty else { return }
-        message = StatusMessage(text: "Nalezen nedokončený záznam – otevírám jeho složku.", isError: true)
+        message = StatusMessage(text: String(localized: "Found a recording that wasn't finished. Opening its folder."), isError: true)
         NSWorkspace.shared.open(dir)
     }
 
@@ -610,7 +614,7 @@ final class AppModel: ObservableObject {
         guard settings.storageRoot != nil else { showFirstRun = true; return }
         guard let schedule = TimelapseSchedule(interval: settings.timelapseInterval,
                                                duration: settings.timelapseDuration) else {
-            message = StatusMessage(text: "Časosběr: interval musí být aspoň 1 s a délka aspoň jeden interval (max. 7 dní).",
+            message = StatusMessage(text: String(localized: "Timelapse didn't start: the interval must be at least 1 second and the duration at least one interval (at most 7 days)."),
                                     isError: true)
             return
         }
@@ -631,11 +635,11 @@ final class AppModel: ObservableObject {
     func moveFiles(_ urls: [URL], to target: JobContext) {
         guard let layout else { showFirstRun = true; return }
         guard !isMovingFiles else {
-            message = StatusMessage(text: "Počkej, předchozí přesun ještě běží.", isError: false)
+            message = StatusMessage(text: String(localized: "Still moving the previous files. Try again in a moment."), isError: false)
             return
         }
         isMovingFiles = true
-        message = StatusMessage(text: "Přesouvám \(urls.count) soubor(ů)…", isError: false)
+        message = StatusMessage(text: String(localized: "Moving files: \(urls.count)…"), isError: false)
         Task {
             let outcomes = await Task.detached(priority: .userInitiated) {
                 JobFileMover(layout: layout).move(urls, to: target)
@@ -650,10 +654,12 @@ final class AppModel: ObservableObject {
                 case .failure: failed.append(outcome)
                 }
             }
-            var text = "Přesunuto: \(moved)"
-            if skipped > 0 { text += ", přeskočeno \(skipped) (už u zakázky)" }
-            if let first = failed.first { text += ", nepodařilo se \(failed.count) (\(first.source.lastPathComponent))" }
-            message = StatusMessage(text: text + ".", isError: !failed.isEmpty)
+            var parts = [String(localized: "Moved: \(moved)")]
+            if skipped > 0 { parts.append(String(localized: "already in that job: \(skipped)")) }
+            if let first = failed.first {
+                parts.append(String(localized: "failed: \(failed.count) (\(first.source.lastPathComponent))"))
+            }
+            message = StatusMessage(text: parts.joined(separator: ", "), isError: !failed.isEmpty)
             capturesChanged()
         }
     }
@@ -702,13 +708,19 @@ final class AppModel: ObservableObject {
         }
         guard StreamPort.isValid(settings.streamingPort) else {
             streamServer?.stop()
-            streamError = "Port musí být 1024–65535."
+            streamError = String(localized: "The port must be a number from 1024 to 65535.")
             return
         }
         // Demo mode stays on loopback and off Bonjour so it never shows up as a real bench.
         streamServer?.start(port: UInt16(settings.streamingPort),
                             serviceName: demo == nil ? (Host.current().localizedName ?? "microCAM") : nil,
                             loopbackOnly: demo != nil)
+    }
+
+    /// Addresses shown in Settings → Stream. The demo shows a documentation
+    /// address so screenshots never reveal a real network.
+    func streamAddresses() -> [String] {
+        demo == nil ? NetworkAddresses.streamIPv4() : ["192.0.2.10"]
     }
 
     // MARK: Viewer mode
@@ -721,7 +733,7 @@ final class AppModel: ObservableObject {
         flushSettings()
         let bundle = Bundle.main.bundleURL
         guard bundle.pathExtension == "app", let executable = Bundle.main.executableURL else {
-            return relaunchFailed("microCAM neběží jako aplikace (.app).")
+            return relaunchFailed(String(localized: "microCAM isn't running as an app (.app)."))
         }
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/sh")
@@ -736,8 +748,8 @@ final class AppModel: ObservableObject {
 
     private func relaunchFailed(_ detail: String) {
         let alert = NSAlert()
-        alert.messageText = "Restart se nepodařil"
-        alert.informativeText = "\(detail)\nUkonči microCAM a spusť ho znovu – nový režim se použije při dalším spuštění."
+        alert.messageText = String(localized: "Couldn't restart microCAM")
+        alert.informativeText = detail + "\n" + String(localized: "Quit microCAM and open it again. The change applies on the next start.")
         alert.runModal()
     }
 
@@ -763,17 +775,17 @@ final class AppModel: ObservableObject {
     /// Sends the given captures one by one; videos only when enabled in Settings.
     func sendToWebhook(_ urls: [URL]) {
         guard let endpoint = webhookEndpoint else {
-            message = StatusMessage(text: "Webhook není nastavený (Nastavení → Integrace).", isError: true)
+            message = StatusMessage(text: String(localized: "The webhook isn't set up. Set it up in Settings → Integrations."), isError: true)
             return
         }
         guard !isSending else {
-            message = StatusMessage(text: "Počkej, předchozí odesílání ještě běží.", isError: false)
+            message = StatusMessage(text: String(localized: "Still sending the previous files. Try again in a moment."), isError: false)
             return
         }
         let files = urls.filter { settings.webhookSendVideos || $0.pathExtension.lowercased() != "mov" }
             .sorted { $0.lastPathComponent < $1.lastPathComponent }
         guard !files.isEmpty else {
-            message = StatusMessage(text: "Nic k odeslání (videa jsou v Nastavení vypnutá).", isError: false)
+            message = StatusMessage(text: String(localized: "Nothing to send. Sending videos is off in Settings → Integrations."), isError: false)
             return
         }
         isSending = true
@@ -782,12 +794,12 @@ final class AppModel: ObservableObject {
             var sent = 0
             var failure: String?
             for (index, file) in files.enumerated() {
-                message = StatusMessage(text: "Odesílám \(index + 1)/\(files.count)…", isError: false)
+                message = StatusMessage(text: String(localized: "Sending \(index + 1) of \(files.count)…"), isError: false)
                 do {
                     try await client.upload(file: file)
                     sent += 1
                 } catch WebhookError.httpStatus(let code) {
-                    failure = "server vrátil \(code)"
+                    failure = String(localized: "the server answered with code \(code)")
                     break
                 } catch {
                     failure = error.localizedDescription
@@ -796,9 +808,9 @@ final class AppModel: ObservableObject {
             }
             isSending = false
             if let failure {
-                message = StatusMessage(text: "Odesláno \(sent)/\(files.count), chyba: \(failure)", isError: true)
+                message = StatusMessage(text: String(localized: "Sent \(sent) of \(files.count). Error: \(failure)"), isError: true)
             } else {
-                message = StatusMessage(text: "Odesláno: \(sent) soubor(ů).", isError: false)
+                message = StatusMessage(text: String(localized: "Files sent: \(sent)"), isError: false)
             }
         }
     }

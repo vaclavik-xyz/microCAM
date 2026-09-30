@@ -21,44 +21,45 @@ struct SidePanel: View {
                 }
             }
             .contextMenu(forSelectionType: URL.self) { urls in
-                Button("Otevřít") { urls.forEach { NSWorkspace.shared.open($0) } }
-                Button("Zobrazit ve Finderu") { NSWorkspace.shared.activateFileViewerSelecting(Array(urls)) }
-                ShareLink("Sdílet…", items: Array(urls))
+                Button("Open") { urls.forEach { NSWorkspace.shared.open($0) } }
+                Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting(Array(urls)) }
+                ShareLink("Share…", items: Array(urls))
                 if model.webhookEndpoint != nil {
-                    Button("Odeslat přes webhook") { model.sendToWebhook(Array(urls)) }
+                    Button("Send to webhook") { model.sendToWebhook(Array(urls)) }
                 }
                 if model.settings.jobsEnabled {
-                    Button("Přesunout k zakázce…") { model.filesToMove = Array(urls) }
+                    Button("Move to job…") { model.filesToMove = Array(urls) }
                 }
             } primaryAction: { urls in
                 urls.forEach { NSWorkspace.shared.open($0) }
             }
             Divider()
             HStack {
-                Text("\(library.files.count) souborů").font(.caption).foregroundStyle(.secondary)
+                Text("Files: \(library.files.count)").font(.caption).foregroundStyle(.secondary)
                 Spacer()
                 if model.settings.jobsEnabled {
-                    Button("Přesunout…") { model.filesToMove = Array(library.selection) }
+                    Button("Move…") { model.filesToMove = Array(library.selection) }
                         .disabled(library.selection.isEmpty || model.isMovingFiles)
+                        .help("Move the selected files to another job")
                 }
                 ShareLink(items: Array(library.selection)) { Image(systemName: "square.and.arrow.up") }
                     .disabled(library.selection.isEmpty)
-                    .help("Sdílet (AirDrop, Mail, Zprávy…)")
+                    .help("Share (AirDrop, Mail, Messages…)")
                 if model.webhookEndpoint != nil {
-                    Button("Odeslat") { model.sendToWebhook(Array(library.selection)) }
+                    Button("Send") { model.sendToWebhook(Array(library.selection)) }
                         .disabled(library.selection.isEmpty || model.isSending)
-                        .help("Odeslat vybrané soubory přes webhook")
+                        .help("Send the selected files to the webhook")
                 }
-                Button("Porovnat") { compare = comparePair }
+                Button("Compare") { compare = comparePair }
                     .disabled(comparePair == nil)
-                    .help("Vyber dvě fotky")
+                    .help("Select two photos to compare them")
             }
             .controlSize(.small)
             .padding(8)
         }
     }
 
-    /// Exactly two photos, older one first ("před"). Sorted by the timestamp
+    /// Exactly two photos, older one first ("before"). Sorted by the timestamp
     /// in the name, not the whole name (the prefix differs after a move).
     private var comparePair: ComparePair? {
         let photos = library.selection.filter { $0.pathExtension.lowercased() == "jpg" }

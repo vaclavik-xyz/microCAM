@@ -8,5 +8,7 @@ let package = Package(
         .target(name: "MicroCAMCore"),
         .executableTarget(name: "MicroCAMApp", dependencies: ["MicroCAMCore"]),
         .testTarget(name: "MicroCAMCoreTests", dependencies: ["MicroCAMCore"]),
+        // Reads Sources/ and Resources/ as files: every UI text must exist in every language.
+        .testTarget(name: "LocalizationTests"),
     ]
 )

@@ -2,28 +2,38 @@ import SwiftUI
 
 /// Number + unit editor for a duration stored in seconds.
 struct DurationField: View {
-    let title: String
+    let title: Text
     @Binding var seconds: TimeInterval
-    let units: [(name: String, seconds: Double)]
+    let units: [(name: Text, seconds: Double)]
     @State private var unitIndex = 0
 
     var body: some View {
         HStack {
-            Text(title).frame(width: 90, alignment: .leading)
-            TextField("", value: Binding(
+            title.frame(minWidth: 90, alignment: .leading)
+            Spacer(minLength: 0)
+            TextField(value: Binding(
                 get: { seconds / units[unitIndex].seconds },
                 set: { seconds = max(0, $0) * units[unitIndex].seconds }
-            ), format: .number.precision(.fractionLength(0...1)))
+            ), format: .number.precision(.fractionLength(0...1))) { title }
+            .labelsHidden()
             .frame(width: 70)
-            Picker("", selection: $unitIndex) {
-                ForEach(units.indices, id: \.self) { Text(units[$0].name).tag($0) }
-            }
-            .labelsHidden().frame(width: 90)
+            Picker(selection: $unitIndex) {
+                ForEach(units.indices, id: \.self) { units[$0].name.tag($0) }
+            } label: { title }
+            .labelsHidden().frame(width: 100)
         }
         .onAppear {
             // Largest unit that divides the stored value evenly.
             unitIndex = units.indices.last { seconds.truncatingRemainder(dividingBy: units[$0].seconds) == 0 } ?? 0
         }
+    }
+
+    static func interval(_ seconds: Binding<TimeInterval>) -> DurationField {
+        DurationField(title: Text("Every"), seconds: seconds, units: [(Text("seconds"), 1), (Text("minutes"), 60)])
+    }
+
+    static func duration(_ seconds: Binding<TimeInterval>) -> DurationField {
+        DurationField(title: Text("For"), seconds: seconds, units: [(Text("minutes"), 60), (Text("hours"), 3600)])
     }
 }
 
@@ -33,17 +43,18 @@ struct TimelapseForm: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            DurationField(title: "Fotit každých", seconds: $model.settings.timelapseInterval,
-                          units: [("sekund", 1), ("minut", 60)])
-            DurationField(title: "Po dobu", seconds: $model.settings.timelapseDuration,
-                          units: [("minut", 60), ("hodin", 3600)])
+            Text("Takes a photo at a fixed interval into the active job.")
+                .font(.caption).foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            DurationField.interval($model.settings.timelapseInterval)
+            DurationField.duration($model.settings.timelapseDuration)
             if runner.isRunning, let schedule = runner.schedule {
                 ProgressView(value: Double(runner.shotsTaken), total: Double(schedule.shotCount)) {
-                    Text("\(runner.shotsTaken) / \(schedule.shotCount) snímků")
+                    Text("Photos: \(runner.shotsTaken) of \(schedule.shotCount)")
                 }
-                Button("Zastavit časosběr") { model.stopTimelapse() }
+                Button("Stop timelapse") { model.stopTimelapse() }
             } else {
-                Button("Spustit časosběr") { model.startTimelapse() }
+                Button("Start timelapse") { model.startTimelapse() }
                     .keyboardShortcut(.defaultAction)
                     .disabled(model.engine.currentCameraID == nil)
             }
