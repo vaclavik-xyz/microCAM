@@ -13,6 +13,7 @@ final class PreviewContainerView: NSView {
     let contentLayer = CALayer()
     let renderer: MetalPreviewRenderer?
     let gridView = GridOverlayView()
+    let annotationView: AnnotationOverlayView
     var onZoomChange: ((CGFloat) -> Void)?
     private(set) var zoom = ZoomState() {
         didSet {
@@ -21,8 +22,9 @@ final class PreviewContainerView: NSView {
         }
     }
 
-    init(session: AVCaptureSession, renderer: MetalPreviewRenderer?) {
+    init(session: AVCaptureSession, renderer: MetalPreviewRenderer?, board: AnnotationBoard) {
         self.renderer = renderer
+        annotationView = AnnotationOverlayView(board: board)
         previewLayer = AVCaptureVideoPreviewLayer(session: session)
         previewLayer.videoGravity = .resizeAspect
         super.init(frame: .zero)
@@ -47,6 +49,8 @@ final class PreviewContainerView: NSView {
         gridView.isHidden = true
         gridView.autoresizingMask = [.width, .height]
         addSubview(gridView)
+        annotationView.autoresizingMask = [.width, .height]
+        addSubview(annotationView)
     }
 
     func resetZoom() { zoom.reset() }
@@ -60,6 +64,7 @@ final class PreviewContainerView: NSView {
         contentLayer.setAffineTransform(zoom.layerTransform(viewSize: bounds.size))
         CATransaction.commit()
         renderer?.zoom = zoom
+        annotationView.zoom = zoom
     }
 
     override func scrollWheel(with event: NSEvent) {
@@ -168,6 +173,7 @@ final class PreviewContainerView: NSView {
         passthroughHost.frame = bounds
         renderer?.view.frame = bounds
         gridView.frame = bounds
+        annotationView.frame = bounds
         CATransaction.begin()
         CATransaction.setDisableActions(true)
         // With a non-identity transform, set bounds/position, never frame.
@@ -183,9 +189,15 @@ struct PreviewView: NSViewRepresentable {
     @EnvironmentObject private var model: AppModel
 
     func makeNSView(context: Context) -> PreviewContainerView {
-        let view = PreviewContainerView(session: model.engine.session, renderer: model.previewRenderer)
+        let view = PreviewContainerView(session: model.engine.session, renderer: model.previewRenderer,
+                                        board: model.board)
         model.previewView = view
         view.onZoomChange = { [weak model] in model?.zoomChanged($0) }
+        view.annotationView.onChange = { [weak model] in model?.boardChanged() }
+        view.annotationView.onPickStyle = { [weak model] color, size in
+            model?.drawColor = color
+            model?.textSize = size
+        }
         view.setMode(model.renderMode)
         return view
     }
@@ -196,5 +208,11 @@ struct PreviewView: NSViewRepresentable {
         view.gridView.gridType = model.settings.gridType
         view.gridView.gridColor = model.settings.gridColor
         view.gridView.contentSize = model.engine.activeFormat.map { CGSize(width: $0.width, height: $0.height) }
+        let drawing = view.annotationView
+        drawing.contentSize = view.gridView.contentSize
+        drawing.tool = model.drawTool
+        drawing.color = model.drawColor
+        drawing.textSize = model.textSize
+        drawing.isDrawing = model.isDrawing
     }
 }

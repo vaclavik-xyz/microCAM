@@ -14,8 +14,10 @@
 "After: %@" = "After: %@";
 "Allow it in System Settings → Privacy & Security → Camera." = "Allow it in System Settings → Privacy & Security → Camera.";
 "already in that job: %lld" = "already in that job: %lld";
+"Arrow" = "Arrow";
 "Before" = "Before";
 "Before: %@" = "Before: %@";
+"Blue" = "Blue";
 "Brightness" = "Brightness";
 "Camera – the microscope is connected to this Mac" = "Camera – the microscope is connected to this Mac";
 "Camera" = "Camera";
@@ -34,6 +36,9 @@
 "Choose folder…" = "Choose folder…";
 "Choose the folder where microCAM saves photos and videos" = "Choose the folder where microCAM saves photos and videos";
 "Choose" = "Choose";
+"Circle" = "Circle";
+"Clear all drawings" = "Clear all drawings";
+"Clear drawing" = "Clear drawing";
 "Clear selection" = "Clear selection";
 "Close" = "Close";
 "Compare the two photos" = "Compare the two photos";
@@ -44,9 +49,14 @@
 "Contrast" = "Contrast";
 "Copy" = "Copy";
 "Couldn't restart microCAM" = "Couldn't restart microCAM";
+"D – draw on the picture, Esc – stop drawing" = "D – draw on the picture, Esc – stop drawing";
 "Device" = "Device";
 "Disconnect and choose another" = "Disconnect and choose another";
+"Done" = "Done";
 "Done around %@" = "Done around %@";
+"Draw" = "Draw";
+"Draw on the picture (D)" = "Draw on the picture (D)";
+"Drawing" = "Drawing";
 "Drawing from another device saved: %@" = "Drawing from another device saved: %@";
 "Drawing not saved" = "Drawing not saved";
 "Dropped frames: %lld" = "Dropped frames: %lld";
@@ -88,6 +98,7 @@
 "Keep the Mac awake while recording" = "Keep the Mac awake while recording";
 "Keyboard shortcuts" = "Keyboard shortcuts";
 "Language" = "Language";
+"Large text" = "Large text";
 "Live picture, photos and video from a microscope camera." = "Live picture, photos and video from a microscope camera.";
 "Live stream" = "Live stream";
 "Looking for microCAM on the network…" = "Looking for microCAM on the network…";
@@ -95,6 +106,7 @@
 "Mark up…" = "Mark up…";
 "Marked-up copy not saved" = "Marked-up copy not saved";
 "Marked-up copy saved: %@" = "Marked-up copy saved: %@";
+"Medium text" = "Medium text";
 "microCAM asks before it installs anything. You can also check in the microCAM menu." = "microCAM asks before it installs anything. You can also check in the microCAM menu.";
 "microCAM is recording a video" = "microCAM is recording a video";
 "microCAM isn't allowed to use the camera." = "microCAM isn't allowed to use the camera.";
@@ -134,6 +146,7 @@
 "Optional. Sent with every file so the server knows it comes from you." = "Optional. Sent with every file so the server knows it comes from you.";
 "or an address, e.g. 192.168.1.20:8090" = "or an address, e.g. 192.168.1.20:8090";
 "Other files" = "Other files";
+"Pen" = "Pen";
 "Photo from another device saved: %@" = "Photo from another device saved: %@";
 "Photo not saved" = "Photo not saved";
 "Photo quality" = "Photo quality";
@@ -143,6 +156,7 @@
 "Pick one that stands out against the board." = "Pick one that stands out against the board.";
 "Picture size and frames per second." = "Picture size and frames per second.";
 "PIN for photos" = "PIN for photos";
+"Pointer – fades after a moment" = "Pointer – fades after a moment";
 "Port" = "Port";
 "Press G to show or hide it. The grid is never saved in photos or videos." = "Press G to show or hide it. The grid is never saved in photos or videos.";
 "Press Return to apply. The stream restarts and viewers reconnect." = "Press Return to apply. The stream restarts and viewers reconnect.";
@@ -195,6 +209,7 @@
 "Shows the live picture in a browser on other devices on your network, or in microCAM on another Mac." = "Shows the live picture in a browser on other devices on your network, or in microCAM on another Mac.";
 "Side by side" = "Side by side";
 "Slider" = "Slider";
+"Small text" = "Small text";
 "Sort by type" = "Sort by type";
 "Source code on GitHub" = "Source code on GitHub";
 "Space in the side panel – Quick Look of the selected files" = "Space in the side panel – Quick Look of the selected files";
@@ -206,6 +221,7 @@
 "Still moving the previous files. Try again in a moment." = "Still moving the previous files. Try again in a moment.";
 "Still saving the previous video. Try again in a moment." = "Still saving the previous video. Try again in a moment.";
 "Still sending the previous files. Try again in a moment." = "Still sending the previous files. Try again in a moment.";
+"Stop drawing (Esc)" = "Stop drawing (Esc)";
 "Stop recording" = "Stop recording";
 "Stop timelapse" = "Stop timelapse";
 "Storage" = "Storage";
@@ -217,6 +233,8 @@
 "Takes a photo at a fixed interval into the current folder. Start it from the toolbar." = "Takes a photo at a fixed interval into the current folder. Start it from the toolbar.";
 "Takes a photo at a fixed interval into the current folder." = "Takes a photo at a fixed interval into the current folder.";
 "Temperature" = "Temperature";
+"Text" = "Text";
+"Text size" = "Text size";
 "The camera doesn't support this format. Choose another one in Settings → Device." = "The camera doesn't support this format. Choose another one in Settings → Device.";
 "The camera isn't sending a picture. Check that it's connected." = "The camera isn't sending a picture. Check that it's connected.";
 "The camera reported an error." = "The camera reported an error.";
@@ -245,7 +263,9 @@
 "Today" = "Today";
 "Token" = "Token";
 "Turn off the camera when the window is hidden" = "Turn off the camera when the window is hidden";
+"Type a label" = "Type a label";
 "Type the address into a browser on a device on the same network." = "Type the address into a browser on a device on the same network.";
+"Undo last drawing" = "Undo last drawing";
 "URL" = "URL";
 "Use jobs" = "Use jobs";
 "Use only letters, digits and hyphens." = "Use only letters, digits and hyphens.";

@@ -41,6 +41,11 @@ struct MicroCAMApp: App {
                 Button("Reset zoom") { model.handle(.resetZoom) }
                     .keyboardShortcut("0")
                 Divider()
+                Toggle("Draw", isOn: $model.isDrawing)
+                    .keyboardShortcut("d")
+                Button("Clear drawing") { model.clearDrawing() }
+                    .disabled(!model.hasDrawing)
+                Divider()
                 // Every toolbar action is also in the menu bar.
                 Button("Timelapse…") { model.showTimelapse = true }
                     .keyboardShortcut("t", modifiers: [.command, .shift])
@@ -67,6 +72,7 @@ struct MicroCAMApp: App {
                         String(localized: "Space in the side panel – Quick Look of the selected files"),
                         String(localized: "R – start or stop recording"),
                         String(localized: "G – show or hide the grid"),
+                        String(localized: "D – draw on the picture, Esc – stop drawing"),
                         String(localized: "0 – reset zoom (or double-click the image)"),
                         String(localized: "Scroll or pinch – zoom, drag – move the image"),
                         String(localized: "⌘, – settings"),

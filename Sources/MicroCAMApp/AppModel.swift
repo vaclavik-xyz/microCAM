@@ -77,7 +77,9 @@ final class AppModel: ObservableObject {
     @Published private(set) var renderMode = RenderMode.passthrough
     @Published var gridVisible = false
     /// Drawing on the live picture: the palette shows and drags draw instead of panning.
-    @Published var isDrawing = false
+    @Published var isDrawing = false {
+        didSet { if !isDrawing { previewView?.annotationView.commitText() } }
+    }
     @Published private(set) var zoomScale: CGFloat = 1
     private var keyboard: KeyboardMonitor?
     let quickLook = QuickLookController()
@@ -186,7 +188,9 @@ final class AppModel: ObservableObject {
         }, isInSidePanel: { [weak self] event in
             guard let view = self?.sidePanelView, view.window === event.window else { return false }
             return view.bounds.contains(view.convert(event.locationInWindow, from: nil))
-        }, hasSelection: { [weak self] in self?.library.selection.isEmpty == false }, handler: { [weak self] action in self?.handle(action) })
+        }, hasSelection: { [weak self] in self?.library.selection.isEmpty == false },
+           isDrawing: { [weak self] in self?.isDrawing == true },
+           handler: { [weak self] action in self?.handle(action) })
         checkUnfinishedRecordings()
         capturesChanged()
         NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification,
@@ -283,6 +287,7 @@ final class AppModel: ObservableObject {
         let wanted = id.flatMap { settings.lastFormatByDevice[$0] }
         engine.selectCamera(id: id, format: wanted) { [weak self] applied in
             guard let self, let device = self.engine.currentCameraID else { return }
+            self.cameraForBoard(device)
             self.settings.lastDeviceID = device
             if let applied { self.settings.lastFormatByDevice[device] = applied }
             self.syncAdjustments()
@@ -301,6 +306,43 @@ final class AppModel: ObservableObject {
         if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?\(pane)") {
             NSWorkspace.shared.open(url)
         }
+    }
+
+    // MARK: Drawing on the picture
+
+    /// What is drawn over the live picture: one board for the app, kept only
+    /// in memory and cleared when another camera is selected.
+    let board = AnnotationBoard()
+    static let drawColors = ["#ff3b30", "#ffd60a", "#30d158", "#0a84ff"]
+    @Published var drawTool = AnnotationShape.Kind.arrow
+    @Published var drawColor = AppModel.drawColors[0]
+    @Published var textSize = AnnotationTextSize.medium
+    @Published private(set) var hasDrawing = false
+    @Published private(set) var canUndoDrawing = false
+    private var boardCameraID: String?
+
+    /// Call after every change of the board.
+    func boardChanged() {
+        hasDrawing = !board.persistent.isEmpty
+        canUndoDrawing = board.persistent.contains { $0.author == AnnotationBoard.bench }
+        previewView?.annotationView.boardChanged()
+    }
+
+    func undoDrawing() {
+        previewView?.annotationView.commitText()
+        if board.undo(by: AnnotationBoard.bench) != nil { boardChanged() }
+    }
+
+    func clearDrawing() {
+        previewView?.annotationView.cancelText()
+        if board.clearAll(by: AnnotationBoard.bench) { boardChanged() }
+    }
+
+    /// The drawing belongs to the board under one camera; another camera starts clean.
+    private func cameraForBoard(_ id: String) {
+        defer { boardCameraID = id }
+        guard let previous = boardCameraID, previous != id else { return }
+        clearDrawing()
     }
 
     // MARK: Storage and photos
