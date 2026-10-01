@@ -13,8 +13,11 @@
 "After: %@" = "Po: %@";
 "Allow it in System Settings → Privacy & Security → Camera." = "Povol ho v Nastavení systému → Soukromí a zabezpečení → Kamera.";
 "already in that job: %lld" = "už u zakázky: %lld";
+"An agent took a photo: %@, with drawing: %@" = "Agent vyfotil: %@, s kresbou: %@";
+"Arrow" = "Šipka";
 "Before" = "Před";
 "Before: %@" = "Před: %@";
+"Blue" = "Modrá";
 "Brightness" = "Jas";
 "Camera – the microscope is connected to this Mac" = "Kamera – mikroskop je připojený k tomuto Macu";
 "Camera" = "Kamera";
@@ -33,6 +36,9 @@
 "Choose folder…" = "Vybrat složku…";
 "Choose the folder where microCAM saves photos and videos" = "Vyber složku, do které bude microCAM ukládat fotky a videa";
 "Choose" = "Vybrat";
+"Circle" = "Kruh";
+"Clear all drawings" = "Smazat všechny kresby";
+"Clear drawing" = "Smazat kresbu";
 "Clear selection" = "Zrušit výběr";
 "Close" = "Zavřít";
 "Compare the two photos" = "Porovnat obě fotky";
@@ -43,9 +49,14 @@
 "Contrast" = "Kontrast";
 "Copy" = "Kopírovat";
 "Couldn't restart microCAM" = "microCAM se nepodařilo restartovat";
+"D – draw on the picture, Esc – stop drawing" = "D – kreslit do obrazu, Esc – ukončit kreslení";
 "Device" = "Zařízení";
 "Disconnect and choose another" = "Odpojit a vybrat jiný";
+"Done" = "Hotovo";
 "Done around %@" = "Hotovo kolem %@";
+"Draw" = "Kreslit";
+"Draw on the picture (D)" = "Kreslit do obrazu (D)";
+"Drawing" = "Kreslení";
 "Drawing from another device saved: %@" = "Uložena kresba z jiného zařízení: %@";
 "Drawing not saved" = "Kresba se neuložila";
 "Dropped frames: %lld" = "Vypadlé snímky: %lld";
@@ -87,6 +98,7 @@
 "Keep the Mac awake while recording" = "Nenechat Mac usnout během nahrávání";
 "Keyboard shortcuts" = "Klávesové zkratky";
 "Language" = "Jazyk";
+"Large text" = "Velký text";
 "Live picture, photos and video from a microscope camera." = "Živý obraz, fotky a video z mikroskopové kamery.";
 "Live stream" = "Živý přenos";
 "Looking for microCAM on the network…" = "Hledám microCAM v síti…";
@@ -94,6 +106,7 @@
 "Mark up…" = "Anotovat…";
 "Marked-up copy not saved" = "Anotovaná kopie se neuložila";
 "Marked-up copy saved: %@" = "Uložena anotovaná kopie: %@";
+"Medium text" = "Střední text";
 "microCAM asks before it installs anything. You can also check in the microCAM menu." = "microCAM se před instalací vždy zeptá. Ručně můžeš hledat v menu microCAM.";
 "microCAM is recording a video" = "microCAM nahrává video";
 "microCAM isn't allowed to use the camera." = "microCAM nemá povolený přístup ke kameře.";
@@ -133,7 +146,9 @@
 "Optional. Sent with every file so the server knows it comes from you." = "Nepovinný. Posílá se s každým souborem, aby server poznal, že je od tebe.";
 "or an address, e.g. 192.168.1.20:8090" = "nebo adresa, např. 192.168.1.20:8090";
 "Other files" = "Ostatní soubory";
+"Pen" = "Pero";
 "Photo from another device saved: %@" = "Uložena fotka z jiného zařízení: %@";
+"Photo from another device saved: %@, with drawing: %@" = "Uložena fotka z jiného zařízení: %@, s kresbou: %@";
 "Photo not saved" = "Fotka se neuložila";
 "Photo quality" = "Kvalita fotek";
 "Photos and videos you take appear here." = "Tady se objeví fotky a videa, která pořídíš.";
@@ -142,6 +157,7 @@
 "Pick one that stands out against the board." = "Vyber barvu, která je na desce dobře vidět.";
 "Picture size and frames per second." = "Rozlišení obrazu a počet snímků za sekundu.";
 "PIN for photos" = "PIN pro focení";
+"Pointer – fades after a moment" = "Ukazovátko – za chvíli zmizí";
 "Port" = "Port";
 "Press G to show or hide it. The grid is never saved in photos or videos." = "Zobrazíš a skryješ ji klávesou G. Do fotek ani videí se nikdy neuloží.";
 "Press Return to apply. The stream restarts and viewers reconnect." = "Potvrď Enterem. Přenos se restartuje a diváci se znovu připojí.";
@@ -169,6 +185,7 @@
 "Saturation" = "Sytost";
 "Saved for this camera. Applies to the preview, photos and videos." = "Ukládá se pro tuto kameru. Platí pro náhled, fotky i videa.";
 "Saved: %@" = "Uloženo: %@";
+"Saved: %@, with drawing: %@" = "Uloženo: %@, s kresbou: %@";
 "Saves energy while the window is minimized or covered, or the screen is locked. Recording, timelapse and viewers of the live stream keep it on." = "Šetří energii, když je okno minimalizované, zakryté nebo je obrazovka zamčená. Nahrávání, časosběr a diváci přenosu ji nechají zapnutou.";
 "Saving video…" = "Ukládám video…";
 "Scroll or pinch – zoom, drag – move the image" = "Kolečko nebo sevření – zoom, tažení – posun obrazu";
@@ -194,6 +211,7 @@
 "Shows the live picture in a browser on other devices on your network, or in microCAM on another Mac." = "Ukazuje živý obraz v prohlížeči na jiných zařízeních v síti nebo v microCAMu na jiném Macu.";
 "Side by side" = "Vedle sebe";
 "Slider" = "Posuvník";
+"Small text" = "Malý text";
 "Sort by type" = "Třídit podle typu";
 "Source code on GitHub" = "Zdrojový kód na GitHubu";
 "Space in the side panel – Quick Look of the selected files" = "Mezerník v bočním panelu – rychlý náhled vybraných souborů";
@@ -205,6 +223,7 @@
 "Still moving the previous files. Try again in a moment." = "Ještě přesouvám předchozí soubory. Zkus to za chvíli.";
 "Still saving the previous video. Try again in a moment." = "Ještě ukládám předchozí video. Zkus to za chvíli.";
 "Still sending the previous files. Try again in a moment." = "Ještě odesílám předchozí soubory. Zkus to za chvíli.";
+"Stop drawing (Esc)" = "Ukončit kreslení (Esc)";
 "Stop recording" = "Zastavit nahrávání";
 "Stop timelapse" = "Zastavit časosběr";
 "Storage" = "Ukládání";
@@ -216,6 +235,8 @@
 "Takes a photo at a fixed interval into the current folder. Start it from the toolbar." = "Fotí v pravidelném intervalu do aktuální složky. Spustíš ho z panelu nástrojů.";
 "Takes a photo at a fixed interval into the current folder." = "Fotí v pravidelném intervalu do aktuální složky.";
 "Temperature" = "Teplota";
+"Text" = "Text";
+"Text size" = "Velikost textu";
 "The camera doesn't support this format. Choose another one in Settings → Device." = "Kamera tento formát nepodporuje. Vyber jiný v Nastavení → Zařízení.";
 "The camera isn't sending a picture. Check that it's connected." = "Kamera neposílá obraz. Zkontroluj, že je připojená.";
 "The camera reported an error." = "Kamera nahlásila chybu.";
@@ -244,7 +265,9 @@
 "Today" = "Dnes";
 "Token" = "Token";
 "Turn off the camera when the window is hidden" = "Vypnout kameru, když okno není vidět";
+"Type a label" = "Napiš popisek";
 "Type the address into a browser on a device on the same network." = "Zadej adresu do prohlížeče na zařízení ve stejné síti.";
+"Undo last drawing" = "Vrátit poslední kresbu";
 "URL" = "URL";
 "Use jobs" = "Používat zakázky";
 "Use only letters, digits and hyphens." = "Jen písmena, číslice a pomlčka.";

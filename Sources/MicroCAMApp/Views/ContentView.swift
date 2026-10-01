@@ -42,10 +42,18 @@ struct ContentView: View {
                         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 6))
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing).padding(12)
                 }
+                if model.isDrawing {
+                    DrawingPalette()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom).padding(16)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+                // Above the palette while drawing.
                 MessageToast()
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom).padding(16)
+                    .padding(.bottom, model.isDrawing ? 52 : 0)
             }
             .animation(.easeOut(duration: 0.2), value: model.message)
+            .animation(.easeOut(duration: 0.2), value: model.isDrawing)
             .frame(minWidth: 400)
             .background(WindowAccessor { model.attachMainWindow($0) })
         }
@@ -65,6 +73,9 @@ struct ContentView: View {
                 TimelapseToolbarButton(runner: model.timelapse, show: $model.showTimelapse)
             }
             ToolbarItemGroup(placement: .primaryAction) {
+                Toggle(isOn: $model.isDrawing) { Label("Draw", systemImage: "pencil.tip.crop.circle") }
+                    .toggleStyle(.button)
+                    .help("Draw on the picture (D)")
                 if model.streamViewers > 0 {
                     Label("Watching: \(model.streamViewers)", systemImage: "dot.radiowaves.left.and.right")
                         .labelStyle(.titleAndIcon).foregroundStyle(.secondary)

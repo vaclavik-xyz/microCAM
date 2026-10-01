@@ -15,7 +15,8 @@ final class KeyboardMonitor {
     private var inSidePanel = false
 
     init(isMainWindow: @escaping (NSWindow?) -> Bool, isInSidePanel: @escaping (NSEvent) -> Bool,
-         hasSelection: @escaping () -> Bool, handler: @escaping (ShortcutAction) -> Void) {
+         hasSelection: @escaping () -> Bool, isDrawing: @escaping () -> Bool,
+         handler: @escaping (ShortcutAction) -> Void) {
         mouseToken = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
             if isMainWindow(event.window) { self?.inSidePanel = isInSidePanel(event) }
             return event
@@ -29,7 +30,8 @@ final class KeyboardMonitor {
                                                    hasModifiers: !modifiers.isEmpty,
                                                    isEditingText: editing,
                                                    inSidePanel: self?.inSidePanel == true,
-                                                   hasSelection: hasSelection()) else { return event }
+                                                   hasSelection: hasSelection(),
+                                                   isDrawing: isDrawing()) else { return event }
             handler(action)
             return nil
         }

@@ -191,6 +191,10 @@ final class DemoDriver {
         model.gridVisible = false
         model.previewView?.resetZoom()
 
+        // 3b–3e. Drawing on the live picture with the mouse, a label, a pointer,
+        // the same drawing zoomed in, and a photo that saves a copy with it.
+        await drawingScript(main, into: dir)
+
         // 4. Recording in progress.
         show(frame(0))
         model.startRecording()
@@ -287,6 +291,110 @@ final class DemoDriver {
             }
         }
         NSApp.terminate(nil)
+    }
+
+    private func drawingScript(_ main: NSWindow, into dir: URL) async {
+        guard let overlay = model.previewView?.annotationView else { return }
+        var checks: [String] = []
+        func check(_ ok: Bool, _ what: String) { checks.append("\(ok ? "ok  " : "FAIL") \(what)") }
+
+        show(frame(0))
+        model.isDrawing = true
+        model.drawColor = AppModel.drawColors[1]
+        await pause(1)
+        // Real mouse events through the window: they must reach the overlay, not pan the image.
+        model.drawTool = .ellipse
+        await pause(0.2)
+        drag(in: main, overlay, from: .init(x: 0.52, y: 0.3), to: .init(x: 0.78, y: 0.72))
+        model.drawTool = .arrow
+        await pause(0.2)
+        drag(in: main, overlay, from: .init(x: 0.18, y: 0.2), to: .init(x: 0.45, y: 0.47))
+        model.drawColor = AppModel.drawColors[0]
+        model.drawTool = .pen
+        await pause(0.2)
+        drag(in: main, overlay, from: .init(x: 0.15, y: 0.78), to: .init(x: 0.48, y: 0.8), wave: 0.03)
+        check(model.board.persistent.map(\.kind) == [.ellipse, .arrow, .pen], "three shapes drawn with the mouse")
+        check(model.zoomScale == 1, "drawing did not pan or zoom the image")
+        model.drawColor = AppModel.drawColors[1]
+        model.drawTool = .text
+        model.textSize = .large
+        await pause(0.2)
+        overlay.beginText(at: .init(x: 0.55, y: 0.17), text: "C12 short")
+        overlay.commitText()
+        check(model.board.persistent.last?.text == "C12 short", "label added")
+        model.drawTool = .pointer
+        await pause(0.2)
+        drag(in: main, overlay, from: .init(x: 0.25, y: 0.62), to: .init(x: 0.42, y: 0.56), wave: 0.02)
+        check(model.board.hasPointers, "pointer on the board")
+        await pause(0.3)
+        capture(main, withChildren: true, as: "03b-drawing", in: dir)
+        await pause(Double(AnnotationBoard.pointerLifetime) + 0.5)
+        check(!model.board.hasPointers, "pointer gone after 2.5 s")
+
+        // A click on the label with the text tool edits it.
+        model.drawTool = .text
+        await pause(0.2)
+        if let label = model.board.persistent.last, let p = label.points.first {
+            click(in: main, overlay, at: .init(x: p.x + 0.01, y: p.y + 0.02))
+        }
+        await pause(0.8)
+        let editor = overlay.subviews.compactMap { $0 as? NSTextField }.first
+        check(editor?.stringValue == "C12 short", "click on a label opens it for editing")
+        capture(main, withChildren: true, as: "03c-text-editing", in: dir)
+        overlay.cancelText()
+
+        // The drawing stays on the board when zoomed.
+        model.isDrawing = false
+        model.previewView?.zoom(by: 2, anchor: CGPoint(x: 0.6, y: 0.55))
+        await pause(1)
+        capture(main, withChildren: true, as: "03d-drawing-zoomed", in: dir)
+        model.previewView?.resetZoom()
+
+        // A photo: the original and a copy with the drawing, including a label
+        // still being typed (the photo button does not take the focus from it).
+        model.isDrawing = true
+        model.drawTool = .text
+        await pause(0.3)
+        overlay.beginText(at: .init(x: 0.1, y: 0.08), text: "R7")
+        let before = Set(model.library.files)
+        model.takePhoto()
+        check(model.board.persistent.contains { $0.text == "R7" }, "a label being typed goes into the photo")
+        model.isDrawing = false
+        await pause(3)
+        capture(main, withChildren: true, as: "03e-photo-with-drawing", in: dir)
+        let added = Set(model.library.files).subtracting(before).map(\.lastPathComponent).sorted()
+        check(added.count == 2 && added.contains { $0.hasSuffix("_2.jpg") }, "photo and copy saved: \(added)")
+        model.clearDrawing()
+        check(model.board.isEmpty && overlay.isHidden, "clear all empties the board and hides the overlay")
+        model.message = nil
+        try? checks.joined(separator: "\n").appending("\n")
+            .write(to: dir.appendingPathComponent("demo-checks.txt"), atomically: true, encoding: .utf8)
+    }
+
+    /// A drag from `a` to `b` (image points), sent to the window like a real mouse.
+    private func drag(in window: NSWindow, _ overlay: AnnotationOverlayView, from a: AnnotationPoint,
+                      to b: AnnotationPoint, wave: Double = 0) {
+        let steps = 16
+        window.sendEvent(mouse(.leftMouseDown, a, overlay, window))
+        for i in 1...steps {
+            let f = Double(i) / Double(steps)
+            let p = AnnotationPoint(x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f + (i % 2 == 0 ? wave : -wave))
+            window.sendEvent(mouse(.leftMouseDragged, p, overlay, window))
+        }
+        window.sendEvent(mouse(.leftMouseUp, b, overlay, window))
+    }
+
+    private func click(in window: NSWindow, _ overlay: AnnotationOverlayView, at p: AnnotationPoint) {
+        window.sendEvent(mouse(.leftMouseDown, p, overlay, window))
+        window.sendEvent(mouse(.leftMouseUp, p, overlay, window))
+    }
+
+    private func mouse(_ type: NSEvent.EventType, _ p: AnnotationPoint, _ overlay: AnnotationOverlayView,
+                       _ window: NSWindow) -> NSEvent {
+        NSEvent.mouseEvent(with: type, location: overlay.convert(overlay.geometry.viewPoint(p), to: nil),
+                           modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
+                           windowNumber: window.windowNumber, context: nil, eventNumber: 0, clickCount: 1,
+                           pressure: type == .leftMouseUp ? 0 : 1)!
     }
 
     /// Viewer mode before a camera computer is found, and its Settings.

@@ -76,6 +76,10 @@ final class AppModel: ObservableObject {
     weak var previewView: PreviewContainerView?
     @Published private(set) var renderMode = RenderMode.passthrough
     @Published var gridVisible = false
+    /// Drawing on the live picture: the palette shows and drags draw instead of panning.
+    @Published var isDrawing = false {
+        didSet { if !isDrawing { previewView?.annotationView.commitText() } }
+    }
     @Published private(set) var zoomScale: CGFloat = 1
     private var keyboard: KeyboardMonitor?
     let quickLook = QuickLookController()
@@ -90,6 +94,8 @@ final class AppModel: ObservableObject {
         case .photo: takePhoto()
         case .toggleRecording: toggleRecording()
         case .quickLook: previewSelection()
+        case .toggleDrawing: isDrawing.toggle()
+        case .leaveDrawing: isDrawing = false
         }
     }
 
@@ -182,7 +188,9 @@ final class AppModel: ObservableObject {
         }, isInSidePanel: { [weak self] event in
             guard let view = self?.sidePanelView, view.window === event.window else { return false }
             return view.bounds.contains(view.convert(event.locationInWindow, from: nil))
-        }, hasSelection: { [weak self] in self?.library.selection.isEmpty == false }, handler: { [weak self] action in self?.handle(action) })
+        }, hasSelection: { [weak self] in self?.library.selection.isEmpty == false },
+           isDrawing: { [weak self] in self?.isDrawing == true },
+           handler: { [weak self] action in self?.handle(action) })
         checkUnfinishedRecordings()
         capturesChanged()
         NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification,
@@ -279,6 +287,7 @@ final class AppModel: ObservableObject {
         let wanted = id.flatMap { settings.lastFormatByDevice[$0] }
         engine.selectCamera(id: id, format: wanted) { [weak self] applied in
             guard let self, let device = self.engine.currentCameraID else { return }
+            self.cameraForBoard(device)
             self.settings.lastDeviceID = device
             if let applied { self.settings.lastFormatByDevice[device] = applied }
             self.syncAdjustments()
@@ -297,6 +306,43 @@ final class AppModel: ObservableObject {
         if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?\(pane)") {
             NSWorkspace.shared.open(url)
         }
+    }
+
+    // MARK: Drawing on the picture
+
+    /// What is drawn over the live picture: one board for the app, kept only
+    /// in memory and cleared when another camera is selected.
+    let board = AnnotationBoard()
+    static let drawColors = ["#ff3b30", "#ffd60a", "#30d158", "#0a84ff"]
+    @Published var drawTool = AnnotationShape.Kind.arrow
+    @Published var drawColor = AppModel.drawColors[0]
+    @Published var textSize = AnnotationTextSize.medium
+    @Published private(set) var hasDrawing = false
+    @Published private(set) var canUndoDrawing = false
+    private var boardCameraID: String?
+
+    /// Call after every change of the board.
+    func boardChanged() {
+        hasDrawing = !board.persistent.isEmpty
+        canUndoDrawing = board.persistent.contains { $0.author == AnnotationBoard.bench }
+        previewView?.annotationView.boardChanged()
+    }
+
+    func undoDrawing() {
+        previewView?.annotationView.commitText()
+        if board.undo(by: AnnotationBoard.bench) != nil { boardChanged() }
+    }
+
+    func clearDrawing() {
+        previewView?.annotationView.cancelText()
+        if board.clearAll(by: AnnotationBoard.bench) { boardChanged() }
+    }
+
+    /// The drawing belongs to the board under one camera; another camera starts clean.
+    private func cameraForBoard(_ id: String) {
+        defer { boardCameraID = id }
+        guard let previous = boardCameraID, previous != id else { return }
+        clearDrawing()
     }
 
     // MARK: Storage and photos
@@ -347,7 +393,9 @@ final class AppModel: ObservableObject {
     enum CaptureSource { case local, remote, agent }
 
     /// `source` marks a photo requested from the stream page or by an AI
-    /// agent; `completion` reports the saved file (main queue).
+    /// agent; `completion` reports the saved file (main queue). While something
+    /// is drawn on the picture, a photo also saves a copy with the drawing next
+    /// to it (`…_2.jpg`); `completion` still reports the original.
     func takePhoto(kind: CaptureKind = .photo, source: CaptureSource = .local,
                    completion: ((Result<URL, Error>) -> Void)? = nil) {
         guard let frame = engine.latestFrame.value, Date().timeIntervalSince(frame.receivedAt) < 1 else {
@@ -363,26 +411,59 @@ final class AppModel: ObservableObject {
             completion?(.failure(error))
             return
         }
+        // A label still being typed belongs to the drawing when the photo button
+        // or menu is used here (they don't take the focus from it). Photos from
+        // another device or an agent leave the person typing alone.
+        if source == .local && kind == .photo { previewView?.annotationView.commitText() }
+        // What is drawn now, not when the file is written.
+        let shapes = board.photoShapes(for: kind)
         photoCapturer.capture(frame.pixelBuffer, adjustments: adjustmentsBox.value,
                               quality: settings.jpegQuality, to: url) { [weak self] result in
             guard let self else { return }
             self.releaseURL(url)
             switch result {
             case .success:
-                let name = url.lastPathComponent
-                let text = switch source {
-                case .local: String(localized: "Saved: \(name)")
-                case .remote: String(localized: "Photo from another device saved: \(name)")
-                case .agent: String(localized: "An agent took a photo: \(name)")
+                guard !shapes.isEmpty else {
+                    self.photoSaved(url, copy: nil, source: source)
+                    completion?(.success(url))
+                    return
                 }
-                self.message = StatusMessage(text: text, isError: false)
-                self.capturesChanged()
-                completion?(.success(url))
+                self.renderAnnotatedCopy(of: url, shapes: shapes) { copy in
+                    switch copy {
+                    case .success(let copy):
+                        self.photoSaved(url, copy: copy, source: source)
+                    case .failure(let error):
+                        // The photo itself is saved; only the copy failed.
+                        self.report(error, prefix: String(localized: "Drawing not saved"))
+                        self.capturesChanged()
+                    }
+                    completion?(.success(url))
+                }
             case .failure(let error):
                 self.report(error, prefix: String(localized: "Photo not saved"))
                 completion?(.failure(error))
             }
         }
+    }
+
+    private func photoSaved(_ url: URL, copy: URL?, source: CaptureSource) {
+        let name = url.lastPathComponent
+        let text: String
+        if let copy = copy?.lastPathComponent {
+            text = switch source {
+            case .local: String(localized: "Saved: \(name), with drawing: \(copy)")
+            case .remote: String(localized: "Photo from another device saved: \(name), with drawing: \(copy)")
+            case .agent: String(localized: "An agent took a photo: \(name), with drawing: \(copy)")
+            }
+        } else {
+            text = switch source {
+            case .local: String(localized: "Saved: \(name)")
+            case .remote: String(localized: "Photo from another device saved: \(name)")
+            case .agent: String(localized: "An agent took a photo: \(name)")
+            }
+        }
+        message = StatusMessage(text: text, isError: false)
+        capturesChanged()
     }
 
     /// Renders shapes onto a saved capture and stores the result as the next
@@ -392,6 +473,21 @@ final class AppModel: ObservableObject {
         guard CaptureFileName.parse(source.lastPathComponent) != nil else {
             return completion(.failure(CocoaError(.fileReadInvalidFileName)))
         }
+        renderAnnotatedCopy(of: source, shapes: shapes) { result in
+            switch result {
+            case .success(let url):
+                self.message = StatusMessage(text: String(localized: "Drawing from another device saved: \(url.lastPathComponent)"), isError: false)
+                self.capturesChanged()
+            case .failure(let error):
+                self.report(error, prefix: String(localized: "Drawing not saved"))
+            }
+            completion(result)
+        }
+    }
+
+    /// The copy with the drawing, written off the main thread; `completion` on the main actor.
+    private func renderAnnotatedCopy(of source: URL, shapes: [AnnotationShape],
+                                     completion: @escaping @MainActor (Result<URL, Error>) -> Void) {
         let destination = reserveEditedCopyURL(of: source)
         let quality = settings.jpegQuality
         Task.detached(priority: .userInitiated) {
@@ -407,13 +503,6 @@ final class AppModel: ObservableObject {
             }
             await MainActor.run {
                 self.releaseURL(destination)
-                switch result {
-                case .success(let url):
-                    self.message = StatusMessage(text: String(localized: "Drawing from another device saved: \(url.lastPathComponent)"), isError: false)
-                    self.capturesChanged()
-                case .failure(let error):
-                    self.report(error, prefix: String(localized: "Drawing not saved"))
-                }
                 completion(result)
             }
         }

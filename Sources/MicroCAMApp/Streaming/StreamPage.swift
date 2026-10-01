@@ -48,6 +48,12 @@ html,body{margin:0;position:fixed;inset:0;overflow:hidden;background:var(--bg);c
 #stage img{max-width:100%;max-height:100%;display:block;-webkit-user-drag:none}
 #ink{position:fixed;touch-action:none;pointer-events:none}
 body.drawing #ink{pointer-events:auto;cursor:crosshair}
+body.drawing.tool-text #ink{cursor:text}
+/* the label being typed: at least 16 px so phones don't zoom, the label itself keeps its size */
+#textEditor{position:fixed;z-index:5;margin:0;padding:0 4px;border:1px dashed rgba(255,255,255,.75);border-radius:4px;
+  background:rgba(0,0,0,.35);outline:none;font-weight:600;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  text-shadow:0 0 2px #000,0 0 4px #000;-webkit-user-select:text;user-select:text;touch-action:manipulation}
+#textEditor::placeholder{color:rgba(255,255,255,.55)}
 svg{width:22px;height:22px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 
 /* ---- status chip ---- */
@@ -100,6 +106,7 @@ button.primary:disabled{opacity:1;background:rgba(255,59,48,.28);color:rgba(255,
 .swatch i{width:26px;height:26px;border-radius:50%;background:var(--c)}
 .swatch.on,.swatch.on:hover{background:transparent!important}
 .swatch.on i{box-shadow:0 0 0 3px #16181d,0 0 0 5px #fff}
+.size b{font-weight:700;line-height:1}
 .hidden{display:none!important}
 body.idle #dock,body.idle #status{opacity:0;pointer-events:none}
 body.idle #dock .panel{pointer-events:none}
@@ -107,8 +114,11 @@ body.image-only #dock,body.image-only #status,body.image-only #ink{display:none!
 
 /* narrow phones: secondary buttons show icons only, the main action keeps its words */
 @media (max-width:520px){ .lbl{display:none} #draw{width:var(--hit);padding:0} }
+/* seven drawing tools fit a 375 px phone only without the dividers */
+@media (max-width:400px){ .sep{display:none} }
 /* the smallest phones (320 px): tighter spacing, no dividers */
-@media (max-width:360px){ :root{--gap:2px;--edge:8px} .sep{display:none} #photo{min-width:132px} }
+@media (max-width:360px){ :root{--gap:2px;--edge:8px} .sep{display:none} #photo{min-width:132px}
+  #palette{flex-wrap:wrap;justify-content:center;max-width:calc(4 * var(--hit) + 3 * var(--gap) + 12px);border-radius:26px} }
 
 #offline{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;
   color:var(--muted);font-size:17px;background:rgba(0,0,0,.55)}
@@ -167,12 +177,17 @@ body.image-only #dock,body.image-only #status,body.image-only #ink{display:none!
   #pinNote{margin:6px 2px 8px}
   .card .row button{height:46px}
 }
-@media (orientation:landscape) and (max-height:340px){ :root{--gap:2px} .sep{display:none} }
+@media (orientation:landscape) and (max-height:380px){ :root{--gap:2px} .sep{display:none}
+  /* seven tools in two columns of four and three */
+  /* (a grid: a column-wrapping flexbox would not grow wider) */
+  #palette{display:grid;grid-auto-flow:column;grid-template-rows:repeat(4,var(--hit));border-radius:26px} }
 </style>
 </head>
 <body>
 <div id="stage"><img id="live" alt=""><img id="shot" class="hidden" alt=""></div>
 <canvas id="ink"></canvas>
+<input id="textEditor" class="hidden" type="text" maxlength="200" autocomplete="off" autocapitalize="sentences"
+       spellcheck="false" enterkeyhint="done" data-i18n-placeholder="textPlaceholder" data-i18n-aria="text">
 <div id="offline" class="hidden" data-i18n="offline"></div>
 <div id="status"><span class="dot"></span><span id="stateLabel"></span><span id="job" class="job hidden"></span></div>
 <div id="dock">
@@ -183,10 +198,16 @@ body.image-only #dock,body.image-only #status,body.image-only #ink{display:none!
     <button class="swatch" data-color="#30d158" style="--c:#30d158" data-i18n-aria="green"><i></i></button>
     <button class="swatch" data-color="#0a84ff" style="--c:#0a84ff" data-i18n-aria="blue"><i></i></button>
   </div>
+  <div id="sizes" class="panel hidden" data-i18n-aria="textSize">
+    <button class="icon size" data-size="small" data-i18n-aria="textSmall" data-i18n-title="textSmall"><b style="font-size:13px">A</b></button>
+    <button class="icon size on" data-size="medium" data-i18n-aria="textMedium" data-i18n-title="textMedium"><b style="font-size:17px">A</b></button>
+    <button class="icon size" data-size="large" data-i18n-aria="textLarge" data-i18n-title="textLarge"><b style="font-size:22px">A</b></button>
+  </div>
   <div id="palette" class="panel hidden" data-i18n-aria="drawing">
     <button class="icon on" data-tool="arrow" data-i18n-aria="arrow" data-i18n-title="arrow"><svg viewBox="0 0 24 24"><path d="M5 19 19 5M9 5h10v10"/></svg></button>
     <button class="icon" data-tool="ellipse" data-i18n-aria="circle" data-i18n-title="circle"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="8.5" ry="7"/></svg></button>
     <button class="icon" data-tool="pen" data-i18n-aria="pen" data-i18n-title="pen"><svg viewBox="0 0 24 24"><path d="M3 15c2.5-5 4.5-7 6-5s1 6 3.5 6S17 9 21 8"/></svg></button>
+    <button class="icon" data-tool="text" data-i18n-aria="text" data-i18n-title="text"><svg viewBox="0 0 24 24"><path d="M5 7V4.5h14V7M12 4.5v15M9 19.5h6"/></svg></button>
     <span class="sep"></span>
     <button id="colorBtn" class="icon" data-i18n-aria="color" data-i18n-title="color"><span class="chip-color"></span></button>
     <span class="sep"></span>
@@ -229,7 +250,9 @@ const STRINGS = {
     "offline": "Connecting to the camera computer…",
     "stateLive": "Live", "statePhoto": "Photo", "stateOffline": "Offline",
     "color": "Color", "red": "Red", "yellow": "Yellow", "green": "Green", "blue": "Blue",
-    "drawing": "Drawing", "arrow": "Arrow", "circle": "Circle", "pen": "Pen",
+    "drawing": "Drawing", "arrow": "Arrow", "circle": "Circle", "pen": "Pen", "text": "Text",
+    "textSize": "Text size", "textSmall": "Small text", "textMedium": "Medium text", "textLarge": "Large text",
+    "textPlaceholder": "Type a label",
     "undo": "Undo last stroke", "clear": "Clear drawing",
     "draw": "Draw", "drawTitle": "Draw on the picture",
     "photo": "Take photo", "photoTitle": "Take a photo on the camera Mac",
@@ -252,7 +275,9 @@ const STRINGS = {
     "offline": "Připojuji se k počítači s kamerou…",
     "stateLive": "Živě", "statePhoto": "Fotka", "stateOffline": "Nepřipojeno",
     "color": "Barva", "red": "Červená", "yellow": "Žlutá", "green": "Zelená", "blue": "Modrá",
-    "drawing": "Kreslení", "arrow": "Šipka", "circle": "Kruh", "pen": "Pero",
+    "drawing": "Kreslení", "arrow": "Šipka", "circle": "Kruh", "pen": "Pero", "text": "Text",
+    "textSize": "Velikost textu", "textSmall": "Malý text", "textMedium": "Střední text", "textLarge": "Velký text",
+    "textPlaceholder": "Napiš popisek",
     "undo": "Vrátit poslední tah", "clear": "Smazat kresbu",
     "draw": "Kreslit", "drawTitle": "Kreslit do obrazu",
     "photo": "Vyfotit", "photoTitle": "Vyfotit na počítači s kamerou",
@@ -284,8 +309,14 @@ document.documentElement.lang = LANG;
 document.querySelectorAll("[data-i18n]").forEach(e => e.textContent = t(e.dataset.i18n));
 document.querySelectorAll("[data-i18n-title]").forEach(e => e.title = t(e.dataset.i18nTitle));
 document.querySelectorAll("[data-i18n-aria]").forEach(e => e.setAttribute("aria-label", t(e.dataset.i18nAria)));
+document.querySelectorAll("[data-i18n-placeholder]").forEach(e => e.placeholder = t(e.dataset.i18nPlaceholder));
 const live = $("live"), shot = $("shot"), ink = $("ink"), ctx = ink.getContext("2d");
 let tool = "arrow", color = "#ff3b30", drawing = false, shapes = [], current = null, frozen = null, offline = false;
+// Text labels: the same numbers as AnnotationTextLayout and AnnotationTextSize in the app, so a
+// label lands in the saved photo where it was typed.
+const LINE = 1.2, BASE = 0.9, OUTLINE = 0.12, MARGIN = 0.15, SIZES = { small: 0.03, medium: 0.045, large: 0.07 };
+const FONT = "-apple-system,BlinkMacSystemFont,system-ui,sans-serif";
+let textSize = "medium", editing = null, textDrag = null;
 
 if (MODE === "imageOnly") document.body.classList.add("image-only");
 // iPhone Safari has no element full screen; the viewer app has its own.
@@ -332,15 +363,16 @@ function layout() {
   ink.width = Math.max(1, Math.round(r.width * dpr));
   ink.height = Math.max(1, Math.round(r.height * dpr));
   redraw();
+  placeEditor();
 }
 window.addEventListener("resize", layout);
 window.addEventListener("orientationchange", () => setTimeout(layout, 250));
 shot.addEventListener("load", layout);
-// Keep the image clear of the main panel and, while drawing, of the tools: above them in
+// Keep the image clear of the main panel and, while drawing, of the tools and text sizes: above them in
 // portrait, beside the rail in landscape. The colour popover is transient and may overlap.
 function reserve() {
   const rail = getComputedStyle($("dock")).flexDirection === "row";
-  const rects = ["palette", "controls"].map(id => $(id).getBoundingClientRect()).filter(r => r.width > 0);
+  const rects = ["sizes", "palette", "controls"].map(id => $(id).getBoundingClientRect()).filter(r => r.width > 0);
   const off = MODE === "imageOnly" || !rects.length;
   const top = Math.min(...rects.map(r => r.top)), left = Math.min(...rects.map(r => r.left));
   root.style.setProperty("--reserve-b", off || rail ? "0px" : (innerHeight - top + 8) + "px");
@@ -353,6 +385,7 @@ function scheduleReserve() { cancelAnimationFrame(relayout); relayout = requestA
 if (window.ResizeObserver) {
   new ResizeObserver(scheduleReserve).observe($("controls"));
   new ResizeObserver(scheduleReserve).observe($("palette"));
+  new ResizeObserver(scheduleReserve).observe($("sizes"));
   new ResizeObserver(scheduleReserve).observe($("stage"));
 }
 window.addEventListener("resize", scheduleReserve);
@@ -365,25 +398,128 @@ function norm(e) {
 ink.addEventListener("pointerdown", e => {
   if (!drawing) return;
   e.preventDefault();
-  ink.setPointerCapture(e.pointerId);
   showSwatches(false);
   const p = norm(e);
+  if (tool === "text") {
+    // Tapping elsewhere finishes the label being typed.
+    if (editing) { commitText(); return; }
+    ink.setPointerCapture(e.pointerId);
+    const s = textAt(p), b = s && textBox(s, ink.width, ink.height);
+    textDrag = { shape: s, start: p, from: s ? { x: b.x / ink.width, y: b.y / ink.height } : p, moved: false };
+    return;
+  }
+  ink.setPointerCapture(e.pointerId);
   current = { kind: tool, points: tool === "pen" ? [p] : [p, p], color, width: 0.006 };
 });
 ink.addEventListener("pointermove", e => {
+  if (textDrag) { moveText(e); return; }
   if (!current) return;
   const p = norm(e);
   if (current.kind === "pen") current.points.push(p); else current.points[1] = p;
   redraw();
 });
 function finish() {
+  if (textDrag) { finishText(); return; }
   if (!current) return;
   const [a, b] = [current.points[0], current.points[current.points.length - 1]];
   if (current.points.length > 1 && (Math.abs(a.x - b.x) + Math.abs(a.y - b.y) > 0.005 || current.kind === "pen")) shapes.push(current);
   current = null; redraw();
 }
 ink.addEventListener("pointerup", finish);
-ink.addEventListener("pointercancel", finish);
+ink.addEventListener("pointercancel", () => { textDrag = null; finish(); });
+
+// ---- text labels: tap to place, Enter or a tap elsewhere to finish, Esc to cancel;
+//      tap a label to edit it, drag it to move it ----
+const clamp01 = v => Math.min(Math.max(v, 0), 1);
+/// The label's box in canvas pixels, kept inside the picture like the app does.
+/// A label too wide for the picture gets a smaller font; the outline and accents keep MARGIN free.
+function textBox(s, W, H) {
+  let px = s.fontSize * H, w = 0;
+  for (let i = 0; i < 5; i++) {
+    ctx.font = "600 " + px + "px " + FONT;
+    w = ctx.measureText(s.text).width;
+    if (w + 2 * MARGIN * px <= W) break;
+    px = px * W / (w + 2 * MARGIN * px) * 0.995;
+  }
+  ctx.font = "600 " + px + "px " + FONT;
+  w = ctx.measureText(s.text).width;
+  const h = px * LINE, m = MARGIN * px;
+  return { x: Math.min(Math.max(s.points[0].x * W, m), Math.max(W - w - m, m)),
+           y: Math.min(Math.max(s.points[0].y * H, m), Math.max(H - h - m, m)), w, h, px };
+}
+function textAt(p) {
+  const x = p.x * ink.width, y = p.y * ink.height, pad = 6 * (window.devicePixelRatio || 1);
+  for (let i = shapes.length - 1; i >= 0; i--) {
+    const s = shapes[i];
+    if (s.kind !== "text") continue;
+    const b = textBox(s, ink.width, ink.height);
+    if (x >= b.x - pad && x <= b.x + b.w + pad && y >= b.y - pad && y <= b.y + b.h + pad) return s;
+  }
+  return null;
+}
+function moveText(e) {
+  const d = textDrag, p = norm(e), r = ink.getBoundingClientRect();
+  if (!d.shape) return;
+  const dx = p.x - d.start.x, dy = p.y - d.start.y;
+  if (!d.moved && Math.hypot(dx * r.width, dy * r.height) < 4) return;
+  d.moved = true;
+  d.shape.points = [{ x: clamp01(d.from.x + dx), y: clamp01(d.from.y + dy) }];
+  redraw();
+}
+function finishText() {
+  const d = textDrag; textDrag = null;
+  if (!d.moved) openEditor(d.shape, d.shape ? d.shape.points[0] : d.start);
+}
+function sizeName(fontSize) {
+  return Object.keys(SIZES).reduce((a, b) => Math.abs(SIZES[b] - fontSize) < Math.abs(SIZES[a] - fontSize) ? b : a);
+}
+function openEditor(shape, point) {
+  editing = { shape, point };
+  if (shape) { selectColor(shape.color); selectSize(sizeName(shape.fontSize)); }
+  const input = $("textEditor");
+  input.value = shape ? shape.text : "";
+  input.classList.remove("hidden");
+  placeEditor();
+  input.focus();
+  redraw();
+}
+/// The editor sits where the label will be drawn, in its colour; it grows with the text.
+function placeEditor() {
+  if (!editing) return;
+  const input = $("textEditor"), r = ink.getBoundingClientRect(), dpr = ink.width / Math.max(r.width, 1);
+  const b = textBox({ points: [editing.point], fontSize: SIZES[textSize], text: input.value || "M" }, ink.width, ink.height);
+  const size = Math.max(16, b.px / dpr);
+  ctx.font = "600 " + size + "px " + FONT;
+  const width = Math.min(innerWidth - 8, ctx.measureText(input.value || input.placeholder).width + size + 12);
+  Object.assign(input.style, { fontSize: size + "px", height: Math.round(size * LINE + 2) + "px", width: width + "px",
+    left: Math.max(4, Math.min(r.left + b.x / dpr - 5, innerWidth - width - 4)) + "px", top: (r.top + b.y / dpr - 1) + "px",
+    color });
+}
+function closeEditor() {
+  editing = null;
+  $("textEditor").classList.add("hidden");
+  $("textEditor").blur();
+}
+function commitText() {
+  if (!editing) return;
+  const e = editing, text = [...$("textEditor").value.replace(/\s+/g, " ").trim()].slice(0, 200).join("");
+  closeEditor();
+  if (e.shape && !text) shapes.splice(shapes.indexOf(e.shape), 1);
+  else if (e.shape) Object.assign(e.shape, { text, color, fontSize: SIZES[textSize] });
+  else if (text) shapes.push({ kind: "text", points: [e.point], color, width: 0.006, text, fontSize: SIZES[textSize] });
+  redraw();
+}
+function cancelText() { closeEditor(); redraw(); }
+$("textEditor").addEventListener("keydown", e => {
+  e.stopPropagation();   // Escape here cancels the label, not the PIN panel
+  if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); commitText(); }
+  else if (e.key === "Escape") { e.preventDefault(); cancelText(); }
+});
+$("textEditor").addEventListener("input", placeEditor);
+$("textEditor").addEventListener("blur", () => setTimeout(commitText, 0));
+// Colour and size buttons keep the focus in the editor, so they restyle the label being typed.
+document.querySelectorAll("#swatches button, #sizes button, #colorBtn").forEach(b =>
+  ["pointerdown", "mousedown"].forEach(ev => b.addEventListener(ev, e => { if (editing) e.preventDefault(); })));
 
 function redraw() {
   ctx.clearRect(0, 0, ink.width, ink.height);
@@ -391,6 +527,16 @@ function redraw() {
   $("undo").disabled = $("clear").disabled = !shapes.length;
 }
 function drawShape(s, W, H) {
+  if (s.kind === "text") {
+    if (editing && editing.shape === s) return;   // the editor shows it meanwhile
+    const b = textBox(s, W, H);
+    ctx.lineJoin = "round"; ctx.lineWidth = OUTLINE * b.px * 2; ctx.strokeStyle = "rgba(0,0,0,.75)";
+    ctx.textBaseline = "alphabetic";
+    ctx.strokeText(s.text, b.x, b.y + BASE * b.px);
+    ctx.fillStyle = s.color;
+    ctx.fillText(s.text, b.x, b.y + BASE * b.px);
+    return;
+  }
   const P = s.points.map(p => [p.x * W, p.y * H]);
   ctx.strokeStyle = s.color; ctx.lineWidth = Math.max(2, s.width * W); ctx.lineCap = "round"; ctx.lineJoin = "round";
   ctx.beginPath();
@@ -413,11 +559,13 @@ function drawShape(s, W, H) {
 
 // ---- toolbar ----
 function setDrawing(v) {
+  if (!v) commitText();
   drawing = v;
   document.body.classList.toggle("drawing", v);
   $("draw").classList.toggle("on", v);
   $("draw").setAttribute("aria-pressed", v);
   $("palette").classList.toggle("hidden", !v);
+  showSizes();
   if (!v) showSwatches(false);
   scheduleReserve();
   wake();
@@ -427,19 +575,30 @@ function showSwatches(v) {
   $("colorBtn").setAttribute("aria-expanded", v);
 }
 $("draw").onclick = () => setDrawing(!drawing);
-$("undo").onclick = () => { shapes.pop(); redraw(); };
-$("clear").onclick = () => { shapes = []; redraw(); };
+function showSizes() { $("sizes").classList.toggle("hidden", !(drawing && tool === "text")); scheduleReserve(); }
+$("undo").onclick = () => { commitText(); shapes.pop(); redraw(); };
+$("clear").onclick = () => { closeEditor(); shapes = []; redraw(); };
 $("colorBtn").onclick = () => showSwatches($("swatches").classList.contains("hidden"));
 document.querySelectorAll("[data-tool]").forEach(b => b.onclick = () => {
+  if (b.dataset.tool !== "text") commitText();
   tool = b.dataset.tool;
   document.querySelectorAll("[data-tool]").forEach(x => x.classList.toggle("on", x === b));
+  document.body.classList.toggle("tool-text", tool === "text");
+  showSizes();
 });
-document.querySelectorAll("[data-color]").forEach(b => b.onclick = () => {
-  color = b.dataset.color;
-  document.querySelectorAll("[data-color]").forEach(x => x.classList.toggle("on", x === b));
+function selectColor(c) {
+  color = c;
+  document.querySelectorAll("[data-color]").forEach(x => x.classList.toggle("on", x.dataset.color === c));
   document.querySelector(".chip-color").style.setProperty("--c", color);
-  showSwatches(false);
-});
+  placeEditor();
+}
+function selectSize(name) {
+  textSize = name;
+  document.querySelectorAll("[data-size]").forEach(x => x.classList.toggle("on", x.dataset.size === name));
+  placeEditor();
+}
+document.querySelectorAll("[data-color]").forEach(b => b.onclick = () => { selectColor(b.dataset.color); showSwatches(false); });
+document.querySelectorAll("[data-size]").forEach(b => b.onclick = () => selectSize(b.dataset.size));
 $("fs").onclick = () => {
   if (document.fullscreenElement || document.webkitFullscreenElement) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
   else (root.requestFullscreen || root.webkitRequestFullscreen).call(root);
@@ -550,6 +709,7 @@ async function setDownload(ref) {
   downloadURL = url; $("download").href = url; $("download").download = ref.name;
 }
 $("photo").onclick = async () => {
+  closeEditor();
   $("photo").disabled = true;
   const ref = await post("/photo");
   $("photo").disabled = false;
@@ -568,6 +728,7 @@ $("photo").onclick = async () => {
   toast(t("photoTaken"), ref.name);
 };
 $("save").onclick = async () => {
+  commitText();
   if (!shapes.length) { toast(t("drawFirst")); return; }
   if ($("save").disabled) return;   // one annotated copy per click, even on a double click
   $("save").disabled = true;
@@ -579,6 +740,7 @@ $("save").onclick = async () => {
   } finally { $("save").disabled = false; }
 };
 $("back").onclick = () => {
+  closeEditor();
   frozen = null; shapes = []; redraw();
   shot.classList.add("hidden"); live.classList.remove("hidden");
   $("shotTools").classList.add("hidden"); $("liveTools").classList.remove("hidden");

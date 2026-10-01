@@ -7,13 +7,13 @@ import XCTest
 final class LocalizationTests: XCTestCase {
     /// Keys whose translation is meant to be identical to English, per language.
     static let sameAsEnglish: [String: Set<String>] = [
-        "cs": ["microCAM", "URL", "Port", "Token", "Video", "Interval",
+        "cs": ["microCAM", "URL", "Port", "Token", "Video", "Interval", "Text",
                // unit abbreviations after a number, the same in both languages
                "s", "min", "h"],
     ]
     /// Stream page keys meant to be identical to English, per language.
     static let streamSameAsEnglish: [String: Set<String>] = [
-        "cs": [],
+        "cs": ["text"],
     ]
     /// Files allowed to contain Czech text (folder names on disk, translations).
     static let czechAllowed: Set<String> = [

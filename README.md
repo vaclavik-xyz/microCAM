@@ -38,6 +38,9 @@ also pick one in *Settings → General → Language*.
 - **Image adjustments per camera:** brightness, contrast, saturation, white
   balance, gamma and sharpening. They apply to the preview, photos and video
   alike, and cost nothing when switched off.
+- **Draw on the live picture:** arrows, circles, freehand, text and a
+  pointer that fades, right over the preview. A photo taken while something
+  is drawn saves a copy with the drawing next to the original.
 - **Digital zoom, grid, timelapse and before/after compare** (side by side or
   with a slider).
 - **Web UI for phones, tablets and other computers:** the live picture in
@@ -102,6 +105,7 @@ folder on its own.
 | `Space` in the side panel | | Quick Look of the selected files (a photo when nothing is selected) |
 | `R` | `⌘ R` | start or stop recording |
 | `G` | `⌘ '` | show or hide the grid |
+| `D` | `⌘ D` | draw on the picture (`Esc` stops drawing) |
 | | `⌘ +` / `⌘ −` | zoom in / out |
 | `0` | `⌘ 0` | reset zoom (or double-click the image) |
 | | `⌘ ⇧ T` | timelapse |
@@ -136,6 +140,18 @@ The window:
   (`com.apple.MarkupUI.Markup`) through `NSSharingService`; if a future
   macOS drops it, *Open in Preview* takes its place (Preview has the same
   Markup tools, and saves into the photo itself).
+- **Drawing.** *Draw* (the pen in the toolbar, `D`) shows the drawing tools
+  at the bottom of the picture: arrow, circle, pen, text, pointer, four
+  colours, undo and *Clear all*. Drags draw instead of moving the image;
+  scrolling and pinching still zoom, and the drawing stays on its spot of
+  the board. With the text tool, click where the label goes, type, and press
+  Return (Esc cancels); click a label to change it, drag it to move it. The
+  pointer leaves a trail that fades after 2.5 s. *Done* or `Esc` hides the
+  tools; the drawing stays until you clear it (*Camera → Clear drawing*) or
+  pick another camera. While something is drawn, every photo (button, Space,
+  another device, an AI agent) saves the original and a copy with the
+  drawing (`…_2.jpg`); the message names both. Timelapse shots stay clean,
+  pointers never go into files, and nothing is kept after quitting.
 - **Title.** The camera (rename it in *Settings → Device*) and its format.
   While recording it shows the running time instead, and the stop button is
   red; a running timelapse shows its progress.
@@ -269,11 +285,15 @@ camera computer via Bonjour.
 
 - *Only watch*: just the picture, for a customer-facing screen.
 - *Watch, draw and take photos*: full screen, drawing over the live image
-  (arrow, circle, freehand, four colours) and **Take photo**. The photo is
+  (arrow, circle, freehand, text, four colours) and **Take photo**. The photo is
   taken on the camera computer, into its current folder. Draw on it and
   **Save as photo** saves a copy with the drawing (`…_2.jpg`); the original
   stays untouched. Remote photos need the *PIN for photos* set on the camera
   computer; a wrong PIN locks the device out for a while.
+- **Text:** pick **T**, tap where the label goes, type, and press Enter
+  or tap elsewhere; Esc cancels. Tap a label to change it, drag it to move
+  it. Three sizes appear next to the tools; the colour is the current one.
+  Labels get a dark outline, so they read on any board.
 - Made for touch: on a phone the buttons sit at the bottom in portrait and in
   a rail beside the picture in landscape, and every control is at least
   44 px (`scripts/stream-page-shots.py` checks that on phones, iPad and

@@ -7,7 +7,7 @@ Run against the demo stream (see README, MICROCAM_DEMO_STREAM_PORT) — with --p
 it also takes a photo, annotates it and saves the copy, so never point it with
 a PIN at a real bench. Needs Python Playwright with WebKit and Chromium.
 For every device and state (live, PIN panel empty / wrong / locked, drawing,
-annotated photo) it checks that each
+text label, annotated photo) it checks that each
 visible control lies fully inside the viewport, is at least 44 px and does not
 overlap another control, and it writes <device>-<state>.png. --locale sets the
 browser language (the page picks its texts from it; default en-US).
@@ -52,8 +52,8 @@ def check(page, name):
         return not problems
     image = page.evaluate("""() => { const i = [live, shot].find(e => !e.classList.contains('hidden'));
                                       const r = i.getBoundingClientRect(); return {x: r.left, y: r.top, w: r.width, h: r.height}; }""")
-    panels = page.evaluate("""() => ['palette', 'controls'].map(id => document.getElementById(id))
-      .filter(e => !e.classList.contains('hidden'))
+    panels = page.evaluate("""() => ['sizes', 'palette', 'controls'].map(id => document.getElementById(id))
+      .filter(e => e && !e.classList.contains('hidden'))
       .map(e => { const r = e.getBoundingClientRect(); return {id: e.id, x: r.left, y: r.top, w: r.width, h: r.height}; })""")
     for p in panels:
         if image["w"] and image["x"] < p["x"] + p["w"] - 0.5 and p["x"] < image["x"] + image["w"] - 0.5 \
@@ -129,6 +129,60 @@ def draw(page):
         page.mouse.up()
 
 
+def add_text(page, name, label, at=(0.3, 0.2)):
+    """The T tool: place a label, type, Enter; tap it again to edit, Esc keeps it;
+    drag it to move it. Returns False (and prints why) when something is off."""
+    ok = True
+    tap(page, "[data-tool=text]")
+    if not page.is_visible("#sizes"):
+        print(f"FAIL {name}: text sizes not shown with the text tool")
+        ok = False
+    tap(page, "[data-size=large]")
+    box = page.locator("#ink").bounding_box()
+    x, y = box["x"] + box["width"] * at[0], box["y"] + box["height"] * at[1]
+    page.mouse.click(x, y)
+    page.wait_for_selector("#textEditor:not(.hidden)", timeout=3000)
+    page.keyboard.type(label)
+    page.keyboard.press("Enter")
+    page.wait_for_timeout(200)
+    count = f"shapes.filter(s => s.kind === 'text' && s.text === {label!r}).length"
+    if page.evaluate(count) != 1 or page.is_visible("#textEditor"):
+        print(f"FAIL {name}: text label not committed with Enter")
+        return False
+    # Tap the label again: the editor opens with its text; Escape leaves it as it was.
+    page.mouse.click(x + 4, y + 4)
+    page.wait_for_selector("#textEditor:not(.hidden)", timeout=3000)
+    if page.input_value("#textEditor") != label:
+        print(f"FAIL {name}: tapping a label does not edit it")
+        ok = False
+    page.keyboard.type("zzz")
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(200)
+    if page.evaluate(count) != 1 or page.is_visible("#textEditor") or page.is_visible("#pinDialog"):
+        print(f"FAIL {name}: Escape did not cancel the edit")
+        ok = False
+    # Drag it a little to the right: the same label moves.
+    before = page.evaluate(f"shapes.find(s => s.text === {label!r}).points[0].x")
+    page.mouse.move(x + 4, y + 4)
+    page.mouse.down()
+    for i in range(1, 6):
+        page.mouse.move(x + 4 + i * 8, y + 4)
+    page.mouse.up()
+    after = page.evaluate(f"shapes.find(s => s.text === {label!r}).points[0].x")
+    # A 200-character label at the right edge must fit the picture, outline included.
+    fits = page.evaluate("""() => { const s = {kind: 'text', points: [{x: .9, y: .97}], fontSize: SIZES.large,
+                                       text: 'W'.repeat(200)}, b = textBox(s, ink.width, ink.height);
+                                    return b.x - b.px * OUTLINE >= 0 && b.x + b.w + b.px * OUTLINE <= ink.width
+                                        && b.y + b.h + b.px * OUTLINE <= ink.height; }""")
+    if not fits:
+        print(f"FAIL {name}: a long label does not fit the picture")
+        ok = False
+    if not after > before or page.is_visible("#textEditor"):
+        print(f"FAIL {name}: dragging a label does not move it")
+        ok = False
+    return ok
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("base")
@@ -173,6 +227,9 @@ def main():
                 ok &= check(page, f"{name} drawing")
                 page.screenshot(path=str(out / f"{slug}-2-drawing.png"))
                 tap(page, "[data-color='#ffd60a']")
+                ok &= add_text(page, name, "C12 short")
+                ok &= check(page, f"{name} text")
+                page.screenshot(path=str(out / f"{slug}-2b-text.png"))
 
                 if args.pin:
                     tap(page, "#photo")
@@ -182,6 +239,7 @@ def main():
                     page.wait_for_selector("#shot:not(.hidden)", timeout=10_000)
                     page.wait_for_timeout(1200)
                     draw(page)
+                    ok &= add_text(page, name, "R7", at=(0.6, 0.15))
                     tap(page, "#save")
                     page.wait_for_timeout(1500)
                     ok &= check(page, f"{name} photo")
