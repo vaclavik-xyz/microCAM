@@ -155,6 +155,9 @@
 "Photos taken from another device are saved on this Mac, like your own." = "Fotky pořízené z jiného zařízení se uloží na tomto Macu, stejně jako tvoje.";
 "Photos: %lld · done around %@" = "Fotek: %lld · hotovo kolem %@";
 "Pick one that stands out against the board." = "Vyber barvu, která je na desce dobře vidět.";
+"Show resolution under the camera name" = "Zobrazovat rozlišení pod názvem kamery";
+"Recording, timelapse and an agent at work show there either way." = "Nahrávání, časosběr a práce agenta se tam ukážou vždy.";
+"To choose the buttons in the toolbar, right-click it." = "Tlačítka v nástrojovém panelu si vybereš kliknutím pravým tlačítkem na panel.";
 "Picture size and frames per second." = "Rozlišení obrazu a počet snímků za sekundu.";
 "PIN for photos" = "PIN pro focení";
 "Pointer – fades after a moment" = "Ukazovátko – za chvíli zmizí";

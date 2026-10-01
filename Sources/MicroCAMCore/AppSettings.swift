@@ -33,6 +33,9 @@ public struct AppSettings: Equatable, Sendable {
     public var timelapseDuration: TimeInterval = 3600
     public var gridType = GridType.thirds
     public var gridColor = GridColor.white
+    /// The camera's format under its name in the window title while nothing
+    /// else (recording, timelapse, agent) is shown there.
+    public var showFormatInTitle = true
     public var pauseWhenHidden = true
     public var preventSleepWhileRecording = true
     public var lastDeviceID: String? = nil
@@ -88,7 +91,7 @@ public struct AppSettings: Equatable, Sendable {
 extension AppSettings: Codable {
     private enum CodingKeys: String, CodingKey {
         case storageRootPath, sortByType, jobsEnabled, activeJob, jpegQuality, videoCodec, videoQuality,
-             timelapseInterval, timelapseDuration, gridType, gridColor, pauseWhenHidden,
+             timelapseInterval, timelapseDuration, gridType, gridColor, showFormatInTitle, pauseWhenHidden,
              preventSleepWhileRecording, lastDeviceID, lastFormatByDevice, lastMicrophoneID,
              recordAudio, adjustmentsByDevice, cameraNames, webhookEnabled, webhookURL, webhookSendVideos,
              streamingEnabled, streamingPort, streamingMode, mcpEnabled, mcpPort, appMode, viewerSourceName, viewerManualURL
@@ -114,6 +117,7 @@ extension AppSettings: Codable {
         timelapseDuration = value(.timelapseDuration, d.timelapseDuration)
         gridType = value(.gridType, d.gridType)
         gridColor = value(.gridColor, d.gridColor)
+        showFormatInTitle = value(.showFormatInTitle, d.showFormatInTitle)
         pauseWhenHidden = value(.pauseWhenHidden, d.pauseWhenHidden)
         preventSleepWhileRecording = value(.preventSleepWhileRecording, d.preventSleepWhileRecording)
         lastDeviceID = value(.lastDeviceID, d.lastDeviceID)

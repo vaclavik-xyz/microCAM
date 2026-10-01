@@ -58,29 +58,39 @@ struct ContentView: View {
             .background(WindowAccessor { model.attachMainWindow($0) })
         }
         .modifier(WindowTitle(engine: model.engine, timelapse: model.timelapse, mcp: model.mcp))
-        .toolbar {
+        // Customizable (right-click the toolbar → Customize Toolbar…): every
+        // item can be removed, all actions stay in the menu bar with shortcuts.
+        // The id keeps the user's choice across launches; changing it resets it.
+        .toolbar(id: "main") {
             if model.settings.jobsEnabled {
-                ToolbarItem(placement: .navigation) { JobToolbarButton() }
+                ToolbarItem(id: "job", placement: .navigation) { JobToolbarButton() }
             }
-            // One item group, not a ControlGroup: macOS draws the three in one
-            // capsule anyway, and each button keeps its own popover anchor (a
-            // popover on a button inside a toolbar ControlGroup never appears,
-            // one on the group points at its middle, record).
-            ToolbarItemGroup(placement: .principal) {
+            // Separate items, not a ControlGroup: each button keeps its own
+            // popover anchor (a popover on a button inside a toolbar
+            // ControlGroup never appears, one on the group points at its middle).
+            ToolbarItem(id: "photo", placement: .principal) {
                 Button { model.takePhoto() } label: { Label("Take photo", systemImage: "camera") }
                     .help("Take a photo (Space)")
-                RecordButton()
+            }
+            ToolbarItem(id: "record", placement: .principal) { RecordButton() }
+            ToolbarItem(id: "timelapse", placement: .principal) {
                 TimelapseToolbarButton(runner: model.timelapse, show: $model.showTimelapse)
             }
-            ToolbarItemGroup(placement: .primaryAction) {
+            ToolbarItem(id: "draw", placement: .primaryAction) {
                 Toggle(isOn: $model.isDrawing) { Label("Draw", systemImage: "pencil.tip.crop.circle") }
                     .toggleStyle(.button)
                     .help("Draw on the picture (D)")
-                if model.streamViewers > 0 {
+            }
+            if model.streamViewers > 0 {
+                // Status, not an action: it can't be removed.
+                ToolbarItem(id: "viewers", placement: .primaryAction) {
                     Label("Watching: \(model.streamViewers)", systemImage: "dot.radiowaves.left.and.right")
                         .labelStyle(.titleAndIcon).foregroundStyle(.secondary)
                         .help("Watching now")
                 }
+                .customizationBehavior(.disabled)
+            }
+            ToolbarItem(id: "adjustments", placement: .primaryAction) {
                 Button { model.showAdjustments.toggle() } label: {
                     Label("Image adjustments", systemImage: "slider.horizontal.3")
                 }
@@ -93,6 +103,8 @@ struct ContentView: View {
                     }
                     .padding(16).frame(width: 360)
                 }
+            }
+            ToolbarItem(id: "settings", placement: .primaryAction) {
                 SettingsLink { Label("Settings", systemImage: "gearshape") }
                     .help("Settings (⌘,)")
             }
@@ -113,7 +125,7 @@ struct ContentView: View {
 }
 
 /// Title: the camera the picture comes from (the user's name for it, if set).
-/// Subtitle: its format; while recording "● Recording 0:12:34" (and dropped
+/// Subtitle: its format (unless turned off in Settings → Preview); while recording "● Recording 0:12:34" (and dropped
 /// frames), then "Saving video…"; a running timelapse adds its progress, and
 /// "Agent is watching" shows while an AI agent pulls frames over MCP.
 /// This is the only recording indicator besides the red stop button, so the
@@ -151,7 +163,9 @@ private struct WindowTitle: ViewModifier {
         if timelapse.isRunning, let schedule = timelapse.schedule {
             parts.append(String(localized: "Timelapse \(timelapse.shotsTaken) of \(schedule.shotCount)"))
         }
-        if parts.isEmpty, let format = engine.activeFormat { parts.append(format.label) }
+        if parts.isEmpty, model.settings.showFormatInTitle, let format = engine.activeFormat {
+            parts.append(format.label)
+        }
         if mcp.agentWatching { parts.append(String(localized: "Agent is watching")) }
         return parts.joined(separator: " · ")
     }
