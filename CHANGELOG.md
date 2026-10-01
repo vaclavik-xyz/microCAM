@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.4.0 — 2026-10-01
+
+Drawing and text, live on the Mac and on photos.
 
 - Draw on the live picture on the Mac: *Draw* in the toolbar (`D`, ⌘D)
   shows arrow, circle, pen, text, a pointer that fades after 2.5 s, four
