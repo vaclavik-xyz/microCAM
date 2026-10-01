@@ -350,9 +350,16 @@ final class DemoDriver {
         capture(main, withChildren: true, as: "03d-drawing-zoomed", in: dir)
         model.previewView?.resetZoom()
 
-        // A photo: the original and a copy with the drawing.
+        // A photo: the original and a copy with the drawing, including a label
+        // still being typed (the photo button does not take the focus from it).
+        model.isDrawing = true
+        model.drawTool = .text
+        await pause(0.3)
+        overlay.beginText(at: .init(x: 0.1, y: 0.08), text: "R7")
         let before = Set(model.library.files)
         model.takePhoto()
+        check(model.board.persistent.contains { $0.text == "R7" }, "a label being typed goes into the photo")
+        model.isDrawing = false
         await pause(3)
         capture(main, withChildren: true, as: "03e-photo-with-drawing", in: dir)
         let added = Set(model.library.files).subtracting(before).map(\.lastPathComponent).sorted()

@@ -411,6 +411,10 @@ final class AppModel: ObservableObject {
             completion?(.failure(error))
             return
         }
+        // A label still being typed belongs to the drawing when the photo button
+        // or menu is used here (they don't take the focus from it). Photos from
+        // another device or an agent leave the person typing alone.
+        if source == .local && kind == .photo { previewView?.annotationView.commitText() }
         // What is drawn now, not when the file is written.
         let shapes = board.photoShapes(for: kind)
         photoCapturer.capture(frame.pixelBuffer, adjustments: adjustmentsBox.value,
