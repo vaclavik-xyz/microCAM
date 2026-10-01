@@ -314,7 +314,7 @@ const live = $("live"), shot = $("shot"), ink = $("ink"), ctx = ink.getContext("
 let tool = "arrow", color = "#ff3b30", drawing = false, shapes = [], current = null, frozen = null, offline = false;
 // Text labels: the same numbers as AnnotationTextLayout and AnnotationTextSize in the app, so a
 // label lands in the saved photo where it was typed.
-const LINE = 1.2, BASE = 0.9, OUTLINE = 0.12, SIZES = { small: 0.03, medium: 0.045, large: 0.07 };
+const LINE = 1.2, BASE = 0.9, OUTLINE = 0.12, MARGIN = 0.15, SIZES = { small: 0.03, medium: 0.045, large: 0.07 };
 const FONT = "-apple-system,BlinkMacSystemFont,system-ui,sans-serif";
 let textSize = "medium", editing = null, textDrag = null;
 
@@ -432,12 +432,20 @@ ink.addEventListener("pointercancel", () => { textDrag = null; finish(); });
 //      tap a label to edit it, drag it to move it ----
 const clamp01 = v => Math.min(Math.max(v, 0), 1);
 /// The label's box in canvas pixels, kept inside the picture like the app does.
+/// A label too wide for the picture gets a smaller font; the outline and accents keep MARGIN free.
 function textBox(s, W, H) {
-  const px = s.fontSize * H;
+  let px = s.fontSize * H, w = 0;
+  for (let i = 0; i < 5; i++) {
+    ctx.font = "600 " + px + "px " + FONT;
+    w = ctx.measureText(s.text).width;
+    if (w + 2 * MARGIN * px <= W) break;
+    px = px * W / (w + 2 * MARGIN * px) * 0.995;
+  }
   ctx.font = "600 " + px + "px " + FONT;
-  const w = ctx.measureText(s.text).width, h = px * LINE;
-  return { x: Math.min(Math.max(s.points[0].x * W, 0), Math.max(W - w, 0)),
-           y: Math.min(Math.max(s.points[0].y * H, 0), Math.max(H - h, 0)), w, h, px };
+  w = ctx.measureText(s.text).width;
+  const h = px * LINE, m = MARGIN * px;
+  return { x: Math.min(Math.max(s.points[0].x * W, m), Math.max(W - w - m, m)),
+           y: Math.min(Math.max(s.points[0].y * H, m), Math.max(H - h - m, m)), w, h, px };
 }
 function textAt(p) {
   const x = p.x * ink.width, y = p.y * ink.height, pad = 6 * (window.devicePixelRatio || 1);

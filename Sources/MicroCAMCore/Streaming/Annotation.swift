@@ -142,14 +142,25 @@ public enum AnnotationTextLayout {
     public static let baseline = 0.9
     /// Width of the dark outline around the letters, as a multiple of the font size.
     public static let outline = 0.12
+    /// How far the outline and accents (caron, acute) reach past the text box, as a
+    /// multiple of the font size; kept free at the edges of the image.
+    public static let margin = 0.15
 
     /// Top-left of the text box in pixels (origin top-left), moved just enough
-    /// that a box of `textWidth` stays inside the image.
+    /// that a box of `textWidth`, with its outline, stays inside the image.
     public static func origin(_ point: AnnotationPoint, textWidth: CGFloat, fontPixels: CGFloat,
                               in size: CGSize) -> CGPoint {
-        let height = fontPixels * lineHeight
-        return CGPoint(x: min(max(point.x * size.width, 0), max(size.width - textWidth, 0)),
-                       y: min(max(point.y * size.height, 0), max(size.height - height, 0)))
+        let height = fontPixels * lineHeight, m = margin * fontPixels
+        return CGPoint(x: min(max(point.x * size.width, m), max(size.width - textWidth - m, m)),
+                       y: min(max(point.y * size.height, m), max(size.height - height - m, m)))
+    }
+
+    /// The font size, made smaller when a label of `textWidth` (measured at
+    /// `fontPixels`) and its outline would not fit the image width.
+    public static func fittedFontPixels(_ fontPixels: CGFloat, textWidth: CGFloat, in size: CGSize) -> CGFloat {
+        guard textWidth > 0, textWidth + 2 * margin * fontPixels > size.width else { return fontPixels }
+        // Width scales with the size: px' · (textWidth / px) + 2 · margin · px' = width.
+        return fontPixels * size.width / (textWidth + 2 * margin * fontPixels)
     }
 
     /// The system font, semibold.
@@ -178,13 +189,29 @@ public enum AnnotationTextLayout {
         CGFloat(shape.fontSize ?? AnnotationTextSize.medium.fontSize) * imageHeight
     }
 
+    /// Font size, line and box of a text shape (box in pixels, origin top-left).
+    static func layout(of shape: AnnotationShape, in size: CGSize) -> (pixels: CGFloat, line: CTLine, frame: CGRect)? {
+        guard shape.kind == .text, let text = shape.text, let point = shape.points.first else { return nil }
+        var px = fontPixels(of: shape, imageHeight: size.height)
+        var line = line(text, font: font(pixels: px))
+        var width = CGFloat(CTLineGetTypographicBounds(line, nil, nil, nil))
+        // The system font is not exactly proportional across sizes (optical
+        // sizes), so measure again until it fits; two or three rounds at most.
+        for _ in 0..<4 {
+            let fitted = fittedFontPixels(px, textWidth: width, in: size)
+            guard fitted < px else { break }
+            px = fitted * 0.995
+            line = self.line(text, font: font(pixels: px))
+            width = CGFloat(CTLineGetTypographicBounds(line, nil, nil, nil))
+        }
+        let frame = CGRect(origin: origin(point, textWidth: width, fontPixels: px, in: size),
+                           size: CGSize(width: width, height: px * lineHeight))
+        return (px, line, frame)
+    }
+
     /// Box of a text shape in pixels (origin top-left); nil for other kinds.
     public static func frame(of shape: AnnotationShape, in size: CGSize) -> CGRect? {
-        guard shape.kind == .text, let text = shape.text, let point = shape.points.first else { return nil }
-        let px = fontPixels(of: shape, imageHeight: size.height)
-        let width = width(of: text, fontPixels: px)
-        return CGRect(origin: origin(point, textWidth: width, fontPixels: px, in: size),
-                      size: CGSize(width: width, height: px * lineHeight))
+        layout(of: shape, in: size)?.frame
     }
 }
 
@@ -251,11 +278,8 @@ public enum AnnotationRenderer {
 
     /// Letters in the shape colour over a dark outline, so they read on any board.
     private static func drawText(_ shape: AnnotationShape, in ctx: CGContext, size: CGSize) {
-        guard let text = shape.text, let point = shape.points.first else { return }
-        let px = AnnotationTextLayout.fontPixels(of: shape, imageHeight: size.height)
-        let line = AnnotationTextLayout.line(text, font: AnnotationTextLayout.font(pixels: px))
-        let width = CGFloat(CTLineGetTypographicBounds(line, nil, nil, nil))
-        let origin = AnnotationTextLayout.origin(point, textWidth: width, fontPixels: px, in: size)
+        guard let (px, line, frame) = AnnotationTextLayout.layout(of: shape, in: size) else { return }
+        let origin = frame.origin
         ctx.saveGState()
         defer { ctx.restoreGState() }
         ctx.setAlpha(1)

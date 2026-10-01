@@ -117,15 +117,27 @@ final class AnnotationTests: XCTestCase {
         XCTAssertEqual(s.points.last, pts.last)
     }
 
-    func testTextOriginStaysInsideTheImage() {
+    func testTextOriginStaysInsideTheImageWithItsOutline() {
         let size = CGSize(width: 200, height: 100)
+        // The outline and accents (Č, Ž) reach 0.15 × the font size past the box.
         let o = AnnotationTextLayout.origin(.init(x: 0.95, y: 0.98), textWidth: 60, fontPixels: 10, in: size)
-        XCTAssertEqual(o.x, 140, accuracy: 0.001)
-        XCTAssertEqual(o.y, 88, accuracy: 0.001)
+        XCTAssertEqual(o.x, 138.5, accuracy: 0.001)
+        XCTAssertEqual(o.y, 86.5, accuracy: 0.001)
         XCTAssertEqual(AnnotationTextLayout.origin(.init(x: 0.1, y: 0.2), textWidth: 60, fontPixels: 10, in: size),
                        CGPoint(x: 20, y: 20))
-        // Wider than the image: starts at the left edge.
-        XCTAssertEqual(AnnotationTextLayout.origin(.init(x: 0.5, y: 0), textWidth: 400, fontPixels: 10, in: size).x, 0)
+        XCTAssertEqual(AnnotationTextLayout.origin(.init(x: 0, y: 0), textWidth: 60, fontPixels: 10, in: size),
+                       CGPoint(x: 1.5, y: 1.5))
+    }
+    func testALongLabelShrinksToFitTheWidth() {
+        let size = CGSize(width: 400, height: 200)
+        let px = AnnotationTextLayout.fittedFontPixels(14, textWidth: 800, in: size)
+        XCTAssertEqual(px, 14 * (400 - 2 * 0.15 * px) / 800, accuracy: 0.01)
+        XCTAssertEqual(AnnotationTextLayout.fittedFontPixels(14, textWidth: 100, in: size), 14)
+        let label = AnnotationShape(kind: .text, points: [.init(x: 0.5, y: 0.5)], color: "#00ff00", width: 0.006,
+                                    text: String(repeating: "W", count: 200), fontSize: 0.07)
+        let frame = AnnotationTextLayout.frame(of: label, in: size)!
+        XCTAssertGreaterThanOrEqual(frame.minX, 0)
+        XCTAssertLessThanOrEqual(frame.maxX, 400)
     }
     func testTextIsRenderedInItsColourWithinItsFrame() {
         let shape = AnnotationShape(kind: .text, points: [.init(x: 0.9, y: 0.9)], color: "#00ff00", width: 0.006,

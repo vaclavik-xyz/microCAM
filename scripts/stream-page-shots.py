@@ -169,6 +169,14 @@ def add_text(page, name, label, at=(0.3, 0.2)):
         page.mouse.move(x + 4 + i * 8, y + 4)
     page.mouse.up()
     after = page.evaluate(f"shapes.find(s => s.text === {label!r}).points[0].x")
+    # A 200-character label at the right edge must fit the picture, outline included.
+    fits = page.evaluate("""() => { const s = {kind: 'text', points: [{x: .9, y: .97}], fontSize: SIZES.large,
+                                       text: 'W'.repeat(200)}, b = textBox(s, ink.width, ink.height);
+                                    return b.x - b.px * OUTLINE >= 0 && b.x + b.w + b.px * OUTLINE <= ink.width
+                                        && b.y + b.h + b.px * OUTLINE <= ink.height; }""")
+    if not fits:
+        print(f"FAIL {name}: a long label does not fit the picture")
+        ok = False
     if not after > before or page.is_visible("#textEditor"):
         print(f"FAIL {name}: dragging a label does not move it")
         ok = False
