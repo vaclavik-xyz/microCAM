@@ -13,6 +13,7 @@
 "After: %@" = "Po: %@";
 "Allow it in System Settings → Privacy & Security → Camera." = "Povol ho v Nastavení systému → Soukromí a zabezpečení → Kamera.";
 "already in that job: %lld" = "už u zakázky: %lld";
+"An agent took a photo: %@, with drawing: %@" = "Agent vyfotil: %@, s kresbou: %@";
 "Arrow" = "Šipka";
 "Before" = "Před";
 "Before: %@" = "Před: %@";
@@ -147,6 +148,7 @@
 "Other files" = "Ostatní soubory";
 "Pen" = "Pero";
 "Photo from another device saved: %@" = "Uložena fotka z jiného zařízení: %@";
+"Photo from another device saved: %@, with drawing: %@" = "Uložena fotka z jiného zařízení: %@, s kresbou: %@";
 "Photo not saved" = "Fotka se neuložila";
 "Photo quality" = "Kvalita fotek";
 "Photos and videos you take appear here." = "Tady se objeví fotky a videa, která pořídíš.";
@@ -183,6 +185,7 @@
 "Saturation" = "Sytost";
 "Saved for this camera. Applies to the preview, photos and videos." = "Ukládá se pro tuto kameru. Platí pro náhled, fotky i videa.";
 "Saved: %@" = "Uloženo: %@";
+"Saved: %@, with drawing: %@" = "Uloženo: %@, s kresbou: %@";
 "Saves energy while the window is minimized or covered, or the screen is locked. Recording, timelapse and viewers of the live stream keep it on." = "Šetří energii, když je okno minimalizované, zakryté nebo je obrazovka zamčená. Nahrávání, časosběr a diváci přenosu ji nechají zapnutou.";
 "Saving video…" = "Ukládám video…";
 "Scroll or pinch – zoom, drag – move the image" = "Kolečko nebo sevření – zoom, tažení – posun obrazu";

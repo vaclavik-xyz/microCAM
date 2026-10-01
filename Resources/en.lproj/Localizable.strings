@@ -14,6 +14,7 @@
 "After: %@" = "After: %@";
 "Allow it in System Settings → Privacy & Security → Camera." = "Allow it in System Settings → Privacy & Security → Camera.";
 "already in that job: %lld" = "already in that job: %lld";
+"An agent took a photo: %@, with drawing: %@" = "An agent took a photo: %@, with drawing: %@";
 "Arrow" = "Arrow";
 "Before" = "Before";
 "Before: %@" = "Before: %@";
@@ -148,6 +149,7 @@
 "Other files" = "Other files";
 "Pen" = "Pen";
 "Photo from another device saved: %@" = "Photo from another device saved: %@";
+"Photo from another device saved: %@, with drawing: %@" = "Photo from another device saved: %@, with drawing: %@";
 "Photo not saved" = "Photo not saved";
 "Photo quality" = "Photo quality";
 "Photos and videos you take appear here." = "Photos and videos you take appear here.";
@@ -184,6 +186,7 @@
 "Saturation" = "Saturation";
 "Saved for this camera. Applies to the preview, photos and videos." = "Saved for this camera. Applies to the preview, photos and videos.";
 "Saved: %@" = "Saved: %@";
+"Saved: %@, with drawing: %@" = "Saved: %@, with drawing: %@";
 "Saves energy while the window is minimized or covered, or the screen is locked. Recording, timelapse and viewers of the live stream keep it on." = "Saves energy while the window is minimized or covered, or the screen is locked. Recording, timelapse and viewers of the live stream keep it on.";
 "Saving video…" = "Saving video…";
 "Scroll or pinch – zoom, drag – move the image" = "Scroll or pinch – zoom, drag – move the image";

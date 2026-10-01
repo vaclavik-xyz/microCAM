@@ -393,7 +393,9 @@ final class AppModel: ObservableObject {
     enum CaptureSource { case local, remote, agent }
 
     /// `source` marks a photo requested from the stream page or by an AI
-    /// agent; `completion` reports the saved file (main queue).
+    /// agent; `completion` reports the saved file (main queue). While something
+    /// is drawn on the picture, a photo also saves a copy with the drawing next
+    /// to it (`…_2.jpg`); `completion` still reports the original.
     func takePhoto(kind: CaptureKind = .photo, source: CaptureSource = .local,
                    completion: ((Result<URL, Error>) -> Void)? = nil) {
         guard let frame = engine.latestFrame.value, Date().timeIntervalSince(frame.receivedAt) < 1 else {
@@ -409,26 +411,55 @@ final class AppModel: ObservableObject {
             completion?(.failure(error))
             return
         }
+        // What is drawn now, not when the file is written.
+        let shapes = board.photoShapes(for: kind)
         photoCapturer.capture(frame.pixelBuffer, adjustments: adjustmentsBox.value,
                               quality: settings.jpegQuality, to: url) { [weak self] result in
             guard let self else { return }
             self.releaseURL(url)
             switch result {
             case .success:
-                let name = url.lastPathComponent
-                let text = switch source {
-                case .local: String(localized: "Saved: \(name)")
-                case .remote: String(localized: "Photo from another device saved: \(name)")
-                case .agent: String(localized: "An agent took a photo: \(name)")
+                guard !shapes.isEmpty else {
+                    self.photoSaved(url, copy: nil, source: source)
+                    completion?(.success(url))
+                    return
                 }
-                self.message = StatusMessage(text: text, isError: false)
-                self.capturesChanged()
-                completion?(.success(url))
+                self.renderAnnotatedCopy(of: url, shapes: shapes) { copy in
+                    switch copy {
+                    case .success(let copy):
+                        self.photoSaved(url, copy: copy, source: source)
+                    case .failure(let error):
+                        // The photo itself is saved; only the copy failed.
+                        self.report(error, prefix: String(localized: "Drawing not saved"))
+                        self.capturesChanged()
+                    }
+                    completion?(.success(url))
+                }
             case .failure(let error):
                 self.report(error, prefix: String(localized: "Photo not saved"))
                 completion?(.failure(error))
             }
         }
+    }
+
+    private func photoSaved(_ url: URL, copy: URL?, source: CaptureSource) {
+        let name = url.lastPathComponent
+        let text: String
+        if let copy = copy?.lastPathComponent {
+            text = switch source {
+            case .local: String(localized: "Saved: \(name), with drawing: \(copy)")
+            case .remote: String(localized: "Photo from another device saved: \(name), with drawing: \(copy)")
+            case .agent: String(localized: "An agent took a photo: \(name), with drawing: \(copy)")
+            }
+        } else {
+            text = switch source {
+            case .local: String(localized: "Saved: \(name)")
+            case .remote: String(localized: "Photo from another device saved: \(name)")
+            case .agent: String(localized: "An agent took a photo: \(name)")
+            }
+        }
+        message = StatusMessage(text: text, isError: false)
+        capturesChanged()
     }
 
     /// Renders shapes onto a saved capture and stores the result as the next
@@ -438,6 +469,21 @@ final class AppModel: ObservableObject {
         guard CaptureFileName.parse(source.lastPathComponent) != nil else {
             return completion(.failure(CocoaError(.fileReadInvalidFileName)))
         }
+        renderAnnotatedCopy(of: source, shapes: shapes) { result in
+            switch result {
+            case .success(let url):
+                self.message = StatusMessage(text: String(localized: "Drawing from another device saved: \(url.lastPathComponent)"), isError: false)
+                self.capturesChanged()
+            case .failure(let error):
+                self.report(error, prefix: String(localized: "Drawing not saved"))
+            }
+            completion(result)
+        }
+    }
+
+    /// The copy with the drawing, written off the main thread; `completion` on the main actor.
+    private func renderAnnotatedCopy(of source: URL, shapes: [AnnotationShape],
+                                     completion: @escaping @MainActor (Result<URL, Error>) -> Void) {
         let destination = reserveEditedCopyURL(of: source)
         let quality = settings.jpegQuality
         Task.detached(priority: .userInitiated) {
@@ -453,13 +499,6 @@ final class AppModel: ObservableObject {
             }
             await MainActor.run {
                 self.releaseURL(destination)
-                switch result {
-                case .success(let url):
-                    self.message = StatusMessage(text: String(localized: "Drawing from another device saved: \(url.lastPathComponent)"), isError: false)
-                    self.capturesChanged()
-                case .failure(let error):
-                    self.report(error, prefix: String(localized: "Drawing not saved"))
-                }
                 completion(result)
             }
         }
