@@ -258,6 +258,8 @@ final class AnnotationOverlayView: NSView, NSTextFieldDelegate {
         addSubview(field)
         placeEditor()
         window?.makeFirstResponder(field)
+        // Caret at the end, not the whole label selected: a stray key must not replace it.
+        field.currentEditor()?.selectedRange = NSRange(location: (field.stringValue as NSString).length, length: 0)
         needsDisplay = true
         updateVisibility()
     }
