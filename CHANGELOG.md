@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Draw on the live picture on the Mac: *Draw* in the toolbar (`D`, ⌘D)
+  shows arrow, circle, pen, text, a pointer that fades after 2.5 s, four
+  colours, undo and *Clear all* at the bottom of the preview. The drawing
+  stays on its spot when you zoom. While something is drawn, a photo saves
+  the original and a copy with the drawing (`…_2.jpg`), also for photos
+  from another device or an AI agent; timelapse shots stay clean.
 - Text in drawings on the stream page: the **T** tool places a label where
   you tap, in three sizes and the drawing colours. Tap a label to edit it,
   drag it to move it. Saved photos show it exactly there, with a dark
