@@ -418,8 +418,13 @@ final class DemoDriver {
         return (view as? NSScrollView).map { [$0] } ?? view.subviews.flatMap { scrollViews(in: $0) }
     }
 
+    /// By its SwiftUI identifier first: the Markup window from 8c can linger
+    /// visible and would otherwise be captured instead.
     private func settingsWindow(besides main: NSWindow) -> NSWindow? {
-        NSApp.windows.first { $0 !== main && $0.isVisible && !String(describing: type(of: $0)).contains("Popover") }
+        let candidates = NSApp.windows.filter {
+            $0 !== main && $0.isVisible && !String(describing: type(of: $0)).contains("Popover")
+        }
+        return candidates.first { $0.identifier?.rawValue.contains("Settings") == true } ?? candidates.first
     }
 
     // MARK: Capture
