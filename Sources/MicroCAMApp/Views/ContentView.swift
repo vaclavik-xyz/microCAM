@@ -58,6 +58,7 @@ struct ContentView: View {
             .background(WindowAccessor { model.attachMainWindow($0) })
         }
         .modifier(WindowTitle(engine: model.engine, timelapse: model.timelapse, mcp: model.mcp))
+        .importsItemProviders([.image]) { model.importPhotos($0) }
         // Customizable (right-click the toolbar → Customize Toolbar…): every
         // item can be removed, all actions stay in the menu bar with shortcuts.
         // The id keeps the user's choice across launches; changing it resets it.

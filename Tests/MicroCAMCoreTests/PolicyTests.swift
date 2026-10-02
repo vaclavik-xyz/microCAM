@@ -38,7 +38,8 @@ final class PolicyTests: XCTestCase {
         for set in [{ (s: inout CaptureLifecycleState) in s.recording = true },
                     { (s: inout CaptureLifecycleState) in s.timelapseRunning = true },
                     { (s: inout CaptureLifecycleState) in s.streamViewers = true },
-                    { (s: inout CaptureLifecycleState) in s.agentWatching = true }] {
+                    { (s: inout CaptureLifecycleState) in s.agentWatching = true },
+                    { (s: inout CaptureLifecycleState) in s.shortcutRunning = true }] {
             s = CaptureLifecycleState(); s.windowVisible = false
             set(&s)
             XCTAssertTrue(CaptureLifecyclePolicy.needsAppAwake(s))
@@ -113,6 +114,15 @@ final class PolicyTests: XCTestCase {
         s.agentWatching = true
         XCTAssertTrue(CaptureLifecyclePolicy.shouldRun(s))
         s.screenLocked = true
+        XCTAssertTrue(CaptureLifecyclePolicy.shouldRun(s))
+        s.systemSleeping = true
+        XCTAssertFalse(CaptureLifecyclePolicy.shouldRun(s))
+    }
+    /// A Shortcuts action (photo, recording) wakes a camera paused by a hidden window.
+    func testRunningShortcutKeepsCameraRunningExceptSleep() {
+        var s = CaptureLifecycleState()
+        s.windowVisible = false
+        s.shortcutRunning = true
         XCTAssertTrue(CaptureLifecyclePolicy.shouldRun(s))
         s.systemSleeping = true
         XCTAssertFalse(CaptureLifecyclePolicy.shouldRun(s))

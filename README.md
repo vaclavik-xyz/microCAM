@@ -49,6 +49,9 @@ also pick one in *Settings → General → Language*.
   viewer.
 - **MCP server for AI agents:** agents on your network can look through the
   microscope, take photos and record, and you see everything they do.
+- **Shortcuts actions:** take a photo, start and stop recording and set the
+  job from the Shortcuts app, Spotlight or Siri, e.g. on a Stream Deck or a
+  foot pedal.
 - **Integrations:** macOS share sheet, and an optional generic webhook for
   sending captures to your own system (your CRM, n8n, Make, Zapier…).
 - **Almost no dependencies.** Swift, SwiftUI/AppKit and Apple frameworks,
@@ -152,6 +155,13 @@ The window:
   another device, an AI agent) saves the original and a copy with the
   drawing (`…_2.jpg`); the message names both. Timelapse shots stay clean,
   pointers never go into files, and nothing is kept after quitting.
+- **Find a job.** With jobs on, the search field at the top of the side
+  panel lists the job folders whose code matches, with their file count and
+  last day; a click switches to the job.
+- **Import from iPhone or iPad.** *File → Import from iPhone or iPad → Take
+  Photo* (Continuity Camera; macOS names the item after the devices nearby) saves the photo from the phone into the current
+  folder, named like the others: a picture of the whole device next to the
+  microscope detail. Image adjustments and drawing don't apply to it.
 - **Title.** The camera (rename it in *Settings → Device*) and its format.
   While recording it shows the running time instead, and the stop button is
   red; a running timelapse shows its progress.
@@ -200,6 +210,17 @@ The window:
   An optional token is sent as `Authorization: Bearer …` and kept in the
   Keychain. Any 2xx counts as success. Videos are sent only when *Send videos
   too* is on; uploads stream from disk, so hour-long videos are fine.
+
+### Shortcuts
+
+microCAM adds four actions to the Shortcuts app: *Take photo* and *Stop
+recording* return the file, so a shortcut can send it on; *Start recording*;
+*Set job* (empty clears it). The first three are also in Spotlight without
+any setup. They run in the open app, wake a camera paused by a hidden window
+and fail with a short message when there is no camera, no picture or no
+storage folder. Their metadata (`Metadata.appintents`) is compiled by
+`scripts/make-app.sh`, the way Xcode does it; a plain `swift build` binary
+has no Shortcuts actions.
 
 ### MCP server for AI agents
 

@@ -67,6 +67,9 @@ final class DemoDriver {
     private let context = CIContext()
     private var frame: CVPixelBuffer?
     private var timer: Timer?
+    /// Behaviour checks, written to demo-checks.txt next to the screenshots.
+    private var checks: [String] = []
+    private func check(_ ok: Bool, _ what: String) { checks.append("\(ok ? "ok  " : "FAIL") \(what)") }
 
     init(model: AppModel, config: DemoConfig) {
         self.model = model
@@ -170,6 +173,11 @@ final class DemoDriver {
         // 1d–1g. Title with recording and an agent at once, then without the
         // resolution; the Customize Toolbar sheet; a toolbar with fewer buttons.
         await toolbarScript(main, into: dir)
+
+        // 1h–1k. Shortcuts actions, a photo imported from an iPhone, job search.
+        await shortcutsScript()
+        await importScript(main, into: dir)
+        await jobSearchScript(main, into: dir)
 
         // 2. Image adjustments popover on a warmer, punchier picture.
         show(frame(1))
@@ -294,6 +302,8 @@ final class DemoDriver {
                 model.language = model.launchLanguage
             }
         }
+        try? checks.joined(separator: "\n").appending("\n")
+            .write(to: dir.appendingPathComponent("demo-checks.txt"), atomically: true, encoding: .utf8)
         NSApp.terminate(nil)
     }
 
@@ -331,10 +341,136 @@ final class DemoDriver {
         await pause(1)
     }
 
+    /// The Shortcuts actions, run the way the system runs them.
+    private func shortcutsScript() async {
+        func files() -> Set<String> { Set(model.library.files.map(\.lastPathComponent)) }
+        func failure(_ body: () async throws -> Void) async -> ShortcutError? {
+            do { try await body(); return nil } catch { return error as? ShortcutError }
+        }
+        show(frame(0))
+        var before = files()
+        _ = try? await TakePhotoIntent().perform()
+        await pause(1)
+        check(files().subtracting(before).contains { $0.hasSuffix(".jpg") }, "Shortcuts: take photo saves a photo")
+
+        before = files()
+        _ = try? await StartRecordingIntent().perform()
+        check(model.isRecording, "Shortcuts: start recording")
+        if case .alreadyRecording = await failure({ _ = try await StartRecordingIntent().perform() }) {
+            check(true, "Shortcuts: start while recording says so")
+        } else { check(false, "Shortcuts: start while recording says so") }
+        await pause(2)
+        _ = try? await StopRecordingIntent().perform()
+        await pause(1)
+        check(!model.isRecording && files().subtracting(before).contains { $0.hasSuffix(".mov") },
+              "Shortcuts: stop recording saves the video")
+        if case .notRecording = await failure({ _ = try await StopRecordingIntent().perform() }) {
+            check(true, "Shortcuts: stop without recording says so")
+        } else { check(false, "Shortcuts: stop without recording says so") }
+
+        let job = model.settings.activeJob
+        var setJob = SetJobIntent()
+        setJob.job = "PR-260500"
+        _ = try? await setJob.perform()
+        check(model.settings.activeJob?.value == "PR-260500", "Shortcuts: set job")
+        setJob.job = "a/b"
+        if case .invalidJob = await failure({ _ = try await setJob.perform() }) {
+            check(model.settings.activeJob?.value == "PR-260500", "Shortcuts: invalid job is refused")
+        } else { check(false, "Shortcuts: invalid job is refused") }
+        setJob.job = nil
+        _ = try? await setJob.perform()
+        check(model.settings.activeJob == nil, "Shortcuts: empty job clears it")
+        model.settings.activeJob = job
+        model.message = nil
+        await pause(1)
+    }
+
+    /// File → Import from iPhone or iPad: the menu item, and a photo handed
+    /// over the way Continuity Camera does it.
+    private func importScript(_ main: NSWindow, into dir: URL) async {
+        // A placeholder that AppKit fills with Continuity Camera items when the menu opens.
+        let items = NSApp.mainMenu?.items.compactMap(\.submenu).flatMap(\.items) ?? []
+        let importItem = items.first { $0.identifier == NSMenuItem.importFromDeviceIdentifier }
+        check(importItem != nil, "File menu has the Import from iPhone or iPad item")
+        if let fileMenu = importItem?.menu, let content = main.contentView {
+            // Open the File menu for real and capture it while it tracks.
+            var titles: [String] = []
+            let timer = Timer(timeInterval: 1, repeats: false) { [self] _ in
+                MainActor.assumeIsolated {
+                    titles = fileMenu.items.map(\.title)
+                    for window in NSApp.windows where window.isVisible && window !== main
+                        && String(describing: type(of: window)).contains("Menu") {
+                        capture(window, withChildren: false, as: "01l-file-menu", in: dir)
+                    }
+                    fileMenu.cancelTracking()
+                }
+            }
+            RunLoop.main.add(timer, forMode: .common)
+            fileMenu.popUp(positioning: nil, at: NSPoint(x: 260, y: content.bounds.height - 40), in: content)
+            check(titles.contains { $0.contains("iPhon") || $0.contains("iPad") }, "open File menu shows \(titles)")
+        }
+        let before = Set(model.library.files.map(\.lastPathComponent))
+        let accepted = NSItemProvider(contentsOf: frame(3)).map { model.importPhotos([$0]) } ?? false
+        await pause(2)
+        let added = Set(model.library.files.map(\.lastPathComponent)).subtracting(before)
+        check(accepted && added.count == 1 && added.first?.hasSuffix(".jpg") == true, "imported photo saved: \(added.sorted())")
+        capture(main, withChildren: true, as: "01h-imported-photo", in: dir)
+        model.message = nil
+    }
+
+    /// Older jobs in the storage folder, found by typing into the side panel's search field.
+    private func jobSearchScript(_ main: NSWindow, into dir: URL) async {
+        let photos = model.library.files.filter { $0.pathExtension.lowercased() == "jpg" }
+        for (index, code) in ["PR-260388", "PR-260215", "PR-259901", "RX-1042"].enumerated() {
+            let folder = config.root.appendingPathComponent(code, isDirectory: true)
+            try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            for (n, photo) in photos.prefix(index + 2).enumerated() {
+                let name = "\(code)_2026-0\(8 - index / 2)-1\(index)_1\(n)-00-00.jpg"
+                try? FileManager.default.copyItem(at: photo, to: folder.appendingPathComponent(name))
+            }
+        }
+        let job = model.settings.activeJob
+        guard let field = searchFields(in: main.contentView?.superview).first else {
+            return check(false, "job search field in the side panel")
+        }
+        main.makeFirstResponder(field)
+        (main.firstResponder as? NSTextView)?.insertText("pr-26", replacementRange: NSRange(location: NSNotFound, length: 0))
+        await pause(1.5)
+        capture(main, withChildren: true, as: "01i-job-search", in: dir)
+        (main.firstResponder as? NSTextView)?.insertText("0215", replacementRange: NSRange(location: NSNotFound, length: 0))
+        await pause(1)
+        capture(main, withChildren: true, as: "01j-job-search-one", in: dir)
+        // Click the one result, like a person would.
+        if let table = tableViews(in: main.contentView?.superview).first, table.numberOfRows == 1 {
+            let row = table.convert(table.rect(ofRow: 0), to: nil)
+            let point = NSPoint(x: row.midX, y: row.midY)
+            for type in [NSEvent.EventType.leftMouseDown, .leftMouseUp] {
+                main.sendEvent(NSEvent.mouseEvent(with: type, location: point, modifierFlags: [],
+                                                  timestamp: ProcessInfo.processInfo.systemUptime,
+                                                  windowNumber: main.windowNumber, context: nil, eventNumber: 0,
+                                                  clickCount: 1, pressure: type == .leftMouseUp ? 0 : 1)!)
+            }
+        }
+        await pause(1.5)
+        check(model.settings.activeJob?.value == "PR-260215", "a click on a found job switches to it")
+        check(field.stringValue.isEmpty, "the search is cleared after switching")
+        capture(main, withChildren: true, as: "01k-job-switched", in: dir)
+        model.settings.activeJob = job
+        await pause(1)
+    }
+
+    private func searchFields(in view: NSView?) -> [NSSearchField] {
+        guard let view else { return [] }
+        return (view as? NSSearchField).map { [$0] } ?? view.subviews.flatMap { searchFields(in: $0) }
+    }
+
+    private func tableViews(in view: NSView?) -> [NSTableView] {
+        guard let view else { return [] }
+        return (view as? NSTableView).map { [$0] } ?? view.subviews.flatMap { tableViews(in: $0) }
+    }
+
     private func drawingScript(_ main: NSWindow, into dir: URL) async {
         guard let overlay = model.previewView?.annotationView else { return }
-        var checks: [String] = []
-        func check(_ ok: Bool, _ what: String) { checks.append("\(ok ? "ok  " : "FAIL") \(what)") }
 
         show(frame(0))
         model.isDrawing = true
@@ -405,8 +541,6 @@ final class DemoDriver {
         model.clearDrawing()
         check(model.board.isEmpty && overlay.isHidden, "clear all empties the board and hides the overlay")
         model.message = nil
-        try? checks.joined(separator: "\n").appending("\n")
-            .write(to: dir.appendingPathComponent("demo-checks.txt"), atomically: true, encoding: .utf8)
     }
 
     /// A drag from `a` to `b` (image points), sent to the window like a real mouse.

@@ -16,12 +16,15 @@ struct SidePanel: View {
     @EnvironmentObject private var model: AppModel
     @ObservedObject var library: LibraryModel
     @Binding var compare: ComparePair?
+    @State private var jobQuery = ""
 
     private let columns = [GridItem(.adaptive(minimum: 84, maximum: 160), spacing: 8)]
 
     var body: some View {
         Group {
-            if library.files.isEmpty {
+            if model.settings.jobsEnabled && !jobQuery.trimmingCharacters(in: .whitespaces).isEmpty {
+                JobSearchResults(query: $jobQuery)
+            } else if library.files.isEmpty {
                 VStack(spacing: 0) {
                     folderRow.padding(.horizontal, 10)
                     Text("Photos and videos you take appear here.")
@@ -61,6 +64,7 @@ struct SidePanel: View {
         }
         .animation(.easeOut(duration: 0.15), value: library.selection.isEmpty)
         .background(ViewAccessor { model.sidePanelView = $0 })
+        .modifier(JobSearchField(enabled: model.settings.jobsEnabled, text: $jobQuery))
     }
 
     /// Where captures go now, with the file count; click opens it in Finder.

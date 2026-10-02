@@ -2,6 +2,7 @@ import AVFoundation
 import AppKit
 import ImageIO
 import MicroCAMCore
+import UniformTypeIdentifiers
 
 /// Shown as a toast over the preview. Each message is new (own `id`), so the
 /// same text twice restarts the auto-hide timer.
@@ -13,6 +14,9 @@ struct StatusMessage: Equatable, Identifiable {
 
 @MainActor
 final class AppModel: ObservableObject {
+    /// The app's one model, for Shortcuts actions (App Intents), which the
+    /// system creates outside the SwiftUI view tree.
+    private(set) static weak var current: AppModel?
     @Published var settings: AppSettings {
         didSet {
             guard settings != oldValue else { return }
@@ -193,6 +197,7 @@ final class AppModel: ObservableObject {
            handler: { [weak self] action in self?.handle(action) })
         checkUnfinishedRecordings()
         capturesChanged()
+        Self.current = self
         NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification,
                                                object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.flushSettings() }
@@ -392,13 +397,29 @@ final class AppModel: ObservableObject {
     /// Who asked for a photo; decides the message shown over the preview.
     enum CaptureSource { case local, remote, agent }
 
+    /// A frame older than this is from a camera that stopped.
+    static let freshFrame: TimeInterval = 1
+
+    /// Calls back on the main queue with a frame at most `freshFrame` old, or
+    /// nil when the camera sends none within `timeout` (e.g. it was paused
+    /// and is starting again).
+    func waitForFrame(timeout: TimeInterval, since start: Date = Date(), _ completion: @escaping (LatestFrame?) -> Void) {
+        if let frame = engine.latestFrame.value, Date().timeIntervalSince(frame.receivedAt) < Self.freshFrame {
+            return completion(frame)
+        }
+        guard Date().timeIntervalSince(start) < timeout else { return completion(nil) }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+            MainActor.assumeIsolated { self?.waitForFrame(timeout: timeout, since: start, completion) ?? completion(nil) }
+        }
+    }
+
     /// `source` marks a photo requested from the stream page or by an AI
     /// agent; `completion` reports the saved file (main queue). While something
     /// is drawn on the picture, a photo also saves a copy with the drawing next
     /// to it (`…_2.jpg`); `completion` still reports the original.
     func takePhoto(kind: CaptureKind = .photo, source: CaptureSource = .local,
                    completion: ((Result<URL, Error>) -> Void)? = nil) {
-        guard let frame = engine.latestFrame.value, Date().timeIntervalSince(frame.receivedAt) < 1 else {
+        guard let frame = engine.latestFrame.value, Date().timeIntervalSince(frame.receivedAt) < Self.freshFrame else {
             report(CaptureError.noFrame, prefix: String(localized: "Photo not saved"))
             completion?(.failure(CaptureError.noFrame))
             return
@@ -464,6 +485,46 @@ final class AppModel: ObservableObject {
         }
         message = StatusMessage(text: text, isError: false)
         capturesChanged()
+    }
+
+    /// Photos from Continuity Camera (File → Import from iPhone or iPad): saved
+    /// like a photo into the current folder, without the image adjustments or
+    /// the drawing, which belong to the microscope picture.
+    func importPhotos(_ providers: [NSItemProvider]) -> Bool {
+        guard launchMode == .camera else { return false }
+        let type = UTType.image.identifier
+        let images = providers.filter { $0.hasItemConformingToTypeIdentifier(type) }
+        guard !images.isEmpty else { return false }
+        for provider in images {
+            _ = provider.loadDataRepresentation(forTypeIdentifier: type) { data, error in
+                DispatchQueue.main.async {
+                    MainActor.assumeIsolated { [weak self] in self?.saveImported(data, error: error) }
+                }
+            }
+        }
+        return true
+    }
+
+    private func saveImported(_ data: Data?, error: Error?) {
+        let prefix = String(localized: "Photo not imported")
+        guard let data else { return report(error ?? CocoaError(.fileReadUnknown), prefix: prefix) }
+        let url: URL
+        do {
+            url = try reserveURL(kind: .photo)
+        } catch {
+            return report(error, prefix: prefix)
+        }
+        photoCapturer.save(imageData: data, quality: settings.jpegQuality, to: url) { [weak self] result in
+            guard let self else { return }
+            self.releaseURL(url)
+            switch result {
+            case .success:
+                self.message = StatusMessage(text: String(localized: "Imported: \(url.lastPathComponent)"), isError: false)
+                self.capturesChanged()
+            case .failure(let error):
+                self.report(error, prefix: prefix)
+            }
+        }
     }
 
     /// Renders shapes onto a saved capture and stores the result as the next
