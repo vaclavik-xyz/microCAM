@@ -74,7 +74,6 @@
 "For developers: each file is sent as a multipart/form-data POST with the fields file, job, kind, capturedAt and idempotencyKey. The token goes in the Authorization: Bearer header." = "For developers: each file is sent as a multipart/form-data POST with the fields file, job, kind, capturedAt and idempotencyKey. The token goes in the Authorization: Bearer header.";
 "For microCAM and the names of new folders. Existing files keep their names." = "For microCAM and the names of new folders. Existing files keep their names.";
 "Format" = "Format";
-"Found a recording that wasn't finished. Opening its folder." = "Found a recording that wasn't finished. Opening its folder.";
 "Full screen on %@" = "Full screen on %@";
 "G – show or hide the grid" = "G – show or hide the grid";
 "Gamma" = "Gamma";
@@ -367,3 +366,7 @@
 "Offline" = "Offline";
 "Photo" = "Photo";
 "Live" = "Live";
+
+/* Leftover recordings */
+"Recovered an unfinished recording: %@" = "Recovered an unfinished recording: %@";
+"An unfinished recording ended before it could be played and was moved to the Trash." = "An unfinished recording ended before it could be played and was moved to the Trash.";

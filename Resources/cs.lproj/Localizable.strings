@@ -73,7 +73,6 @@
 "For developers: each file is sent as a multipart/form-data POST with the fields file, job, kind, capturedAt and idempotencyKey. The token goes in the Authorization: Bearer header." = "Pro vývojáře: každý soubor se pošle jako multipart/form-data POST s poli file, job, kind, capturedAt a idempotencyKey. Token jde v hlavičce Authorization: Bearer.";
 "For microCAM and the names of new folders. Existing files keep their names." = "Pro microCAM a názvy nových složek. Existující soubory si své názvy ponechají.";
 "Format" = "Formát";
-"Found a recording that wasn't finished. Opening its folder." = "Našel jsem nedokončený záznam. Otevírám jeho složku.";
 "Full screen on %@" = "Na celou obrazovku: %@";
 "G – show or hide the grid" = "G – zobrazit nebo skrýt mřížku";
 "Gamma" = "Gama";
@@ -366,3 +365,7 @@
 "Offline" = "Nepřipojeno";
 "Photo" = "Fotka";
 "Live" = "Živě";
+
+/* Leftover recordings */
+"Recovered an unfinished recording: %@" = "Obnoven nedokončený záznam: %@";
+"An unfinished recording ended before it could be played and was moved to the Trash." = "Nedokončený záznam skončil dřív, než se dal přehrát. Je v Koši.";

@@ -379,14 +379,15 @@ final class AppModel: ObservableObject {
         layout?.baseFolder(for: settings.jobContext)
     }
 
-    func reserveURL(kind: CaptureKind) throws -> URL {
+    /// `date` names the file; a recovered recording keeps the time it was made.
+    func reserveURL(kind: CaptureKind, date: Date = Date()) throws -> URL {
         guard let layout else { throw CaptureError.noStorageRoot }
         let folder = try layout.prepareFolder(for: settings.jobContext, kind: kind)
         let pending = pendingURLs
         let namer = CaptureFileNamer(fileExists: {
             pending.contains($0) || FileManager.default.fileExists(atPath: $0.path)
         })
-        let url = namer.nextURL(in: folder, prefix: layout.prefix(for: settings.jobContext), kind: kind, date: Date())
+        let url = namer.nextURL(in: folder, prefix: layout.prefix(for: settings.jobContext), kind: kind, date: date)
         pendingURLs.insert(url)
         return url
     }
@@ -869,14 +870,46 @@ final class AppModel: ObservableObject {
     }
 
     /// Leftovers in the staging folder mean a previous run crashed mid-recording.
+    /// Recordings a crash or power cut left in the staging folder: a playable
+    /// one goes into the current folder, one that can't be played into the
+    /// Trash (see `LeftoverRecordingPolicy`). Saying what happened is enough;
+    /// nothing stays behind to report again on the next launch.
     private func checkUnfinishedRecordings() {
         guard let dir = try? Recorder.stagingDirectory(),
-              let files = try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil),
+              let files = try? FileManager.default.contentsOfDirectory(
+                at: dir, includingPropertiesForKeys: [.creationDateKey], options: [.skipsHiddenFiles]),
               !files.isEmpty else { return }
-        // Information, not an error: the folder opens right away, so the
-        // message may hide on its own instead of covering the preview.
-        message = StatusMessage(text: String(localized: "Found a recording that wasn't finished. Opening its folder."), isError: false)
-        NSWorkspace.shared.open(dir)
+        Task { await recoverLeftovers(files) }
+    }
+
+    private func recoverLeftovers(_ files: [URL]) async {
+        var recovered: [String] = []
+        var trashed = 0
+        for file in files {
+            let asset = AVURLAsset(url: file)
+            let playable = (try? await asset.load(.isPlayable)) == true
+            let seconds = playable ? (try? await asset.load(.duration)).map(CMTimeGetSeconds) : nil
+            switch LeftoverRecordingPolicy.action(playableSeconds: seconds, hasStorage: settings.storageRoot != nil) {
+            case .recover:
+                let date = (try? file.resourceValues(forKeys: [.creationDateKey]).creationDate) ?? Date()
+                guard let target = try? reserveURL(kind: .video, date: date) else { continue }
+                defer { releaseURL(target) }
+                if (try? FileManager.default.moveItem(at: file, to: target)) != nil { recovered.append(target.lastPathComponent) }
+            case .trash:
+                if (try? FileManager.default.trashItem(at: file, resultingItemURL: nil)) != nil { trashed += 1 }
+            case .keep:
+                break
+            }
+        }
+        var parts: [String] = []
+        if !recovered.isEmpty {
+            parts.append(String(localized: "Recovered an unfinished recording: \(recovered.joined(separator: ", "))"))
+            capturesChanged()
+        }
+        if trashed > 0 {
+            parts.append(String(localized: "An unfinished recording ended before it could be played and was moved to the Trash."))
+        }
+        if !parts.isEmpty { message = StatusMessage(text: parts.joined(separator: " "), isError: false) }
     }
 
     // MARK: Timelapse
