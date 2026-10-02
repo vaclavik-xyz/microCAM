@@ -27,9 +27,16 @@ public protocol StreamBackend: AnyObject {
     func saveAnnotated(_ request: AnnotationRequest, source: URL, completion: @escaping (Result<String, Error>) -> Void)
 }
 
+/// The two live feeds: H.264 in fragmented MP4 for Media Source Extensions,
+/// and Motion JPEG for browsers without them.
+public enum LiveFeed: Sendable {
+    case video
+    case mjpeg
+}
+
 public enum StreamRoute {
     case response(HTTPResponse)
-    case stream
+    case stream(LiveFeed)
 }
 
 public final class StreamRouter {
@@ -59,7 +66,9 @@ public final class StreamRouter {
         case ("GET", "/status"):
             completion(.response(.json(200, backend.status())))
         case ("GET", "/stream"):
-            completion(.stream)
+            completion(.stream(.mjpeg))
+        case ("GET", "/video"):
+            completion(.stream(.video))
         case (_, _) where path.hasPrefix("/captures/"):
             if let denied = remoteActionDenied(request, method: "GET") { return completion(.response(denied)) }
             let name = String(path.dropFirst("/captures/".count))
@@ -69,7 +78,7 @@ public final class StreamRouter {
         case (_, "/photo"), (_, "/annotated"):
             if let denied = remoteActionDenied(request, method: "POST") { return completion(.response(denied)) }
             path == "/photo" ? photo(backend, completion) : annotated(request, backend, completion)
-        case (_, "/"), (_, "/status"), (_, "/stream"):
+        case (_, "/"), (_, "/status"), (_, "/stream"), (_, "/video"):
             completion(.response(.text(405, "method not allowed")))
         default:
             completion(.response(.text(404, "not found")))

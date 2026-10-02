@@ -54,7 +54,9 @@ final class StreamRouterTests: XCTestCase {
         guard case .response(let page) = route(request("GET", "/?embedded=1")) else { return XCTFail() }
         XCTAssertEqual(String(decoding: page.body, as: UTF8.self), "page-controls-true")
         XCTAssertEqual(status(route(request("GET", "/status"))), 200)
-        guard case .stream = route(request("GET", "/stream")) else { return XCTFail("expected stream") }
+        guard case .stream(.mjpeg) = route(request("GET", "/stream")) else { return XCTFail("expected JPEG stream") }
+        guard case .stream(.video) = route(request("GET", "/video")) else { return XCTFail("expected video stream") }
+        XCTAssertEqual(status(route(request("POST", "/video"))), 405)
     }
 
     func testPhotoRequiresPostPinAndSameOrigin() {

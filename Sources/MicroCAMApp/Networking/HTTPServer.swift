@@ -16,13 +16,13 @@ final class HTTPServer {
     private let queue: DispatchQueue
     private let handler: Handler
     /// Takes over a connection answered with `.stream`.
-    private let onStream: ((NWConnection) -> Void)?
+    private let onStream: ((NWConnection, LiveFeed) -> Void)?
     private let onStop: (() -> Void)?
     private let cannotStart: (_ port: Int, _ reason: String) -> String
     private var listener: NWListener?
 
     init(queue: DispatchQueue, cannotStart: @escaping (_ port: Int, _ reason: String) -> String,
-         onStream: ((NWConnection) -> Void)? = nil, onStop: (() -> Void)? = nil, handler: @escaping Handler) {
+         onStream: ((NWConnection, LiveFeed) -> Void)? = nil, onStop: (() -> Void)? = nil, handler: @escaping Handler) {
         self.queue = queue
         self.cannotStart = cannotStart
         self.onStream = onStream
@@ -109,8 +109,8 @@ final class HTTPServer {
                         self.queue.async {
                             switch route {
                             case .response(let response): self.send(response, on: connection)
-                            case .stream:
-                                if let onStream = self.onStream { onStream(connection) } else { connection.cancel() }
+                            case .stream(let feed):
+                                if let onStream = self.onStream { onStream(connection, feed) } else { connection.cancel() }
                             }
                         }
                     }

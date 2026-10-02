@@ -354,7 +354,7 @@
 "Smooth" = "Smooth";
 "Sharp" = "Sharp";
 "Stream quality" = "Stream quality";
-"Smooth suits Wi-Fi. Sharp sends full HD and needs a fast network, or the picture stutters. Photos and videos are full quality either way." = "Smooth suits Wi-Fi. Sharp sends full HD and needs a fast network, or the picture stutters. Photos and videos are full quality either way.";
+"Both send full HD video. Sharp shows finer detail but needs twice the data; on slow Wi-Fi choose Smooth. Photos and videos are full quality either way." = "Both send full HD video. Sharp shows finer detail but needs twice the data; on slow Wi-Fi choose Smooth. Photos and videos are full quality either way.";
 
 /* Viewer: native tools */
 "Live view" = "Live view";

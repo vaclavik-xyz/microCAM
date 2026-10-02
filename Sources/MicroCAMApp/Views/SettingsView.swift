@@ -521,7 +521,7 @@ struct StreamSettingsTab: View {
                         Text("Sharp").tag(StreamQuality.sharp)
                     } label: {
                         Text("Stream quality")
-                        Text("Smooth suits Wi-Fi. Sharp sends full HD and needs a fast network, or the picture stutters. Photos and videos are full quality either way.")
+                        Text("Both send full HD video. Sharp shows finer detail but needs twice the data; on slow Wi-Fi choose Smooth. Photos and videos are full quality either way.")
                     }
                     SecureField(text: $pin, prompt: Text("Not set")) {
                         Text("PIN for photos")

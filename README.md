@@ -308,10 +308,16 @@ camera computer via Bonjour.
   </tr>
 </table>
 
-- *Stream quality*: **Smooth** (default) sends 1280 px frames, about
-  20 Mbit/s at 15 fps, which Wi-Fi carries. **Sharp** sends full HD at about
-  60 Mbit/s; on Wi-Fi it drops to a few frames a second. Photos and videos
-  are full quality either way, and a camera computer on Ethernet helps most.
+- The live picture is H.264 video from the Mac's hardware encoder: full HD
+  at up to 30 fps and about 0.1–0.3 s behind, encoded once for every viewer.
+  Browsers play it with Media Source Extensions (iPhone: iOS 17.1 or later);
+  older browsers get Motion JPEG instead, at most 15 fps (`?mjpeg=1` forces it).
+  A viewer on a slow network skips ahead to the newest picture instead of
+  falling behind or slowing anyone else down.
+- *Stream quality*: **Smooth** (default) is about 4 Mbit/s, **Sharp** about
+  8 Mbit/s for finer detail; both are full HD. For the Motion JPEG fallback
+  Smooth means 1280 px (about 20 Mbit/s) and Sharp full HD (about 60 Mbit/s).
+  Photos and videos are full quality either way.
 - *Only watch*: just the picture, for a customer-facing screen.
 - In microCAM's viewer the drawing tools are native: *Draw* and *Take photo*
   in the window toolbar and the same tools as on the camera Mac.
@@ -343,12 +349,14 @@ scripts/make-icon.sh                # recompile the app icon (needs Xcode 26)
 scripts/make-screenshots.sh <photos> [en|cs] [out-dir]   # screenshots in demo mode (no camera needed)
 scripts/stream-smoke.sh <host> [port] [pin]              # check a running stream
 scripts/stream-page-shots.py <url> <dir> --pin <pin> [--locale cs-CZ]   # stream page on phones/iPad/desktop (demo stream only)
+scripts/stream-video-check.py <url>                      # plays the stream in Chromium and WebKit: feed, fps, delay
 MICROCAM_MCP_TOKEN=<token> scripts/mcp-smoke.py <host> [port] [--write] [--lockout]   # check a running MCP server
 ```
 
 Demo mode without a camera can also serve the stream on 127.0.0.1: set
 `MICROCAM_DEMO_STREAM_PORT` (and optionally `MICROCAM_DEMO_STREAM_PIN`,
-`MICROCAM_DEMO_STREAM_MODE=imageOnly`). `MICROCAM_DEMO_MCP_PORT` (and
+`MICROCAM_DEMO_STREAM_MODE=imageOnly`, `MICROCAM_DEMO_MOTION=1` for a
+moving picture at 30 fps). `MICROCAM_DEMO_MCP_PORT` (and
 optionally `MICROCAM_DEMO_MCP_TOKEN`) does the same for the MCP server; the
 demo keeps its token in memory and never touches the Keychain one. The smoke script adapts to *Only
 watch* and to a camera computer without a PIN. The page-shots script (Python
