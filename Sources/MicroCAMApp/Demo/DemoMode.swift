@@ -69,6 +69,8 @@ final class DemoDriver {
     private var timer: Timer?
     /// Behaviour checks, written to demo-checks.txt next to the screenshots.
     private var checks: [String] = []
+    /// The File menu's items while it was open (import check).
+    private var menuTitles: [String] = []
     private func check(_ ok: Bool, _ what: String) { checks.append("\(ok ? "ok  " : "FAIL") \(what)") }
 
     init(model: AppModel, config: DemoConfig) {
@@ -369,7 +371,7 @@ final class DemoDriver {
         } else { check(false, "Shortcuts: stop without recording says so") }
 
         let job = model.settings.activeJob
-        var setJob = SetJobIntent()
+        let setJob = SetJobIntent()
         setJob.job = "PR-260500"
         _ = try? await setJob.perform()
         check(model.settings.activeJob?.value == "PR-260500", "Shortcuts: set job")
@@ -388,25 +390,25 @@ final class DemoDriver {
     /// File → Import from iPhone or iPad: the menu item, and a photo handed
     /// over the way Continuity Camera does it.
     private func importScript(_ main: NSWindow, into dir: URL) async {
-        // A placeholder that AppKit fills with Continuity Camera items when the menu opens.
-        let items = NSApp.mainMenu?.items.compactMap(\.submenu).flatMap(\.items) ?? []
-        let importItem = items.first { $0.identifier == NSMenuItem.importFromDeviceIdentifier }
-        check(importItem != nil, "File menu has the Import from iPhone or iPad item")
-        if let fileMenu = importItem?.menu, let content = main.contentView {
-            // Open the File menu for real and capture it while it tracks.
-            var titles: [String] = []
+        check(importMenuItem() != nil, "File menu has the Import from iPhone or iPad item")
+        var titles: [String] = []
+        if let fileMenu = importMenuItem()?.menu, let content = main.contentView {
+            // Open the File menu for real and capture it while it tracks. The
+            // timer looks the menu up again: AppKit objects aren't Sendable.
             let timer = Timer(timeInterval: 1, repeats: false) { [self] _ in
                 MainActor.assumeIsolated {
-                    titles = fileMenu.items.map(\.title)
-                    for window in NSApp.windows where window.isVisible && window !== main
+                    guard let menu = importMenuItem()?.menu else { return }
+                    menuTitles = menu.items.map(\.title)
+                    for window in NSApp.windows where window.isVisible && window !== model.mainWindow
                         && String(describing: type(of: window)).contains("Menu") {
                         capture(window, withChildren: false, as: "01l-file-menu", in: dir)
                     }
-                    fileMenu.cancelTracking()
+                    menu.cancelTracking()
                 }
             }
             RunLoop.main.add(timer, forMode: .common)
             fileMenu.popUp(positioning: nil, at: NSPoint(x: 260, y: content.bounds.height - 40), in: content)
+            titles = menuTitles
             check(titles.contains { $0.contains("iPhon") || $0.contains("iPad") }, "open File menu shows \(titles)")
         }
         let before = Set(model.library.files.map(\.lastPathComponent))
@@ -467,6 +469,12 @@ final class DemoDriver {
     private func tableViews(in view: NSView?) -> [NSTableView] {
         guard let view else { return [] }
         return (view as? NSTableView).map { [$0] } ?? view.subviews.flatMap { tableViews(in: $0) }
+    }
+
+    /// A placeholder that AppKit fills with Continuity Camera items when the menu opens.
+    private func importMenuItem() -> NSMenuItem? {
+        let items = NSApp.mainMenu?.items.compactMap(\.submenu).flatMap(\.items) ?? []
+        return items.first { $0.identifier == NSMenuItem.importFromDeviceIdentifier }
     }
 
     private func drawingScript(_ main: NSWindow, into dir: URL) async {
