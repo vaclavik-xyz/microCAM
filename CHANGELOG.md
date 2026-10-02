@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.2 — 2026-10-02
+
+- Viewer: *Connect* to a camera computer found on the network did nothing.
+  It connects now, and if the camera computer can't be reached the viewer
+  says so and tries again.
+- Release notes in the update window show as formatted text, not with
+  asterisks.
+
 ## 0.5.1 — 2026-10-02
 
 - The sidebar button is back next to the window buttons. In a narrow window
