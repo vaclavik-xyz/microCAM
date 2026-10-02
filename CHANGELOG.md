@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.3 — 2026-10-02
+
+- The live stream is smooth on Wi-Fi: *Settings → Stream → Stream quality*
+  is *Smooth* by default (1280 px, a third of the data), so a viewer gets
+  about 15 frames a second instead of 4. *Sharp* sends full HD as before,
+  for a fast network.
+
 ## 0.5.2 — 2026-10-02
 
 - Viewer: *Connect* to a camera computer found on the network did nothing.

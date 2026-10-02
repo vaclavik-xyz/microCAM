@@ -306,6 +306,10 @@ camera computer via Bonjour.
   </tr>
 </table>
 
+- *Stream quality*: **Smooth** (default) sends 1280 px frames, about
+  20 Mbit/s at 15 fps, which Wi-Fi carries. **Sharp** sends full HD at about
+  60 Mbit/s; on Wi-Fi it drops to a few frames a second. Photos and videos
+  are full quality either way, and a camera computer on Ethernet helps most.
 - *Only watch*: just the picture, for a customer-facing screen.
 - *Watch, draw and take photos*: full screen, drawing over the live image
   (arrow, circle, freehand, text, four colours) and **Take photo**. The photo is

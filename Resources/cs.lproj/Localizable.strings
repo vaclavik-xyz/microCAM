@@ -349,3 +349,9 @@
 "Photo not imported" = "Fotka se neimportovala";
 "Switch to this job" = "Přepnout na tuto zakázku";
 "The current job" = "Aktuální zakázka";
+
+/* Stream quality */
+"Smooth" = "Plynulá";
+"Sharp" = "Ostrá";
+"Stream quality" = "Kvalita přenosu";
+"Smooth suits Wi-Fi. Sharp sends full HD and needs a fast network, or the picture stutters. Photos and videos are full quality either way." = "Plynulá se hodí pro Wi-Fi. Ostrá posílá Full HD a potřebuje rychlou síť, jinak se obraz zasekává. Fotky a videa mají plnou kvalitu v obou případech.";

@@ -15,7 +15,9 @@ final class StreamHub {
     }
 
     static let maxFPS = 15.0
-    static let maxWidth: CGFloat = 1920
+
+    /// Settings → Stream; one size for all viewers (each frame is encoded once).
+    let quality = LockedValue(StreamQuality.smooth)
 
     let hasViewers = LockedValue(false)
     /// Called on the main queue with the new viewer count.
@@ -65,17 +67,18 @@ final class StreamHub {
         guard now - lastOffer >= 1 / Self.maxFPS, !encoding.value else { return }
         lastOffer = now
         encoding.value = true
+        let quality = quality.value
         encodeQueue.async { [weak self] in
             guard let self else { return }
             defer { self.encoding.value = false }
             var image = AdjustmentPipeline.apply(adjustments, to: CIImage(cvPixelBuffer: pixelBuffer))
-            if image.extent.width > Self.maxWidth {
-                let s = Self.maxWidth / image.extent.width
+            if image.extent.width > quality.maxWidth {
+                let s = quality.maxWidth / image.extent.width
                 image = image.transformed(by: CGAffineTransform(scaleX: s, y: s))
             }
             guard let jpeg = self.context.jpegRepresentation(
                 of: image, colorSpace: self.colorSpace,
-                options: [kCGImageDestinationLossyCompressionQuality as CIImageRepresentationOption: 0.7]) else { return }
+                options: [kCGImageDestinationLossyCompressionQuality as CIImageRepresentationOption: quality.jpegQuality]) else { return }
             let part = MJPEG.part(jpeg: jpeg)
             self.queue.async { self.broadcast(part) }
         }

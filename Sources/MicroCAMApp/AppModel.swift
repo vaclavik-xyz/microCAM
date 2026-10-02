@@ -26,6 +26,7 @@ final class AppModel: ObservableObject {
             }
             if settings.jobContext != oldValue.jobContext || settings.storageRootPath != oldValue.storageRootPath
                 || settings.sortByType != oldValue.sortByType { capturesChanged() }
+            streamHub.quality.value = settings.streamQuality
             if settings.streamingEnabled != oldValue.streamingEnabled
                 || settings.streamingPort != oldValue.streamingPort { applyStreaming() }
             if settings.mcpEnabled != oldValue.mcpEnabled || settings.mcpPort != oldValue.mcpPort { mcp.apply() }
@@ -198,6 +199,7 @@ final class AppModel: ObservableObject {
         checkUnfinishedRecordings()
         capturesChanged()
         Self.current = self
+        streamHub.quality.value = settings.streamQuality
         NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification,
                                                object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.flushSettings() }

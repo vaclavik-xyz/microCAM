@@ -7,6 +7,18 @@ public enum GridColor: String, Codable, CaseIterable, Sendable { case white, yel
 public enum StreamMode: String, Codable, CaseIterable, Sendable { case imageOnly, controls }
 public enum AppMode: String, Codable, CaseIterable, Sendable { case camera, viewer }
 
+/// Size of the live stream's frames. Each is a JPEG; Wi-Fi often carries
+/// ~20 Mbit/s, which full HD at 15 fps exceeds, so viewers got 4–8 fps.
+public enum StreamQuality: String, Codable, CaseIterable, Sendable {
+    /// ~160 KB a frame, ~20 Mbit/s at 15 fps.
+    case smooth
+    /// Full HD as recorded, ~480 KB a frame: for a fast network.
+    case sharp
+
+    public var maxWidth: Double { self == .smooth ? 1280 : 1920 }
+    public var jpegQuality: Double { self == .smooth ? 0.55 : 0.7 }
+}
+
 public struct FormatChoice: Codable, Hashable, Sendable {
     public var width: Int
     public var height: Int
@@ -55,6 +67,7 @@ public struct AppSettings: Equatable, Sendable {
     public var streamingEnabled = false
     public var streamingPort = 8090
     public var streamingMode = StreamMode.controls
+    public var streamQuality = StreamQuality.smooth
     /// MCP server for AI agents (off by default). The token lives in the Keychain.
     public var mcpEnabled = false
     public var mcpPort = 8091
@@ -96,7 +109,7 @@ extension AppSettings: Codable {
              timelapseInterval, timelapseDuration, gridType, gridColor, showFormatInTitle, hiddenToolbarButtons, pauseWhenHidden,
              preventSleepWhileRecording, lastDeviceID, lastFormatByDevice, lastMicrophoneID,
              recordAudio, adjustmentsByDevice, cameraNames, webhookEnabled, webhookURL, webhookSendVideos,
-             streamingEnabled, streamingPort, streamingMode, mcpEnabled, mcpPort, appMode, viewerSourceName, viewerManualURL
+             streamingEnabled, streamingPort, streamingMode, streamQuality, mcpEnabled, mcpPort, appMode, viewerSourceName, viewerManualURL
     }
 
     /// Every key is optional so settings from older builds keep working. A
@@ -135,6 +148,7 @@ extension AppSettings: Codable {
         streamingEnabled = value(.streamingEnabled, d.streamingEnabled)
         streamingPort = value(.streamingPort, d.streamingPort)
         streamingMode = value(.streamingMode, d.streamingMode)
+        streamQuality = value(.streamQuality, d.streamQuality)
         mcpEnabled = value(.mcpEnabled, d.mcpEnabled)
         mcpPort = value(.mcpPort, d.mcpPort)
         appMode = value(.appMode, d.appMode)
