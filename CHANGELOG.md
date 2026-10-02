@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.5.4 — 2026-10-02
 
 - The live stream is video now: full HD at up to 30 frames a second and
   about a tenth of a second behind, at 4 Mbit/s (*Smooth*) or 8 Mbit/s
