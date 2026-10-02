@@ -24,6 +24,14 @@ SPARKLE_VERSION="2.10.0"   # keep in sync with Package.swift
 TOOLS=".build/sparkle-tools"
 KEY_FILE="${SPARKLE_KEY_FILE:-$HOME/.config/microcam/sparkle-ed25519.key}"
 
+# The notarytool profile is readable only from the logged-in GUI session; a
+# process detached from it (ssh, a terminal multiplexer started outside it,
+# an agent session after a restart) gets "No Keychain password item found"
+# although the profile exists. Don't create a new one: run from Terminal.app.
+launchctl print "gui/$(id -u)" >/dev/null 2>&1 || {
+    echo "Not in the GUI login session: notarization can't read its keychain profile. Run this from Terminal.app." >&2
+    exit 1
+}
 [ "$(git rev-parse --abbrev-ref HEAD)" = main ] || { echo "Run on main." >&2; exit 1; }
 git diff --quiet && git diff --cached --quiet || { echo "Commit your changes first." >&2; exit 1; }
 [ -n "$(plutil -extract SUPublicEDKey raw Resources/Info.plist)" ] || { echo "SUPublicEDKey is empty (see setup above)." >&2; exit 1; }
