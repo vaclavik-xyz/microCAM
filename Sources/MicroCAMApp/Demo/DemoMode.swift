@@ -394,10 +394,11 @@ final class DemoDriver {
         var titles: [String] = []
         if let fileMenu = importMenuItem()?.menu, let content = main.contentView {
             // Open the File menu for real and capture it while it tracks. The
-            // timer looks the menu up again: AppKit objects aren't Sendable.
+            // timer fires on the main thread; it must always end the tracking,
+            // or popUp never returns.
+            nonisolated(unsafe) let menu = fileMenu
             let timer = Timer(timeInterval: 1, repeats: false) { [self] _ in
                 MainActor.assumeIsolated {
-                    guard let menu = importMenuItem()?.menu else { return }
                     menuTitles = menu.items.map(\.title)
                     for window in NSApp.windows where window.isVisible && window !== model.mainWindow
                         && String(describing: type(of: window)).contains("Menu") {
