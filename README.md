@@ -311,12 +311,14 @@ camera computer via Bonjour.
   60 Mbit/s; on Wi-Fi it drops to a few frames a second. Photos and videos
   are full quality either way, and a camera computer on Ethernet helps most.
 - *Only watch*: just the picture, for a customer-facing screen.
+- In microCAM's viewer the drawing tools are native: *Draw* and *Take photo*
+  in the window toolbar and the same tools as on the camera Mac.
 - *Watch, draw and take photos*: full screen, drawing over the live image
   (arrow, circle, freehand, text, four colours) and **Take photo**. The photo is
   taken on the camera computer, into its current folder. Draw on it and
   **Save as photo** saves a copy with the drawing (`…_2.jpg`); the original
   stays untouched. Remote photos need the *PIN for photos* set on the camera
-  computer; a wrong PIN locks the device out for a while.
+  computer (without one the button is hidden); a wrong PIN locks the device out for a while.
 - **Text:** pick **T**, tap where the label goes, type, and press Enter
   or tap elsewhere; Esc cancels. Tap a label to change it, drag it to move
   it. Three sizes appear next to the tools; the colour is the current one.
