@@ -240,9 +240,33 @@ struct PreviewSettingsTab: View {
                     Text("Show resolution under the camera name")
                     Text("Recording, timelapse and an agent at work show there either way.")
                 }
-            } footer: {
-                Text("To choose the buttons in the toolbar, right-click it.")
             }
+            Section {
+                ForEach(ToolbarButton.allCases, id: \.self) { button in
+                    Toggle(Self.title(of: button), isOn: Binding(
+                        get: { !model.settings.hiddenToolbarButtons.contains(button) },
+                        set: { shown in
+                            if shown { model.settings.hiddenToolbarButtons.remove(button) }
+                            else { model.settings.hiddenToolbarButtons.insert(button) }
+                        }))
+                }
+            } header: {
+                Text("Toolbar buttons")
+            } footer: {
+                Text("Hidden buttons stay in the Camera menu with their shortcuts. Recording and a running timelapse show their button anyway.")
+            }
+        }
+    }
+}
+
+extension PreviewSettingsTab {
+    static func title(of button: ToolbarButton) -> LocalizedStringKey {
+        switch button {
+        case .photo: "Take photo"
+        case .record: "Record"
+        case .timelapse: "Timelapse"
+        case .draw: "Draw"
+        case .adjustments: "Image adjustments"
         }
     }
 }

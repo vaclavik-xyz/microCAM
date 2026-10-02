@@ -9,24 +9,13 @@ struct JobToolbarButton: View {
 
     var body: some View {
         Button { show.toggle() } label: {
-            // Titled "Job" for Customize Toolbar, which names items by the
-            // label's title; the toolbar itself shows the job code.
-            Label("Job", systemImage: "tag")
-                .labelStyle(JobLabelStyle(code: model.settings.activeJob?.value ?? String(localized: "No job")))
+            Label(model.settings.activeJob?.value ?? String(localized: "No job"), systemImage: "tag")
+                .labelStyle(.titleAndIcon)
         }
         .help("Job: files go into its folder")
         .popover(isPresented: $show, arrowEdge: .bottom) {
             JobForm { show = false }.padding(16).frame(width: 300)
         }
-    }
-}
-
-private struct JobLabelStyle: LabelStyle {
-    let code: String
-
-    func makeBody(configuration: Configuration) -> some View {
-        Label { Text(verbatim: code) } icon: { configuration.icon }
-            .labelStyle(.titleAndIcon)
     }
 }
 

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.1 — 2026-10-02
+
+- The sidebar button is back next to the window buttons. In a narrow window
+  0.5.0 moved it into the » menu at the right.
+- Toolbar buttons are now chosen in *Settings → Preview* instead of
+  *Customize Toolbar…*. *Image adjustments…* (⌘I) and *Timelapse…* (⌘⇧T)
+  open even when their button is off.
+
 ## 0.5.0 — 2026-10-02
 
 Your toolbar, Shortcuts and a phone for the overview shot.

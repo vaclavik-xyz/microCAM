@@ -172,8 +172,8 @@ final class DemoDriver {
         capture(main, withChildren: true, as: "01c-agent-watching", in: dir)
         model.message = nil
 
-        // 1d–1g. Title with recording and an agent at once, then without the
-        // resolution; the Customize Toolbar sheet; a toolbar with fewer buttons.
+        // 1d–1g, 1m–1n. Title with recording and an agent at once, then without
+        // the resolution; a narrow window; buttons hidden in Settings.
         await toolbarScript(main, into: dir)
 
         // 1h–1k. Shortcuts actions, a photo imported from an iPhone, job search.
@@ -322,24 +322,39 @@ final class DemoDriver {
         capture(main, withChildren: true, as: "01d-title-without-resolution", in: dir)
         model.settings.showFormatInTitle = true
 
-        guard let toolbar = main.toolbar else { return }
-        // The demo must not change the toolbar the user set up.
-        toolbar.autosavesConfiguration = false
-        toolbar.runCustomizationPalette(nil)
+        // A narrow window: the sidebar button stays next to the window
+        // buttons, also with the sidebar hidden (0.5.0 pushed it into »).
+        let wide = main.frame
+        main.setFrame(NSRect(x: wide.minX, y: wide.minY, width: 780, height: 500), display: true)
         await pause(1.5)
-        capture(main, withChildren: true, as: "01f-customize-toolbar", in: dir)
-        if let sheet = main.attachedSheet { main.endSheet(sheet) }
+        capture(main, withChildren: true, as: "01f-narrow-window", in: dir)
+        check(!(main.toolbar?.items.isEmpty ?? true), "toolbar present in a narrow window")
+        let sidebarToggle = main.toolbar?.items.first { $0.itemIdentifier.rawValue.contains("toggleSidebar") }
+        check(sidebarToggle != nil, "sidebar button in the toolbar")
+        // visibleItems leaves out what went into the » overflow menu.
+        check(main.toolbar?.visibleItems?.contains { $0.itemIdentifier.rawValue.contains("toggleSidebar") } == true,
+              "sidebar button visible, not in » (narrow window)")
+        NSApp.sendAction(#selector(NSSplitViewController.toggleSidebar(_:)), to: nil, from: nil)
+        await pause(1.5)
+        capture(main, withChildren: true, as: "01g-narrow-sidebar-hidden", in: dir)
+        check(main.toolbar?.visibleItems?.contains { $0.itemIdentifier.rawValue.contains("toggleSidebar") } == true,
+              "sidebar button visible with the sidebar hidden")
+        NSApp.sendAction(#selector(NSSplitViewController.toggleSidebar(_:)), to: nil, from: nil)
         await pause(1)
+        main.setFrame(wide, display: true)
 
-        // Without timelapse, drawing and adjustments; then put them back.
-        let removed = toolbar.items.enumerated().filter { _, item in
-            [String(localized: "Timelapse"), String(localized: "Draw"), String(localized: "Image adjustments")]
-                .contains(item.label)
-        }
-        for (index, _) in removed.reversed() { toolbar.removeItem(at: index) }
+        // Buttons hidden in Settings → Preview; ⌘I still opens the adjustments.
+        model.settings.hiddenToolbarButtons = [.timelapse, .draw, .adjustments]
         await pause(1)
-        capture(main, withChildren: true, as: "01g-fewer-buttons", in: dir)
-        for (index, item) in removed { toolbar.insertItem(withItemIdentifier: item.itemIdentifier, at: index) }
+        capture(main, withChildren: true, as: "01m-fewer-buttons", in: dir)
+        model.showAdjustments = true
+        await pause(1.5)
+        check(NSApp.windows.contains { $0.isVisible && String(describing: type(of: $0)).contains("Popover") },
+              "image adjustments open from the menu with their button hidden")
+        capture(main, withChildren: true, as: "01n-adjustments-from-menu", in: dir)
+        model.showAdjustments = false
+        await pause(1)
+        model.settings.hiddenToolbarButtons = []
         await pause(1)
     }
 
