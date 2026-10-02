@@ -192,7 +192,9 @@ The window:
   hides existing captures.
 - Recordings are written to `~/Library/Application Support/microCAM/Recording/`
   and moved into place when finished, so iCloud never uploads a half-written
-  file. If a leftover file is found after a crash, microCAM opens that folder.
+  file. A recording left there by a crash or power cut is moved into the
+  current folder on the next launch, named by when it was recorded; one that
+  ended before its first 10 seconds can't be played and goes to the Trash.
 
 ## Integrations
 
