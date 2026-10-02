@@ -2,7 +2,9 @@
 # Render screenshots in demo mode — no camera needed. Still photos stand in
 # for the live image and the app captures its own windows: the main window,
 # adjustments, zoom, recording, timelapse, compare, Move to job, first
-# launch, every Settings tab and viewer mode. Needs a logged-in GUI session.
+# launch, every Settings tab and viewer mode. Needs a logged-in GUI session;
+# from a detached shell (ssh, mosh, tmux) run it through Terminal:
+#   osascript -e 'tell application "Terminal" to do script "cd <repo> && scripts/make-screenshots.sh …"'
 #
 # Usage: scripts/make-screenshots.sh <photos> [language] [out-dir]
 #   <photos>/frames/*.jpg    "live" images, in order: main, adjustments, zoom, timelapse
