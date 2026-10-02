@@ -15,6 +15,8 @@ enum SwiftLiteralScanner {
         "DatePicker", "ColorPicker", "Slider", "LocalizedStringKey", "Window", "WindowGroup",
         ".help", ".navigationTitle", ".alert", ".confirmationDialog", ".accessibilityLabel",
         "String(localized:", "LocalizedStringResource(",
+        // App Intents: a parameter in a summary is keyed as `${name}`.
+        "Summary(",
     ]
 
     struct Literal: Hashable {
@@ -127,8 +129,11 @@ enum SwiftLiteralScanner {
                 let e = chars[j + 1]
                 switch e {
                 case "(":
-                    j = try skipInterpolation(chars, at: j + 2, file: file, line: line)
-                    key += placeholder
+                    let end = try skipInterpolation(chars, at: j + 2, file: file, line: line)
+                    // `\(\.$job)` is an App Intents parameter, keyed as `${job}`.
+                    let inner = String(chars[(j + 2)..<(end - 1)])
+                    key += inner.hasPrefix("\\.$") ? "${\(inner.dropFirst(3))}" : placeholder
+                    j = end
                     continue
                 case "n": key += "\n"
                 case "t": key += "\t"

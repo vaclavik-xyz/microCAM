@@ -22,4 +22,23 @@ final class PhotoCapturer {
             DispatchQueue.main.async { completion(result) }
         }
     }
+
+    /// A picture from another device (iPhone, iPad) → JPEG, upright, without adjustments.
+    func save(imageData data: Data, quality: Double, to url: URL, completion: @escaping (Result<URL, Error>) -> Void) {
+        queue.async {
+            let result: Result<URL, Error>
+            if let image = CIImage(data: data, options: [.applyOrientationProperty: true]) {
+                let options = [kCGImageDestinationLossyCompressionQuality as CIImageRepresentationOption: quality]
+                do {
+                    try self.context.writeJPEGRepresentation(of: image, to: url, colorSpace: self.colorSpace, options: options)
+                    result = .success(url)
+                } catch {
+                    result = .failure(error)
+                }
+            } else {
+                result = .failure(CocoaError(.fileReadCorruptFile))
+            }
+            DispatchQueue.main.async { completion(result) }
+        }
+    }
 }

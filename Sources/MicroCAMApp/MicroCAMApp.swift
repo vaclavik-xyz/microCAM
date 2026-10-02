@@ -60,6 +60,9 @@ struct MicroCAMApp: App {
                     Button("Full screen on \(screen.localizedName)") { model.showFullScreen(on: screen) }
                 }
             }
+            // File → Import from iPhone or iPad (Continuity Camera); the main
+            // window receives the photo (`importsItemProviders` in ContentView).
+            ImportFromDevicesCommands()
             CommandGroup(replacing: .help) {
                 Button("microCAM on GitHub") { NSWorkspace.shared.open(AboutPanel.repository) }
                 Button("Report a problem…") { NSWorkspace.shared.open(AboutPanel.issues) }

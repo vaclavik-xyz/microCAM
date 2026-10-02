@@ -323,3 +323,29 @@
 "Copy configuration" = "Copy configuration";
 "Copies the MCP client configuration with this address and the token." = "Copies the MCP client configuration with this address and the token.";
 "Tools: status, live picture, photo, recent captures, start and stop recording, and the job." = "Tools: status, live picture, photo, recent captures, start and stop recording, and the job.";
+
+/* Shortcuts actions */
+"Choose where to save photos and videos in microCAM first." = "Choose where to save photos and videos in microCAM first.";
+"Jobs are off. Turn them on in Settings → Storage." = "Jobs are off. Turn them on in Settings → Storage.";
+"New photos and videos go into the job's folder. Leave it empty for no job." = "New photos and videos go into the job's folder. Leave it empty for no job.";
+"Set job" = "Set job";
+"Set job to ${job}" = "Set job to ${job}";
+"Start recording" = "Start recording";
+"Starts a video in the current folder." = "Starts a video in the current folder.";
+"Stops the video and returns it once it is saved." = "Stops the video and returns it once it is saved.";
+"Takes a photo into the current folder and returns it." = "Takes a photo into the current folder and returns it.";
+"The camera sends no picture. Check it in microCAM." = "The camera sends no picture. Check it in microCAM.";
+"microCAM is already recording." = "microCAM is already recording.";
+"microCAM is in viewer mode. Switch to camera mode in Settings → General." = "microCAM is in viewer mode. Switch to camera mode in Settings → General.";
+"microCAM is still saving the previous video. Try again in a moment." = "microCAM is still saving the previous video. Try again in a moment.";
+"microCAM isn't ready yet. Try again in a moment." = "microCAM isn't ready yet. Try again in a moment.";
+"microCAM isn't recording." = "microCAM isn't recording.";
+
+/* Import from iPhone, job search */
+"Click to switch to this job" = "Click to switch to this job";
+"Files: %lld" = "Files: %lld";
+"Find a job" = "Find a job";
+"Imported: %@" = "Imported: %@";
+"Photo not imported" = "Photo not imported";
+"Switch to this job" = "Switch to this job";
+"The current job" = "The current job";

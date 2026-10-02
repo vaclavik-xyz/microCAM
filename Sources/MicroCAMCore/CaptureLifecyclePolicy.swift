@@ -9,6 +9,8 @@ public struct CaptureLifecycleState: Equatable, Sendable {
     public var streamViewers = false
     /// An AI agent pulled a frame over MCP in the last few seconds; like a stream viewer.
     public var agentWatching = false
+    /// A Shortcuts action is waiting for a picture or recording; like an agent.
+    public var shortcutRunning = false
     public var pauseWhenHidden = true
 
     public init() {}
@@ -16,11 +18,11 @@ public struct CaptureLifecycleState: Equatable, Sendable {
 
 public enum CaptureLifecyclePolicy {
     /// The camera runs only while someone can see it, unless a recording,
-    /// timelapse, stream viewer or agent needs frames. System sleep always stops it (the recorder is
+    /// timelapse, stream viewer, agent or Shortcuts action needs frames. System sleep always stops it (the recorder is
     /// finalized before that).
     public static func shouldRun(_ s: CaptureLifecycleState) -> Bool {
         if s.systemSleeping { return false }
-        if s.recording || s.timelapseRunning || s.streamViewers || s.agentWatching { return true }
+        if s.recording || s.timelapseRunning || s.streamViewers || s.agentWatching || s.shortcutRunning { return true }
         if s.screenLocked || s.displayAsleep { return false }
         if s.pauseWhenHidden && !s.windowVisible { return false }
         return true
@@ -31,6 +33,7 @@ public enum CaptureLifecyclePolicy {
     /// encoder late and ~1 500 were dropped in a few minutes. While this is
     /// true the app holds a `ProcessInfo` activity that opts out of App Nap.
     public static func needsAppAwake(_ s: CaptureLifecycleState) -> Bool {
-        !s.systemSleeping && (s.recording || s.timelapseRunning || s.streamViewers || s.agentWatching)
+        !s.systemSleeping && (s.recording || s.timelapseRunning || s.streamViewers || s.agentWatching
+                              || s.shortcutRunning)
     }
 }

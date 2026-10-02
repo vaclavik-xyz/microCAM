@@ -322,3 +322,29 @@
 "Copy configuration" = "Kopírovat konfiguraci";
 "Copies the MCP client configuration with this address and the token." = "Zkopíruje konfiguraci MCP klienta s touto adresou a tokenem.";
 "Tools: status, live picture, photo, recent captures, start and stop recording, and the job." = "Nástroje: stav, živý obraz, fotka, poslední záznamy, spuštění a zastavení nahrávání a zakázka.";
+
+/* Shortcuts actions */
+"Choose where to save photos and videos in microCAM first." = "Nejdřív v microCAM vyber, kam ukládat fotky a videa.";
+"Jobs are off. Turn them on in Settings → Storage." = "Zakázky jsou vypnuté. Zapni je v Nastavení → Ukládání.";
+"New photos and videos go into the job's folder. Leave it empty for no job." = "Nové fotky a videa půjdou do složky zakázky. Nech prázdné pro žádnou zakázku.";
+"Set job" = "Nastavit zakázku";
+"Set job to ${job}" = "Nastavit zakázku na ${job}";
+"Start recording" = "Spustit nahrávání";
+"Starts a video in the current folder." = "Spustí video do aktuální složky.";
+"Stops the video and returns it once it is saved." = "Zastaví video a po uložení ho vrátí.";
+"Takes a photo into the current folder and returns it." = "Vyfotí do aktuální složky a fotku vrátí.";
+"The camera sends no picture. Check it in microCAM." = "Kamera neposílá obraz. Zkontroluj ji v microCAM.";
+"microCAM is already recording." = "microCAM už nahrává.";
+"microCAM is in viewer mode. Switch to camera mode in Settings → General." = "microCAM je v režimu prohlížeče. Přepni na režim kamery v Nastavení → Obecné.";
+"microCAM is still saving the previous video. Try again in a moment." = "microCAM ještě ukládá předchozí video. Zkus to za chvíli.";
+"microCAM isn't ready yet. Try again in a moment." = "microCAM ještě není připravený. Zkus to za chvíli.";
+"microCAM isn't recording." = "microCAM nenahrává.";
+
+/* Import from iPhone, job search */
+"Click to switch to this job" = "Klikni pro přepnutí na tuto zakázku";
+"Files: %lld" = "Souborů: %lld";
+"Find a job" = "Najít zakázku";
+"Imported: %@" = "Importováno: %@";
+"Photo not imported" = "Fotka se neimportovala";
+"Switch to this job" = "Přepnout na tuto zakázku";
+"The current job" = "Aktuální zakázka";

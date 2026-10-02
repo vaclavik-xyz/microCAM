@@ -80,10 +80,11 @@ final class LocalizationTests: XCTestCase {
         x.help("Tip")
         let s = String(localized: "Moved: \(count)")
         MyText("no")
+        Summary("Set job to \(\.$job)")
         """#
         let keys = try SwiftLiteralScanner.localizableLiterals(in: source, file: "t").map(\.key)
         let p = SwiftLiteralScanner.placeholder
-        XCTAssertEqual(keys, ["Hello", "Save \(p) now", "Tip", "Moved: \(p)"])
+        XCTAssertEqual(keys, ["Hello", "Save \(p) now", "Tip", "Moved: \(p)", "Set job to ${job}"])
         XCTAssertEqual(Self.normalized("Moved: %lld of %@, 5 %%"), "Moved: \(p) of \(p), 5 %")
     }
 

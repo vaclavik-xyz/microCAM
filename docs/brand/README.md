@@ -11,6 +11,7 @@
 | `logo-dark.svg/.png/@2x.png` | Icon + wordmark, transparent, for dark backgrounds. |
 | `wordmark-light.svg`, `wordmark-dark.svg` (+ `@2x.png`) | Wordmark only, pure vector. |
 | `symbol-red.svg`, `symbol-black.svg`, `symbol-white.svg` | One-colour microscope silhouette, pure vector (print, stickers, favicon-like use). |
+| `/favicon.png` (repo root) | The app icon at 256×256 for tools that show a project's icon. Updated by `scripts/make-icon.sh`. |
 | `og-image.png` (+ `.svg`) | Open Graph / social preview, 1200×630. |
 
 All text is converted to outlines; no fonts are needed. The logo SVGs embed the icon as a PNG (the icon is a 3D render); the wordmark and symbol SVGs are pure vector.

@@ -6,8 +6,6 @@ import MicroCAMCore
 /// main-actor `AppModel`. Photos and recordings go through the same code as
 /// the buttons; only the message over the preview says an agent did it.
 final class MCPBackendAdapter: MCPBackend {
-    /// A frame older than this is from a camera that stopped.
-    private static let freshFrame: TimeInterval = 1
     /// How long to wait for a paused camera to deliver a picture.
     private static let startTimeout: TimeInterval = 5
 
@@ -127,17 +125,9 @@ final class MCPBackendAdapter: MCPBackend {
 
     // MARK: Frames
 
-    /// Calls back on the main queue with a frame at most `freshFrame` old,
-    /// or nil when the camera sends none within `startTimeout`.
     @MainActor
-    private func waitForFrame(since start: Date = Date(), _ completion: @escaping (LatestFrame?) -> Void) {
-        if let frame = model.engine.latestFrame.value, Date().timeIntervalSince(frame.receivedAt) < Self.freshFrame {
-            return completion(frame)
-        }
-        guard Date().timeIntervalSince(start) < Self.startTimeout else { return completion(nil) }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [self] in
-            MainActor.assumeIsolated { waitForFrame(since: start, completion) }
-        }
+    private func waitForFrame(_ completion: @escaping (LatestFrame?) -> Void) {
+        model.waitForFrame(timeout: Self.startTimeout, completion)
     }
 
     private func encode(_ pixelBuffer: CVPixelBuffer, adjustments: ImageAdjustments, maxDimension: Int) -> MCPImage? {
