@@ -28,11 +28,13 @@ KEY_FILE="${SPARKLE_KEY_FILE:-$HOME/.config/microcam/sparkle-ed25519.key}"
 # process detached from it (ssh, a terminal multiplexer started outside it,
 # an agent session after a restart) gets "No Keychain password item found"
 # although the profile exists. Don't create a new one: run from Terminal.app.
-# `launchctl managername` is "Aqua" there, "Background" or "StandardIO" outside.
-[ "$(launchctl managername 2>/dev/null)" = Aqua ] || {
-    echo "Not in the GUI login session: notarization can't read its keychain profile. Run this from Terminal.app." >&2
-    exit 1
-}
+# `launchctl managername` prints "Aqua" there (accepted with any suffix),
+# "Background" or "StandardIO" outside.
+case "$(launchctl managername 2>/dev/null)" in
+    Aqua*) ;;
+    *) echo "Not in the GUI login session: notarization can't read its keychain profile. Run this from Terminal.app." >&2
+       exit 1 ;;
+esac
 [ "$(git rev-parse --abbrev-ref HEAD)" = main ] || { echo "Run on main." >&2; exit 1; }
 git diff --quiet && git diff --cached --quiet || { echo "Commit your changes first." >&2; exit 1; }
 [ -n "$(plutil -extract SUPublicEDKey raw Resources/Info.plist)" ] || { echo "SUPublicEDKey is empty (see setup above)." >&2; exit 1; }
