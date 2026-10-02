@@ -1014,7 +1014,7 @@ final class AppModel: ObservableObject {
             let hub = streamHub
             let server = HTTPServer(queue: DispatchQueue(label: "microcam.stream.server"), cannotStart: { port, reason in
                 String(localized: "The stream can't start on port \(port): \(reason). Try another port.")
-            }, onStream: { hub.add($0) }, onStop: { hub.closeAll() }) { request, _, reply in
+            }, onStream: { hub.add($0, feed: $1) }, onStop: { hub.closeAll() }) { request, _, reply in
                 router.handle(request, completion: reply)
             }
             server.onError = { [weak self] in self?.streamError = $0 }

@@ -353,7 +353,7 @@
 "Smooth" = "Plynulá";
 "Sharp" = "Ostrá";
 "Stream quality" = "Kvalita přenosu";
-"Smooth suits Wi-Fi. Sharp sends full HD and needs a fast network, or the picture stutters. Photos and videos are full quality either way." = "Plynulá se hodí pro Wi-Fi. Ostrá posílá Full HD a potřebuje rychlou síť, jinak se obraz zasekává. Fotky a videa mají plnou kvalitu v obou případech.";
+"Both send full HD video. Sharp shows finer detail but needs twice the data; on slow Wi-Fi choose Smooth. Photos and videos are full quality either way." = "Obě posílají video ve Full HD. Ostrá ukáže jemnější detaily, ale potřebuje dvakrát víc dat; na pomalé Wi-Fi zvol Plynulou. Fotky a videa mají plnou kvalitu v obou případech.";
 
 /* Viewer: native tools */
 "Live view" = "Živý obraz";

@@ -12,6 +12,13 @@ final class StreamQualityTests: XCTestCase {
         XCTAssertLessThan(StreamQuality.smooth.jpegQuality, StreamQuality.sharp.jpegQuality)
     }
 
+    /// The video stream measured on Wi-Fi at about 18 Mbit/s: both bit rates must fit with room to spare.
+    func testVideoBitRatesFitWiFi() {
+        XCTAssertEqual(StreamQuality.videoMaxWidth, 1920)
+        XCTAssertLessThan(StreamQuality.smooth.videoBitsPerSecond, StreamQuality.sharp.videoBitsPerSecond)
+        XCTAssertLessThanOrEqual(StreamQuality.sharp.videoBitsPerSecond, 10_000_000)
+    }
+
     func testRoundTripAndOlderSettings() throws {
         var s = AppSettings()
         s.streamQuality = .sharp

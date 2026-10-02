@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+- The live stream is video now: full HD at up to 30 frames a second and
+  about a tenth of a second behind, at 4 Mbit/s (*Smooth*) or 8 Mbit/s
+  (*Sharp*) instead of 20–60 Mbit/s. The Mac's hardware encoder does the
+  work once for every viewer. Browsers without video support (iPhone before
+  iOS 17.1) get the picture as before.
+- On an iPad in portrait in Czech, the photo actions no longer run off the
+  screen: they wrap to a second row.
+- A recording left unfinished by a crash no longer asks on every launch: a
+  playable one is moved into the current folder, one that can't be played
+  goes to the Trash.
+
 ## 0.5.3 — 2026-10-02
 
 - The live stream is smooth on Wi-Fi: *Settings → Stream → Stream quality*

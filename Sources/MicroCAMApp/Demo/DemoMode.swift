@@ -15,6 +15,8 @@ import Quartz
 /// `MICROCAM_DEMO_VIEWER=1` starts in viewer mode instead (no network search);
 /// with `MICROCAM_DEMO_VIEWER_URL` (a demo stream, optionally with
 /// `MICROCAM_DEMO_VIEWER_PIN`) it connects and runs the native drawing tools.
+/// `MICROCAM_DEMO_MOTION=1` pans the picture at 30 fps, like a board moved
+/// under the microscope, to measure the video stream.
 struct DemoConfig {
     let frames: [URL]
     let root: URL
@@ -29,6 +31,7 @@ struct DemoConfig {
     var viewer = false
     var viewerURL: String? = nil
     var viewerPIN: String? = nil
+    var motion = false
 
     static func fromEnvironment(_ env: [String: String] = ProcessInfo.processInfo.environment) -> DemoConfig? {
         let urls = { (key: String) in
@@ -49,7 +52,8 @@ struct DemoConfig {
                           mcpToken: env["MICROCAM_DEMO_MCP_TOKEN"],
                           viewer: env["MICROCAM_DEMO_VIEWER"] == "1",
                           viewerURL: env["MICROCAM_DEMO_VIEWER_URL"],
-                          viewerPIN: env["MICROCAM_DEMO_VIEWER_PIN"])
+                          viewerPIN: env["MICROCAM_DEMO_VIEWER_PIN"],
+                          motion: env["MICROCAM_DEMO_MOTION"] == "1")
     }
 
     /// Separate, freshly reset settings domain: the demo never touches real settings.
@@ -73,6 +77,8 @@ final class DemoDriver {
     private let config: DemoConfig
     private let context = CIContext()
     private var frame: CVPixelBuffer?
+    private var still: CIImage?
+    private var pool: CVPixelBufferPool?
     private var timer: Timer?
     /// Behaviour checks, written to demo-checks.txt next to the screenshots.
     private var checks: [String] = []
@@ -97,8 +103,12 @@ final class DemoDriver {
                            streamMode: config.streamMode, mcpPort: config.mcpPort, mcpToken: config.mcpToken)
         NSApp.activate(ignoringOtherApps: true)
         show(config.frames[0])
-        timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.pushFrame() }
+        timer = Timer.scheduledTimer(withTimeInterval: config.motion ? 1.0 / 30 : 0.1, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                if self.config.motion { self.pan() }
+                self.pushFrame()
+            }
         }
         if let dir = config.shotsDir {
             Task { await runScript(into: dir) }
@@ -114,7 +124,26 @@ final class DemoDriver {
         guard let buffer else { return }
         context.render(image, to: buffer)
         frame = buffer
+        still = image
+        CVPixelBufferPoolCreate(nil, nil, [kCVPixelBufferPixelFormatTypeKey: kCVPixelFormatType_32BGRA,
+                                           kCVPixelBufferWidthKey: width, kCVPixelBufferHeightKey: height,
+                                           kCVPixelBufferIOSurfacePropertiesKey: [:] as CFDictionary] as CFDictionary, &pool)
         pushFrame()
+    }
+
+    /// The still picture, slightly zoomed and drifting in a slow circle.
+    private func pan() {
+        guard let still, let pool else { return }
+        var buffer: CVPixelBuffer?
+        CVPixelBufferPoolCreatePixelBuffer(nil, pool, &buffer)
+        guard let buffer else { return }
+        let t = CFAbsoluteTimeGetCurrent(), extent = still.extent
+        let moved = still.clampedToExtent()
+            .transformed(by: CGAffineTransform(scaleX: 1.15, y: 1.15)
+                .translatedBy(x: -extent.width * (0.065 + 0.05 * sin(t * 0.7)), y: -extent.height * (0.065 + 0.05 * cos(t * 0.5))))
+            .cropped(to: extent)
+        context.render(moved, to: buffer)
+        frame = buffer
     }
 
     /// Feeds the still frame through the same paths as the camera, including
@@ -624,9 +653,12 @@ final class DemoDriver {
     private func viewerToolsScript(_ main: NSWindow, into dir: URL) async {
         let viewer = model.viewer
         func js(_ script: String) async -> Any? { try? await viewer.webView?.evaluateJavaScript(script) }
-        let imageWidth = "Math.round(document.getElementById('live').getBoundingClientRect().width)"
+        let imageWidth = "Math.round(live.getBoundingClientRect().width)"
         await pause(4)
         capture(main, withChildren: true, as: "11b-viewer-live", in: dir)
+        let feed = await js("document.body.dataset.feed") as? String
+        let playing = await js("document.getElementById('video').currentTime > 0") as? Bool
+        check(feed == "video" && playing == true, "viewer: plays the H.264 video stream (feed \(feed ?? "-"))")
         check(await js("getComputedStyle(document.getElementById('bar')).display") as? String == "none",
               "viewer: the page hides its own tools")
         check(viewer.photoEnabled == (config.viewerPIN != nil), "viewer: photo button only with a PIN")

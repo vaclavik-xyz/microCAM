@@ -10,13 +10,18 @@ public enum AppMode: String, Codable, CaseIterable, Sendable { case camera, view
 /// Size of the live stream's frames. Each is a JPEG; Wi-Fi often carries
 /// ~20 Mbit/s, which full HD at 15 fps exceeds, so viewers got 4–8 fps.
 public enum StreamQuality: String, Codable, CaseIterable, Sendable {
-    /// ~160 KB a frame, ~20 Mbit/s at 15 fps.
+    /// Video: full HD at 4 Mbit/s. JPEG fallback: ~160 KB a frame, ~20 Mbit/s at 15 fps.
     case smooth
-    /// Full HD as recorded, ~480 KB a frame: for a fast network.
+    /// Video: full HD at 8 Mbit/s. JPEG fallback: full HD, ~480 KB a frame, for a fast network.
     case sharp
 
+    /// The JPEG stream for browsers without Media Source Extensions.
     public var maxWidth: Double { self == .smooth ? 1280 : 1920 }
     public var jpegQuality: Double { self == .smooth ? 0.55 : 0.7 }
+
+    /// The H.264 stream: always full HD at most; the quality is its bit rate.
+    public static let videoMaxWidth = 1920
+    public var videoBitsPerSecond: Int { self == .smooth ? 4_000_000 : 8_000_000 }
 }
 
 public struct FormatChoice: Codable, Hashable, Sendable {

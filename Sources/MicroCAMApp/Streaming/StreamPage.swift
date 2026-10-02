@@ -11,6 +11,13 @@ import MicroCAMCore
 /// the picture. Touch controls are at least 44 px, mouse ones 36 px, and the
 /// safe-area insets are respected. Without a PIN on the camera computer the
 /// photo button is not shown.
+///
+/// The live picture is H.264 (`/video`, fragmented MP4) played through Media
+/// Source Extensions, or `ManagedMediaSource` on iPhone; WebCodecs would be
+/// simpler but needs HTTPS, and this page is served over plain HTTP. The
+/// player keeps close to live: a growing delay first plays slightly faster,
+/// then jumps. Browsers without either API, or where the video fails, get
+/// the Motion JPEG stream (`/stream`); `?mjpeg=1` forces it.
 /// `scripts/stream-page-shots.py` renders it on phone, tablet and desktop.
 ///
 /// Texts live in the `STRINGS` dictionary of the script, one entry per
@@ -49,7 +56,7 @@ html,body{margin:0;position:fixed;inset:0;overflow:hidden;background:var(--bg);c
   touch-action:none;overscroll-behavior:none;-webkit-text-size-adjust:100%}
 /* the image is centred in the space the main panel leaves free, so it never sits under the controls */
 #stage{position:fixed;top:0;left:0;right:var(--reserve-r);bottom:var(--reserve-b);display:flex;align-items:center;justify-content:center}
-#stage img{max-width:100%;max-height:100%;display:block;-webkit-user-drag:none}
+#stage img,#stage video{max-width:100%;max-height:100%;display:block;-webkit-user-drag:none}
 #ink{position:fixed;touch-action:none;pointer-events:none}
 body.drawing #ink{pointer-events:auto;cursor:crosshair}
 body.drawing.tool-text #ink{cursor:text}
@@ -114,7 +121,8 @@ button.primary:disabled{opacity:1;background:rgba(255,59,48,.28);color:rgba(255,
 .swatch.on i{box-shadow:0 0 0 3px #16181d,0 0 0 5px #fff}
 .size b{font-weight:700;line-height:1}
 .hidden{display:none!important}
-@media (min-width:760px) and (min-height:501px){ #bar{flex-direction:row;align-items:flex-end} }
+/* one row where it fits; longer labels (Czech on an iPad in portrait) wrap to two rows, tools above actions */
+@media (min-width:760px) and (min-height:501px){ #bar{flex-direction:row;flex-wrap:wrap;justify-content:center;align-items:flex-end} }
 /* a mouse needs no thumb-sized targets: smaller buttons, more picture */
 @media (hover:hover) and (pointer:fine){
   :root{--hit:36px;--edge:10px}
@@ -207,7 +215,7 @@ body.embedded #dock{padding-bottom:64px}
 </style>
 </head>
 <body>
-<div id="stage"><img id="live" alt=""><img id="shot" class="hidden" alt=""></div>
+<div id="stage"><video id="video" class="hidden" muted playsinline autoplay disableremoteplayback></video><img id="live" alt=""><img id="shot" class="hidden" alt=""></div>
 <canvas id="ink"></canvas>
 <input id="textEditor" class="hidden" type="text" maxlength="200" autocomplete="off" autocapitalize="sentences"
        spellcheck="false" enterkeyhint="done" data-i18n-placeholder="textPlaceholder" data-i18n-aria="text">
@@ -333,7 +341,7 @@ document.querySelectorAll("[data-i18n]").forEach(e => e.textContent = t(e.datase
 document.querySelectorAll("[data-i18n-title]").forEach(e => e.title = t(e.dataset.i18nTitle));
 document.querySelectorAll("[data-i18n-aria]").forEach(e => e.setAttribute("aria-label", t(e.dataset.i18nAria)));
 document.querySelectorAll("[data-i18n-placeholder]").forEach(e => e.placeholder = t(e.dataset.i18nPlaceholder));
-const live = $("live"), shot = $("shot"), ink = $("ink"), ctx = ink.getContext("2d");
+const shot = $("shot"), ink = $("ink"), ctx = ink.getContext("2d");
 let tool = "arrow", color = "#ff3b30", drawing = false, shapes = [], current = null, frozen = null, offline = false;
 // Text labels: the same numbers as AnnotationTextLayout and AnnotationTextSize in the app, so a
 // label lands in the saved photo where it was typed.
@@ -350,11 +358,89 @@ if (EMBEDDED || !(root.requestFullscreen || root.webkitRequestFullscreen)) $("fs
 document.addEventListener("gesturestart", e => e.preventDefault());
 document.addEventListener("dblclick", e => e.preventDefault());
 
-// ---- live stream with automatic reconnect ----
-function startStream() { live.src = "/stream?t=" + Date.now(); }
-function stopStream() { live.removeAttribute("src"); }
-live.addEventListener("load", () => { setOffline(false); layout(); });
-live.addEventListener("error", () => { if (!frozen) { setOffline(true); setTimeout(startStream, 1500); } });
+// ---- live stream with automatic reconnect: H.264 video, or Motion JPEG where video can't play ----
+const MSE = window.ManagedMediaSource || window.MediaSource;
+let useVideo = !!MSE && MSE.isTypeSupported('video/mp4; codecs="avc1.640028"') && !/[?&]mjpeg=1/.test(location.search);
+let live = useVideo ? $("video") : $("live"), feed = null;
+function showFeed() {
+  $("video").classList.toggle("hidden", !useVideo || !!frozen);
+  $("live").classList.toggle("hidden", useVideo || !!frozen);
+  document.body.dataset.feed = useVideo ? "video" : "mjpeg";
+}
+showFeed();
+function startStream() {
+  stopStream();
+  if (!useVideo) { live.src = "/stream?t=" + Date.now(); return; }
+  const source = new MSE();
+  const session = feed = { source, abort: new AbortController(), url: URL.createObjectURL(source) };
+  live.disableRemotePlayback = true;   // ManagedMediaSource on iPhone needs it
+  live.src = session.url;
+  source.addEventListener("sourceopen", () => pump(session), { once: true });
+}
+function stopStream() {
+  if (!useVideo) { live.removeAttribute("src"); return; }
+  if (feed) { feed.abort.abort(); URL.revokeObjectURL(feed.url); feed = null; }
+  live.removeAttribute("src"); live.load();
+}
+// The video can't play here after all: the JPEG stream for the rest of the visit.
+function fallBack() {
+  stopStream();
+  useVideo = false; live = $("live");
+  showFeed(); startStream();
+}
+async function pump(session) {
+  let buffer = null, bytes = new Uint8Array(0), queue = [], codecFound = false, lastTrim = 0;
+  const appendNext = () => {
+    if (!buffer || buffer.updating || feed !== session) return;
+    const t = live.currentTime, b = live.buffered;
+    // Keep ~10 s behind the playhead; iPhone may also drop old video on its own.
+    if (b.length && t - b.start(0) > 20 && t - lastTrim > 10) { lastTrim = t; buffer.remove(b.start(0), t - 10); return; }
+    if (queue.length) buffer.appendBuffer(queue.shift());
+  };
+  try {
+    const response = await fetch("/video?t=" + Date.now(), { cache: "no-store", signal: session.abort.signal });
+    if (!response.ok || !response.body) throw new Error("http " + response.status);
+    const reader = response.body.getReader();
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done || feed !== session) break;
+      if (!codecFound) {
+        // The codec (profile and level) is in the init segment's avcC box.
+        const all = new Uint8Array(bytes.length + value.length); all.set(bytes); all.set(value, bytes.length); bytes = all;
+        const at = findAvcC(bytes);
+        if (at < 0 || bytes.length < at + 8) continue;
+        const hex = Array.from(bytes.slice(at + 5, at + 8), x => x.toString(16).padStart(2, "0")).join("");
+        try { buffer = session.source.addSourceBuffer('video/mp4; codecs="avc1.' + hex + '"'); }
+        catch (e) { return fallBack(); }
+        buffer.addEventListener("updateend", () => { keepLive(); appendNext(); });
+        buffer.addEventListener("error", () => feed === session && fallBack());
+        codecFound = true; queue.push(bytes); bytes = null;
+      } else {
+        queue.push(value);
+      }
+      appendNext();
+    }
+  } catch (e) { /* offline, closed or aborted: below */ }
+  if (feed === session && !frozen) { setOffline(true); setTimeout(() => feed === session && startStream(), 1500); }
+}
+function findAvcC(b) {
+  for (let i = 0; i + 4 <= b.length; i++) if (b[i] === 0x61 && b[i + 1] === 0x76 && b[i + 2] === 0x63 && b[i + 3] === 0x43) return i;
+  return -1;
+}
+// Stay close to live: a small delay plays a little faster, a big one jumps.
+function keepLive() {
+  const b = live.buffered;
+  if (!b.length) return;
+  const end = b.end(b.length - 1), behind = end - live.currentTime;
+  if (behind > 1 || live.currentTime < b.start(b.length - 1)) live.currentTime = Math.max(b.start(b.length - 1), end - 0.1);
+  else live.playbackRate = behind > 0.5 ? 1.25 : behind > 0.25 ? 1.1 : 1;
+  if (live.paused) live.play().catch(() => {});
+}
+$("live").addEventListener("load", () => { setOffline(false); layout(); });
+$("live").addEventListener("error", () => { if (!frozen && !useVideo) { setOffline(true); setTimeout(startStream, 1500); } });
+$("video").addEventListener("playing", () => { setOffline(false); layout(); });
+$("video").addEventListener("resize", layout);
+$("video").addEventListener("error", () => { if (useVideo && feed) fallBack(); });
 function setOffline(v) {
   offline = v;
   $("offline").classList.toggle("hidden", !v);
@@ -377,7 +463,7 @@ async function poll() {
     $("photo").classList.toggle("hidden", !s.photoEnabled);
     photoEnabled = !!s.photoEnabled; job = s.job || "";
     report();
-    if (offline && !frozen) startStream();
+    if (offline && !frozen && !useVideo) startStream();
   } catch (e) { if (!frozen) setOffline(true); }
   setTimeout(poll, 3000);
 }
@@ -753,7 +839,7 @@ $("photo").onclick = async () => {
   frozen = ref; shapes = [];
   shotURL = downloadURL = url;
   shot.src = url;
-  shot.classList.remove("hidden"); live.classList.add("hidden"); stopStream();
+  shot.classList.remove("hidden"); stopStream(); showFeed();
   $("liveTools").classList.add("hidden"); $("shotTools").classList.remove("hidden");
   $("download").href = url; $("download").download = ref.name;
   setState(); setDrawing(true);
@@ -774,7 +860,7 @@ $("save").onclick = async () => {
 $("back").onclick = () => {
   closeEditor();
   frozen = null; shapes = []; redraw();
-  shot.classList.add("hidden"); live.classList.remove("hidden");
+  shot.classList.add("hidden"); showFeed();
   $("shotTools").classList.add("hidden"); $("liveTools").classList.remove("hidden");
   setState(); setDrawing(false); startStream();
 };

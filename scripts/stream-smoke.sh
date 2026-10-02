@@ -19,6 +19,11 @@ photo_enabled=$(echo "$status" | grep -q '"photoEnabled":true' && echo yes || ec
 echo "     mode=$mode photoEnabled=$photo_enabled"
 frames=$(curl -s --max-time 3 "$BASE/stream" | grep -ac "Content-Type: image/jpeg")
 [ "$frames" -ge 10 ] && echo "ok   stream ($frames frames in 3 s)" || { echo "FAIL stream ($frames frames in 3 s)"; fail=1; }
+# The video feed: fragmented MP4 (ftyp first), then a moof per frame.
+boxes=$(curl -s --max-time 3 "$BASE/video" | LC_ALL=C grep -aoE 'ftyp|moof')
+vframes=$(echo "$boxes" | grep -c moof)
+[ "$(echo "$boxes" | head -1)" = "ftyp" ] && [ "$vframes" -ge 30 ] && echo "ok   video ($vframes frames in 3 s)" \
+    || { echo "FAIL video ($vframes frames in 3 s)"; fail=1; }
 check "OPTIONS" "$(code -X OPTIONS "$BASE/photo")" 405
 
 if [ "$mode" = "imageOnly" ]; then
