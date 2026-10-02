@@ -64,7 +64,9 @@ spctl --assess --type execute --verbose build/microCAM.app
 rm "$ZIP" && ditto -c -k --keepParent build/microCAM.app "$ZIP"
 
 # Release notes shown by the updater, next to the archive with the same name.
-printf '%s\n' "$NOTES" > "$OUT/microCAM-$VERSION.txt"
+# .md, not .txt: the CHANGELOG section is Markdown, and Sparkle renders it
+# (sparkle:format="markdown") instead of showing the asterisks.
+printf '%s\n' "$NOTES" > "$OUT/microCAM-$VERSION.md"
 "$TOOLS/bin/generate_appcast" --ed-key-file "$KEY_FILE" --embed-release-notes \
     --download-url-prefix "https://github.com/$REPO/releases/download/$TAG/" "$OUT"
 
