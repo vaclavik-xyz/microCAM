@@ -156,6 +156,9 @@
 "Photos taken from another device are saved on this Mac, like your own." = "Photos taken from another device are saved on this Mac, like your own.";
 "Photos: %lld · done around %@" = "Photos: %lld · done around %@";
 "Pick one that stands out against the board." = "Pick one that stands out against the board.";
+"Show resolution under the camera name" = "Show resolution under the camera name";
+"Recording, timelapse and an agent at work show there either way." = "Recording, timelapse and an agent at work show there either way.";
+"To choose the buttons in the toolbar, right-click it." = "To choose the buttons in the toolbar, right-click it.";
 "Picture size and frames per second." = "Picture size and frames per second.";
 "PIN for photos" = "PIN for photos";
 "Pointer – fades after a moment" = "Pointer – fades after a moment";
@@ -295,7 +298,7 @@
 "Zoom in" = "Zoom in";
 "Zoom out" = "Zoom out";
 "⌘, – settings" = "⌘, – settings";
-"● Recording %@" = "● Recording %@";
+"🔴 Recording %@" = "🔴 Recording %@";
 
 /* MCP server for AI agents */
 "An agent took a photo: %@" = "An agent took a photo: %@";

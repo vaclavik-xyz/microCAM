@@ -235,6 +235,14 @@ struct PreviewSettingsTab: View {
                     Text("Pick one that stands out against the board.")
                 }
             }
+            Section {
+                Toggle(isOn: $model.settings.showFormatInTitle) {
+                    Text("Show resolution under the camera name")
+                    Text("Recording, timelapse and an agent at work show there either way.")
+                }
+            } footer: {
+                Text("To choose the buttons in the toolbar, right-click it.")
+            }
         }
     }
 }

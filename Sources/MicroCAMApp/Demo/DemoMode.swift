@@ -167,6 +167,10 @@ final class DemoDriver {
         capture(main, withChildren: true, as: "01c-agent-watching", in: dir)
         model.message = nil
 
+        // 1d–1g. Title with recording and an agent at once, then without the
+        // resolution; the Customize Toolbar sheet; a toolbar with fewer buttons.
+        await toolbarScript(main, into: dir)
+
         // 2. Image adjustments popover on a warmer, punchier picture.
         show(frame(1))
         var adjustments = ImageAdjustments.neutral
@@ -291,6 +295,40 @@ final class DemoDriver {
             }
         }
         NSApp.terminate(nil)
+    }
+
+    private func toolbarScript(_ main: NSWindow, into dir: URL) async {
+        // The agent from 1c is still watching.
+        model.settings.showFormatInTitle = false
+        model.startRecording()
+        await pause(3)
+        capture(main, withChildren: true, as: "01e-title-recording-and-agent", in: dir)
+        model.stopRecording(reason: nil)
+        model.message = nil
+        while model.mcp.agentWatching || model.isFinalizingRecording { await pause(0.5) }
+        await pause(0.5)
+        capture(main, withChildren: true, as: "01d-title-without-resolution", in: dir)
+        model.settings.showFormatInTitle = true
+
+        guard let toolbar = main.toolbar else { return }
+        // The demo must not change the toolbar the user set up.
+        toolbar.autosavesConfiguration = false
+        toolbar.runCustomizationPalette(nil)
+        await pause(1.5)
+        capture(main, withChildren: true, as: "01f-customize-toolbar", in: dir)
+        if let sheet = main.attachedSheet { main.endSheet(sheet) }
+        await pause(1)
+
+        // Without timelapse, drawing and adjustments; then put them back.
+        let removed = toolbar.items.enumerated().filter { _, item in
+            [String(localized: "Timelapse"), String(localized: "Draw"), String(localized: "Image adjustments")]
+                .contains(item.label)
+        }
+        for (index, _) in removed.reversed() { toolbar.removeItem(at: index) }
+        await pause(1)
+        capture(main, withChildren: true, as: "01g-fewer-buttons", in: dir)
+        for (index, item) in removed { toolbar.insertItem(withItemIdentifier: item.itemIdentifier, at: index) }
+        await pause(1)
     }
 
     private func drawingScript(_ main: NSWindow, into dir: URL) async {
@@ -418,8 +456,13 @@ final class DemoDriver {
         return (view as? NSScrollView).map { [$0] } ?? view.subviews.flatMap { scrollViews(in: $0) }
     }
 
+    /// By its SwiftUI identifier first: the Markup window from 8c can linger
+    /// visible and would otherwise be captured instead.
     private func settingsWindow(besides main: NSWindow) -> NSWindow? {
-        NSApp.windows.first { $0 !== main && $0.isVisible && !String(describing: type(of: $0)).contains("Popover") }
+        let candidates = NSApp.windows.filter {
+            $0 !== main && $0.isVisible && !String(describing: type(of: $0)).contains("Popover")
+        }
+        return candidates.first { $0.identifier?.rawValue.contains("Settings") == true } ?? candidates.first
     }
 
     // MARK: Capture

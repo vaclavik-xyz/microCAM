@@ -116,4 +116,13 @@ final class SettingsStoreTests: XCTestCase {
         store.save(s)
         XCTAssertEqual(SettingsStore(defaults: defaults).load(), s)
     }
+    /// Older settings have no key: the format stays in the title as before.
+    func testFormatInTitleDefaultsOnAndRoundTrips() {
+        let store = SettingsStore(defaults: defaults)
+        var s = store.load()
+        XCTAssertTrue(s.showFormatInTitle)
+        s.showFormatInTitle = false
+        store.save(s)
+        XCTAssertFalse(SettingsStore(defaults: defaults).load().showFormatInTitle)
+    }
 }
