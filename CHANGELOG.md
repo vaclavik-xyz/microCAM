@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.5.0 — 2026-10-02
+
+Your toolbar, Shortcuts and a phone for the overview shot.
+
+- Customize the toolbar: right-click it and choose *Customize Toolbar…* to
+  remove or move any button. Everything stays in the menu bar with its
+  shortcut.
+- *Settings → Preview* can hide the resolution under the camera name.
+  Recording, timelapse and an agent at work still show there, and the
+  recording dot is red now.
+- Shortcuts actions: *Take photo*, *Start recording*, *Stop recording* and
+  *Set job*, for the Shortcuts app, Spotlight and Siri, e.g. on a Stream
+  Deck or a foot pedal. A photo or video comes back as a file the shortcut
+  can send on.
+- *File → Import from iPhone or iPad → Take Photo* saves a picture from the
+  phone into the current folder: the whole device next to the microscope
+  detail.
+- With jobs on, *Find a job* at the top of the side panel lists older jobs
+  with their file count and last day; a click switches to one.
+
 ## 0.4.0 — 2026-10-01
 
 Drawing and text, live on the Mac and on photos.
