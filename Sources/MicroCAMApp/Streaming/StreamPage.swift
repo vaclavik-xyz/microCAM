@@ -114,7 +114,8 @@ button.primary:disabled{opacity:1;background:rgba(255,59,48,.28);color:rgba(255,
 .swatch.on i{box-shadow:0 0 0 3px #16181d,0 0 0 5px #fff}
 .size b{font-weight:700;line-height:1}
 .hidden{display:none!important}
-@media (min-width:760px) and (min-height:501px){ #bar{flex-direction:row;align-items:flex-end} }
+/* one row where it fits; longer labels (Czech on an iPad in portrait) wrap to two rows, tools above actions */
+@media (min-width:760px) and (min-height:501px){ #bar{flex-direction:row;flex-wrap:wrap;justify-content:center;align-items:flex-end} }
 /* a mouse needs no thumb-sized targets: smaller buttons, more picture */
 @media (hover:hover) and (pointer:fine){
   :root{--hit:36px;--edge:10px}
