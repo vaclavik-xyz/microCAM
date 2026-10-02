@@ -71,21 +71,23 @@ final class ViewerModel: ObservableObject {
                 guard let self else { return }
                 switch state {
                 case .ready:
+                    connection.cancel()
+                    self.resolving = nil
+                    // Only an IPv4 address: WebKit can't load a link-local IPv6 one.
                     if case .hostPort(let host, let port)? = connection.currentPath?.remoteEndpoint,
-                       case .ipv4(let address) = host {
-                        self.url = URL(string: "http://\(address):\(port.rawValue)/?embedded=1&lang=\(Self.pageLanguage)")
+                       case .ipv4(let address) = host,
+                       let url = ViewerURL.stream(host: "\(address)", port: port.rawValue, language: Self.pageLanguage) {
+                        self.url = url
                         self.status = source.name
                         self.update { $0.viewerSourceName = source.name; $0.viewerManualURL = nil }
+                    } else {
+                        // Never stay on "Connecting…" without saying anything.
+                        self.retryLater(source)
                     }
-                    connection.cancel()
-                    self.resolving = nil
                 case .failed, .waiting:
-                    self.status = String(localized: "\(source.name) isn't reachable. Trying again…")
                     connection.cancel()
                     self.resolving = nil
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                        MainActor.assumeIsolated { self.autoConnect() }
-                    }
+                    self.retryLater(source)
                 default:
                     break
                 }
@@ -93,6 +95,13 @@ final class ViewerModel: ObservableObject {
         }
         resolving = connection
         connection.start(queue: .main)
+    }
+
+    private func retryLater(_ source: Source) {
+        status = String(localized: "\(source.name) isn't reachable. Trying again…")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in
+            MainActor.assumeIsolated { self?.autoConnect() }
+        }
     }
 
     /// `host:port`, `http://host:port` or a full URL. Returns false if unusable.
