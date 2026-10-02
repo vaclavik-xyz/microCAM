@@ -157,8 +157,9 @@
 "Photos: %lld · done around %@" = "Photos: %lld · done around %@";
 "Pick one that stands out against the board." = "Pick one that stands out against the board.";
 "Show resolution under the camera name" = "Show resolution under the camera name";
+"Toolbar buttons" = "Toolbar buttons";
+"Hidden buttons stay in the Camera menu with their shortcuts. Recording and a running timelapse show their button anyway." = "Hidden buttons stay in the Camera menu with their shortcuts. Recording and a running timelapse show their button anyway.";
 "Recording, timelapse and an agent at work show there either way." = "Recording, timelapse and an agent at work show there either way.";
-"To choose the buttons in the toolbar, right-click it." = "To choose the buttons in the toolbar, right-click it.";
 "Picture size and frames per second." = "Picture size and frames per second.";
 "PIN for photos" = "PIN for photos";
 "Pointer – fades after a moment" = "Pointer – fades after a moment";

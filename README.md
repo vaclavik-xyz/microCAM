@@ -122,9 +122,11 @@ photos and videos are always full frame.
 
 The window:
 
-- **Toolbar.** Photo, video and timelapse sit together in the middle. Image
-  adjustments and Settings are on the right, and the active job is on the
-  left when jobs are on.
+- **Toolbar.** Photo, video and timelapse sit together in the middle. Draw,
+  image adjustments and Settings are on the right, and the active job is on
+  the left when jobs are on. *Settings → Preview* turns single buttons off;
+  their actions stay in the Camera menu with the shortcuts, and recording or
+  a running timelapse shows its button anyway.
 - **Side panel.** The captures of the current folder as thumbnails, grouped
   by day. Click selects, ⌘-click adds, ⇧-click selects a range, double-click
   opens, and you can drag a file into another app. The folder name at the top

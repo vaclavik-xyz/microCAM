@@ -27,7 +27,9 @@ KEY_FILE="${SPARKLE_KEY_FILE:-$HOME/.config/microcam/sparkle-ed25519.key}"
 # The notarytool profile is readable only from the logged-in GUI session; a
 # process detached from it (ssh, a terminal multiplexer started outside it,
 # an agent session after a restart) gets "No Keychain password item found"
-# although the profile exists. Don't create a new one: run from Terminal.app.
+# although the profile exists. Don't create a new one: run from Terminal.app,
+# or from a detached shell hand it to Terminal, which runs in the GUI session:
+#   osascript -e 'tell application "Terminal" to do script "cd <repo> && scripts/release.sh"'
 # `launchctl managername` prints "Aqua" there (accepted with any suffix),
 # "Background" or "StandardIO" outside.
 case "$(launchctl managername 2>/dev/null)" in

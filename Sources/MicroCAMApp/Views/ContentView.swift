@@ -1,3 +1,4 @@
+import MicroCAMCore
 import SwiftUI
 
 struct ContentView: View {
@@ -14,6 +15,14 @@ struct ContentView: View {
             }
         }
         .onChange(of: model.openSettingsRequest) { openSettings() }
+    }
+
+    /// Hidden in Settings → Preview, unless needed right now (see `ToolbarButtons`).
+    private func shows(_ button: ToolbarButton) -> Bool {
+        ToolbarButtons.isVisible(button, hidden: model.settings.hiddenToolbarButtons,
+                                 state: ToolbarButtonState(recording: model.isRecording || model.isStartingRecording
+                                                               || model.isFinalizingRecording,
+                                                           adjustmentsOpen: model.showAdjustments))
     }
 
     /// Sidebar width and visibility survive a relaunch.
@@ -59,53 +68,51 @@ struct ContentView: View {
         }
         .modifier(WindowTitle(engine: model.engine, timelapse: model.timelapse, mcp: model.mcp))
         .importsItemProviders([.image]) { model.importPhotos($0) }
-        // Customizable (right-click the toolbar → Customize Toolbar…): every
-        // item can be removed, all actions stay in the menu bar with shortcuts.
-        // The id keeps the user's choice across launches; changing it resets it.
-        .toolbar(id: "main") {
+        // A fixed toolbar: the system's sidebar button stays in the sidebar's
+        // part and never falls into the » overflow of a narrow window, which it
+        // did as an item of a customizable toolbar (0.5.0). Buttons are chosen
+        // in Settings → Preview instead.
+        .toolbar {
             if model.settings.jobsEnabled {
-                ToolbarItem(id: "job", placement: .navigation) { JobToolbarButton() }
+                ToolbarItem(placement: .navigation) { JobToolbarButton() }
             }
-            // Separate items, not a ControlGroup: each button keeps its own
-            // popover anchor (a popover on a button inside a toolbar
-            // ControlGroup never appears, one on the group points at its middle).
-            ToolbarItem(id: "photo", placement: .principal) {
-                Button { model.takePhoto() } label: { Label("Take photo", systemImage: "camera") }
-                    .help("Take a photo (Space)")
-            }
-            ToolbarItem(id: "record", placement: .principal) { RecordButton() }
-            ToolbarItem(id: "timelapse", placement: .principal) {
+            // One item group, not a ControlGroup: macOS draws the buttons in one
+            // capsule anyway, and each keeps its own popover anchor (a popover
+            // on a button inside a toolbar ControlGroup never appears, one on
+            // the group points at its middle).
+            ToolbarItemGroup(placement: .principal) {
+                if shows(.photo) {
+                    Button { model.takePhoto() } label: { Label("Take photo", systemImage: "camera") }
+                        .help("Take a photo (Space)")
+                }
+                if shows(.record) { RecordButton() }
                 TimelapseToolbarButton(runner: model.timelapse, show: $model.showTimelapse)
             }
-            ToolbarItem(id: "draw", placement: .primaryAction) {
-                Toggle(isOn: $model.isDrawing) { Label("Draw", systemImage: "pencil.tip.crop.circle") }
-                    .toggleStyle(.button)
-                    .help("Draw on the picture (D)")
-            }
-            if model.streamViewers > 0 {
-                // Status, not an action: it can't be removed.
-                ToolbarItem(id: "viewers", placement: .primaryAction) {
+            ToolbarItemGroup(placement: .primaryAction) {
+                if shows(.draw) {
+                    Toggle(isOn: $model.isDrawing) { Label("Draw", systemImage: "pencil.tip.crop.circle") }
+                        .toggleStyle(.button)
+                        .help("Draw on the picture (D)")
+                }
+                if model.streamViewers > 0 {
                     Label("Watching: \(model.streamViewers)", systemImage: "dot.radiowaves.left.and.right")
                         .labelStyle(.titleAndIcon).foregroundStyle(.secondary)
                         .help("Watching now")
                 }
-                .customizationBehavior(.disabled)
-            }
-            ToolbarItem(id: "adjustments", placement: .primaryAction) {
-                Button { model.showAdjustments.toggle() } label: {
-                    Label("Image adjustments", systemImage: "slider.horizontal.3")
-                }
-                .help("Image adjustments")
-                .popover(isPresented: $model.showAdjustments) {
-                    // Titled like the timelapse and job popovers.
-                    VStack(alignment: .leading, spacing: 14) {
-                        Text("Image adjustments").font(.headline)
-                        AdjustmentsForm()
+                if shows(.adjustments) {
+                    Button { model.showAdjustments.toggle() } label: {
+                        Label("Image adjustments", systemImage: "slider.horizontal.3")
                     }
-                    .padding(16).frame(width: 360)
+                    .help("Image adjustments")
+                    .popover(isPresented: $model.showAdjustments) {
+                        // Titled like the timelapse and job popovers.
+                        VStack(alignment: .leading, spacing: 14) {
+                            Text("Image adjustments").font(.headline)
+                            AdjustmentsForm()
+                        }
+                        .padding(16).frame(width: 360)
+                    }
                 }
-            }
-            ToolbarItem(id: "settings", placement: .primaryAction) {
                 SettingsLink { Label("Settings", systemImage: "gearshape") }
                     .help("Settings (⌘,)")
             }
@@ -208,10 +215,18 @@ struct CameraStateOverlay: View {
 }
 
 struct TimelapseToolbarButton: View {
+    @EnvironmentObject private var model: AppModel
     @ObservedObject var runner: TimelapseRunner
     @Binding var show: Bool
 
     var body: some View {
+        if ToolbarButtons.isVisible(.timelapse, hidden: model.settings.hiddenToolbarButtons,
+                                    state: ToolbarButtonState(timelapseRunning: runner.isRunning, timelapseOpen: show)) {
+            button
+        }
+    }
+
+    private var button: some View {
         // Same symbol while running, in the accent colour: "timer.circle.fill"
         // drew visibly smaller than "timer" next to it.
         Button { show.toggle() } label: {
