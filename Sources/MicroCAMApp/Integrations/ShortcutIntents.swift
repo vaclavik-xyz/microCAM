@@ -68,7 +68,8 @@ struct SetJobIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult {
-        let model = try ShortcutAccess.cameraModel()
+        // Only settings: works without a camera, like the job button.
+        let model = try ShortcutAccess.appModel()
         guard model.settings.jobsEnabled else { throw ShortcutError.jobsDisabled }
         guard model.setActiveJob(job ?? "") else { throw ShortcutError.invalidJob }
         return .result()
@@ -115,9 +116,14 @@ private enum ShortcutAccess {
     /// How long to wait for a paused camera to deliver a picture.
     static let startTimeout: TimeInterval = 5
 
-    static func cameraModel() throws -> AppModel {
+    static func appModel() throws -> AppModel {
         guard let model = AppModel.current else { throw ShortcutError.notRunning }
         guard model.launchMode == .camera else { throw ShortcutError.viewerMode }
+        return model
+    }
+
+    static func cameraModel() throws -> AppModel {
+        let model = try appModel()
         guard model.engine.currentCameraID != nil else { throw ShortcutError.noCamera }
         guard model.settings.storageRoot != nil else { throw ShortcutError.noStorageFolder }
         return model
