@@ -125,7 +125,7 @@ struct ContentView: View {
 }
 
 /// Title: the camera the picture comes from (the user's name for it, if set).
-/// Subtitle: its format (unless turned off in Settings → Preview); while recording "● Recording 0:12:34" (and dropped
+/// Subtitle: its format (unless turned off in Settings → Preview); while recording "🔴 Recording 0:12:34" (and dropped
 /// frames), then "Saving video…"; a running timelapse adds its progress, and
 /// "Agent is watching" shows while an AI agent pulls frames over MCP.
 /// This is the only recording indicator besides the red stop button, so the
@@ -155,7 +155,7 @@ private struct WindowTitle: ViewModifier {
         if model.isRecording, let started = model.recordingStartedAt {
             let seconds = max(0, Int(now.timeIntervalSince(started)))
             let time = String(format: "%d:%02d:%02d", seconds / 3600, seconds / 60 % 60, seconds % 60)
-            parts.append(String(localized: "● Recording \(time)"))
+            parts.append(String(localized: "🔴 Recording \(time)"))
             if model.droppedFrames > 0 { parts.append(String(localized: "Dropped frames: \(model.droppedFrames)")) }
         } else if model.isFinalizingRecording {
             parts.append(String(localized: "Saving video…"))

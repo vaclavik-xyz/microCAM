@@ -297,7 +297,7 @@
 "Zoom in" = "Zvětšit";
 "Zoom out" = "Zmenšit";
 "⌘, – settings" = "⌘, – nastavení";
-"● Recording %@" = "● Nahrává se %@";
+"🔴 Recording %@" = "🔴 Nahrává se %@";
 
 /* MCP server for AI agents */
 "An agent took a photo: %@" = "Agent vyfotil: %@";
