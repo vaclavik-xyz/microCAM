@@ -8,7 +8,7 @@ it also takes a photo, annotates it and saves the copy, so never point it with
 a PIN at a real bench. Needs Python Playwright with WebKit and Chromium.
 For every device and state (live, PIN panel empty / wrong / locked, drawing,
 text label, annotated photo) it checks that each
-visible control lies fully inside the viewport, is at least 44 px and does not
+visible control lies fully inside the viewport, is at least 44 px (36 px with a mouse) and does not
 overlap another control, and it writes <device>-<state>.png. --locale sets the
 browser language (the page picks its texts from it; default en-US).
 """
@@ -35,12 +35,14 @@ def check(page, name):
     page.wait_for_timeout(450)  # let button transitions settle before measuring and shooting
     vw, vh = page.viewport_size["width"], page.viewport_size["height"]
     boxes = page.evaluate(CONTROLS)
+    # 44 px for a finger; with a mouse the page uses 36 px buttons.
+    minimum = 36 if page.evaluate("matchMedia('(hover:hover) and (pointer:fine)').matches") else 44
     problems = []
     for b in boxes:
         if b["x"] < 0 or b["y"] < 0 or b["x"] + b["w"] > vw + 0.5 or b["y"] + b["h"] > vh + 0.5:
             problems.append(f"{b['id']} outside the viewport {b}")
-        if not b["chip"] and (b["w"] < 44 or b["h"] < 44):
-            problems.append(f"{b['id']} smaller than 44 px ({b['w']:.0f}×{b['h']:.0f})")
+        if not b["chip"] and (b["w"] < minimum or b["h"] < minimum):
+            problems.append(f"{b['id']} smaller than {minimum} px ({b['w']:.0f}×{b['h']:.0f})")
     for i, a in enumerate(boxes):
         for b in boxes[i + 1:]:
             if a["x"] < b["x"] + b["w"] - 0.5 and b["x"] < a["x"] + a["w"] - 0.5 \
@@ -52,7 +54,8 @@ def check(page, name):
         return not problems
     image = page.evaluate("""() => { const i = [live, shot].find(e => !e.classList.contains('hidden'));
                                       const r = i.getBoundingClientRect(); return {x: r.left, y: r.top, w: r.width, h: r.height}; }""")
-    panels = page.evaluate("""() => ['sizes', 'palette', 'controls'].map(id => document.getElementById(id))
+    # Text sizes and colours open over the image on purpose; tools and main actions must not.
+    panels = page.evaluate("""() => ['palette', 'controls'].map(id => document.getElementById(id))
       .filter(e => e && !e.classList.contains('hidden'))
       .map(e => { const r = e.getBoundingClientRect(); return {id: e.id, x: r.left, y: r.top, w: r.width, h: r.height}; })""")
     for p in panels:

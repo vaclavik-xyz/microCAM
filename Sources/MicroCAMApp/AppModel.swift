@@ -26,6 +26,7 @@ final class AppModel: ObservableObject {
             }
             if settings.jobContext != oldValue.jobContext || settings.storageRootPath != oldValue.storageRootPath
                 || settings.sortByType != oldValue.sortByType { capturesChanged() }
+            streamHub.quality.value = settings.streamQuality
             if settings.streamingEnabled != oldValue.streamingEnabled
                 || settings.streamingPort != oldValue.streamingPort { applyStreaming() }
             if settings.mcpEnabled != oldValue.mcpEnabled || settings.mcpPort != oldValue.mcpPort { mcp.apply() }
@@ -198,6 +199,7 @@ final class AppModel: ObservableObject {
         checkUnfinishedRecordings()
         capturesChanged()
         Self.current = self
+        streamHub.quality.value = settings.streamQuality
         NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification,
                                                object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.flushSettings() }
@@ -318,7 +320,9 @@ final class AppModel: ObservableObject {
     /// What is drawn over the live picture: one board for the app, kept only
     /// in memory and cleared when another camera is selected.
     let board = AnnotationBoard()
+    /// The same four colours as the stream page's swatches.
     static let drawColors = ["#ff3b30", "#ffd60a", "#30d158", "#0a84ff"]
+    let drawingTools: [AnnotationShape.Kind] = [.arrow, .ellipse, .pen, .text, .pointer]
     @Published var drawTool = AnnotationShape.Kind.arrow
     @Published var drawColor = AppModel.drawColors[0]
     @Published var textSize = AnnotationTextSize.medium

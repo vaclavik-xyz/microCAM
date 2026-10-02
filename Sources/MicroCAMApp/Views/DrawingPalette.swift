@@ -1,13 +1,28 @@
 import MicroCAMCore
 import SwiftUI
 
-/// Tools for drawing on the live picture, floating at the bottom of the
-/// preview while drawing (D). What is drawn stays until it is deleted, and
-/// photos carry it.
-struct DrawingPalette: View {
-    @EnvironmentObject private var model: AppModel
+/// What the drawing tools work on: the live picture of this Mac (`AppModel`)
+/// or the stream page in the viewer (`ViewerModel`).
+@MainActor
+protocol DrawingTarget: ObservableObject {
+    var drawTool: AnnotationShape.Kind { get set }
+    var drawColor: String { get set }
+    var textSize: AnnotationTextSize { get set }
+    var isDrawing: Bool { get set }
+    var canUndoDrawing: Bool { get }
+    var hasDrawing: Bool { get }
+    /// The pointer exists only on the Mac with the camera.
+    var drawingTools: [AnnotationShape.Kind] { get }
+    func undoDrawing()
+    func clearDrawing()
+}
 
-    private let tools: [(kind: AnnotationShape.Kind, symbol: String, title: LocalizedStringKey)] = [
+/// Tools for drawing on the picture, floating at the bottom of it while
+/// drawing (D). What is drawn stays until it is deleted, and photos carry it.
+struct DrawingPalette<Target: DrawingTarget>: View {
+    @ObservedObject var model: Target
+
+    private let allTools: [(kind: AnnotationShape.Kind, symbol: String, title: LocalizedStringKey)] = [
         (.arrow, "arrow.up.right", LocalizedStringKey("Arrow")),
         (.ellipse, "circle", LocalizedStringKey("Circle")),
         (.pen, "scribble", LocalizedStringKey("Pen")),
@@ -20,7 +35,7 @@ struct DrawingPalette: View {
     var body: some View {
         HStack(spacing: 6) {
             HStack(spacing: 2) {
-                ForEach(tools, id: \.kind) { tool in
+                ForEach(allTools.filter { model.drawingTools.contains($0.kind) }, id: \.kind) { tool in
                     let selected = model.drawTool == tool.kind
                     Button { model.drawTool = tool.kind } label: {
                         Image(systemName: tool.symbol)
@@ -94,3 +109,4 @@ struct DrawingPalette: View {
         .accessibilityLabel("Drawing")
     }
 }
+extension AppModel: DrawingTarget {}

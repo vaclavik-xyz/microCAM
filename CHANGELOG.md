@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.5.3 — 2026-10-02
+
+- The live stream is smooth on Wi-Fi: *Settings → Stream → Stream quality*
+  is *Smooth* by default (1280 px, a third of the data), so a viewer gets
+  about 15 frames a second instead of 4. *Sharp* sends full HD as before,
+  for a fast network. Photos and videos keep full quality.
+- The stream page keeps the picture's size while you draw: text sizes and
+  colours open over it, and on a wide screen the tools and main actions
+  share one row. With a mouse the buttons are smaller.
+- *Take photo* on the stream page is hidden while no PIN is set on the
+  camera computer, instead of showing a button that can't work.
+- Viewer mode has native tools: *Draw* and *Take photo* in the window
+  toolbar, the same drawing tools as on the camera Mac, and *Live view* and
+  *Save as photo* after a photo. The subtitle shows live, photo or offline
+  and the job.
+
 ## 0.5.2 — 2026-10-02
 
 - Viewer: *Connect* to a camera computer found on the network did nothing.

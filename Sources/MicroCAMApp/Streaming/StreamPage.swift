@@ -5,8 +5,12 @@ import MicroCAMCore
 /// Layout: a small status chip top-left and a dock of floating panels at the
 /// bottom (drawing tools above the main actions), so everything stays within
 /// thumb reach on a phone in portrait. Phones in landscape get the same
-/// panels as a vertical rail on the right, beside the 16:9 image. Every
-/// control is at least 44 px and the safe-area insets are respected.
+/// panels as a vertical rail on the right, beside the 16:9 image; wide
+/// screens one row. The image gets the space the tools and main actions leave
+/// free; text sizes and colours open over it, so picking a tool never shrinks
+/// the picture. Touch controls are at least 44 px, mouse ones 36 px, and the
+/// safe-area insets are respected. Without a PIN on the camera computer the
+/// photo button is not shown.
 /// `scripts/stream-page-shots.py` renders it on phone, tablet and desktop.
 ///
 /// Texts live in the `STRINGS` dictionary of the script, one entry per
@@ -80,6 +84,8 @@ body.offline #status .dot{background:var(--muted);box-shadow:none}
   -webkit-backdrop-filter:blur(20px) saturate(1.4);backdrop-filter:blur(20px) saturate(1.4);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 14px 36px rgba(0,0,0,.45)}
 .group{display:flex;align-items:center;gap:var(--gap)}
+/* drawing tools and main actions: stacked on a phone, one row on a wide screen */
+#bar{display:flex;flex-direction:column;align-items:center;gap:8px;max-width:100%}
 .sep{width:1px;height:26px;background:var(--line);margin:0 4px;flex:none}
 button,.btn{appearance:none;border:0;margin:0;font:inherit;color:var(--text);cursor:pointer;text-decoration:none;
   display:inline-flex;align-items:center;justify-content:center;gap:7px;flex:none;
@@ -108,9 +114,25 @@ button.primary:disabled{opacity:1;background:rgba(255,59,48,.28);color:rgba(255,
 .swatch.on i{box-shadow:0 0 0 3px #16181d,0 0 0 5px #fff}
 .size b{font-weight:700;line-height:1}
 .hidden{display:none!important}
+@media (min-width:760px) and (min-height:501px){ #bar{flex-direction:row;align-items:flex-end} }
+/* a mouse needs no thumb-sized targets: smaller buttons, more picture */
+@media (hover:hover) and (pointer:fine){
+  :root{--hit:36px;--edge:10px}
+  .panel{padding:4px;border-radius:24px}
+  svg{width:20px;height:20px}
+  button,.btn{padding:0 11px;font-size:14px}
+  button.primary{height:40px;padding:0 18px;font-size:15px}
+  #photo{min-width:0}
+  .swatch i{width:22px;height:22px}
+  .chip-color{width:20px;height:20px}
+}
 body.idle #dock,body.idle #status{opacity:0;pointer-events:none}
 body.idle #dock .panel{pointer-events:none}
 body.image-only #dock,body.image-only #status,body.image-only #ink{display:none!important}
+/* microCAM's viewer draws its own native tools and status; the page keeps the picture, drawing and messages */
+body.embedded #bar,body.embedded #swatches,body.embedded #sizes,body.embedded #status{display:none!important}
+/* messages above the native drawing tools at the bottom of the window */
+body.embedded #dock{padding-bottom:64px}
 
 /* narrow phones: secondary buttons show icons only, the main action keeps its words */
 @media (max-width:520px){ .lbl{display:none} #draw{width:var(--hit);padding:0} }
@@ -162,6 +184,7 @@ body.image-only #dock,body.image-only #status,body.image-only #ink{display:none!
   #dock{top:0;bottom:0;left:auto;flex-direction:row;justify-content:flex-end;align-items:center;
     padding:calc(var(--st) + var(--edge)) calc(var(--sr) + var(--edge)) calc(var(--sb) + var(--edge)) 0}
   .panel,.group{flex-direction:column}
+  #bar{flex-direction:row;align-items:center}
   .sep{width:26px;height:1px;margin:3px 0}
   .lbl{display:none}
   #draw{width:var(--hit);padding:0}
@@ -203,6 +226,7 @@ body.image-only #dock,body.image-only #status,body.image-only #ink{display:none!
     <button class="icon size on" data-size="medium" data-i18n-aria="textMedium" data-i18n-title="textMedium"><b style="font-size:17px">A</b></button>
     <button class="icon size" data-size="large" data-i18n-aria="textLarge" data-i18n-title="textLarge"><b style="font-size:22px">A</b></button>
   </div>
+  <div id="bar">
   <div id="palette" class="panel hidden" data-i18n-aria="drawing">
     <button class="icon on" data-tool="arrow" data-i18n-aria="arrow" data-i18n-title="arrow"><svg viewBox="0 0 24 24"><path d="M5 19 19 5M9 5h10v10"/></svg></button>
     <button class="icon" data-tool="ellipse" data-i18n-aria="circle" data-i18n-title="circle"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="8.5" ry="7"/></svg></button>
@@ -225,6 +249,7 @@ body.image-only #dock,body.image-only #status,body.image-only #ink{display:none!
       <a id="download" class="btn" download data-i18n-aria="download" data-i18n-title="download"><svg viewBox="0 0 24 24"><path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/></svg><span class="lbl" data-i18n="download"></span></a>
     </span>
     <button id="fs" class="icon" data-i18n-aria="fullScreen" data-i18n-title="fullScreen"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+  </div>
   </div>
 </div>
 <div id="pinDialog" class="hidden" role="dialog" aria-modal="true" aria-labelledby="pinTitle">
@@ -256,7 +281,6 @@ const STRINGS = {
     "undo": "Undo last stroke", "clear": "Clear drawing",
     "draw": "Draw", "drawTitle": "Draw on the picture",
     "photo": "Take photo", "photoTitle": "Take a photo on the camera Mac",
-    "photoOff": "Taking photos is off: no PIN is set in microCAM on the camera computer (Settings → Stream).",
     "back": "Live view", "backTitle": "Back to the live picture",
     "save": "Save", "saveSuffix": " as photo", "saveTitle": "Save the drawing as a new photo on the camera Mac",
     "download": "Download", "fullScreen": "Full screen",
@@ -281,7 +305,6 @@ const STRINGS = {
     "undo": "Vrátit poslední tah", "clear": "Smazat kresbu",
     "draw": "Kreslit", "drawTitle": "Kreslit do obrazu",
     "photo": "Vyfotit", "photoTitle": "Vyfotit na počítači s kamerou",
-    "photoOff": "Focení je vypnuté: v microCAMu na počítači s kamerou není nastavený PIN (Nastavení → Přenos).",
     "back": "Živý obraz", "backTitle": "Zpět na živý obraz",
     "save": "Uložit", "saveSuffix": " jako fotku", "saveTitle": "Uložit kresbu jako novou fotku na počítači s kamerou",
     "download": "Stáhnout", "fullScreen": "Celá obrazovka",
@@ -316,9 +339,10 @@ let tool = "arrow", color = "#ff3b30", drawing = false, shapes = [], current = n
 // label lands in the saved photo where it was typed.
 const LINE = 1.2, BASE = 0.9, OUTLINE = 0.12, MARGIN = 0.15, SIZES = { small: 0.03, medium: 0.045, large: 0.07 };
 const FONT = "-apple-system,BlinkMacSystemFont,system-ui,sans-serif";
-let textSize = "medium", editing = null, textDrag = null;
+let textSize = "medium", editing = null, textDrag = null, photoEnabled = false, job = "", reported = "";
 
 if (MODE === "imageOnly") document.body.classList.add("image-only");
+if (EMBEDDED) document.body.classList.add("embedded");
 // iPhone Safari has no element full screen; the viewer app has its own.
 const root = document.documentElement;
 if (EMBEDDED || !(root.requestFullscreen || root.webkitRequestFullscreen)) $("fs").classList.add("hidden");
@@ -340,6 +364,7 @@ function setOffline(v) {
 function setState() {
   $("stateLabel").textContent = frozen ? t("statePhoto") : offline ? t("stateOffline") : t("stateLive");
   document.body.classList.toggle("frozen", !!frozen);
+  report();
 }
 
 async function poll() {
@@ -348,8 +373,10 @@ async function poll() {
     const s = await r.json();
     $("job").textContent = s.job || "";
     $("job").classList.toggle("hidden", !s.job);
-    $("photo").disabled = !s.photoEnabled;
-    $("photo").title = s.photoEnabled ? t("photoTitle") : t("photoOff");
+    // Without a PIN on the camera computer nobody can take a photo: no button.
+    $("photo").classList.toggle("hidden", !s.photoEnabled);
+    photoEnabled = !!s.photoEnabled; job = s.job || "";
+    report();
     if (offline && !frozen) startStream();
   } catch (e) { if (!frozen) setOffline(true); }
   setTimeout(poll, 3000);
@@ -368,11 +395,12 @@ function layout() {
 window.addEventListener("resize", layout);
 window.addEventListener("orientationchange", () => setTimeout(layout, 250));
 shot.addEventListener("load", layout);
-// Keep the image clear of the main panel and, while drawing, of the tools and text sizes: above them in
-// portrait, beside the rail in landscape. The colour popover is transient and may overlap.
+// Keep the image clear of the main panel and, while drawing, of the tools: above them in portrait and on
+// wide screens (one row, so drawing doesn't shrink the picture there), beside the rail in landscape.
+// Text sizes and colours are transient popovers and may overlap it.
 function reserve() {
   const rail = getComputedStyle($("dock")).flexDirection === "row";
-  const rects = ["sizes", "palette", "controls"].map(id => $(id).getBoundingClientRect()).filter(r => r.width > 0);
+  const rects = ["palette", "controls"].map(id => $(id).getBoundingClientRect()).filter(r => r.width > 0);
   const off = MODE === "imageOnly" || !rects.length;
   const top = Math.min(...rects.map(r => r.top)), left = Math.min(...rects.map(r => r.left));
   root.style.setProperty("--reserve-b", off || rail ? "0px" : (innerHeight - top + 8) + "px");
@@ -385,7 +413,6 @@ function scheduleReserve() { cancelAnimationFrame(relayout); relayout = requestA
 if (window.ResizeObserver) {
   new ResizeObserver(scheduleReserve).observe($("controls"));
   new ResizeObserver(scheduleReserve).observe($("palette"));
-  new ResizeObserver(scheduleReserve).observe($("sizes"));
   new ResizeObserver(scheduleReserve).observe($("stage"));
 }
 window.addEventListener("resize", scheduleReserve);
@@ -522,6 +549,7 @@ document.querySelectorAll("#swatches button, #sizes button, #colorBtn").forEach(
   ["pointerdown", "mousedown"].forEach(ev => b.addEventListener(ev, e => { if (editing) e.preventDefault(); })));
 
 function redraw() {
+  report();
   ctx.clearRect(0, 0, ink.width, ink.height);
   for (const s of current ? [...shapes, current] : shapes) drawShape(s, ink.width, ink.height);
   $("undo").disabled = $("clear").disabled = !shapes.length;
@@ -569,6 +597,7 @@ function setDrawing(v) {
   if (!v) showSwatches(false);
   scheduleReserve();
   wake();
+  report();
 }
 function showSwatches(v) {
   $("swatches").classList.toggle("hidden", !v);
@@ -585,17 +614,20 @@ document.querySelectorAll("[data-tool]").forEach(b => b.onclick = () => {
   document.querySelectorAll("[data-tool]").forEach(x => x.classList.toggle("on", x === b));
   document.body.classList.toggle("tool-text", tool === "text");
   showSizes();
+  report();
 });
 function selectColor(c) {
   color = c;
   document.querySelectorAll("[data-color]").forEach(x => x.classList.toggle("on", x.dataset.color === c));
   document.querySelector(".chip-color").style.setProperty("--c", color);
   placeEditor();
+  report();
 }
 function selectSize(name) {
   textSize = name;
   document.querySelectorAll("[data-size]").forEach(x => x.classList.toggle("on", x.dataset.size === name));
   placeEditor();
+  report();
 }
 document.querySelectorAll("[data-color]").forEach(b => b.onclick = () => { selectColor(b.dataset.color); showSwatches(false); });
 document.querySelectorAll("[data-size]").forEach(b => b.onclick = () => selectSize(b.dataset.size));
@@ -755,6 +787,31 @@ function wake() {
   idleTimer = setTimeout(() => { if (!drawing && !frozen) document.body.classList.add("idle"); }, 3000);
 }
 ["pointermove", "pointerdown", "keydown"].forEach(ev => window.addEventListener(ev, wake));
+
+// ---- microCAM's viewer: native tools drive the page, the page reports its state back ----
+function report() {
+  const handler = window.webkit && webkit.messageHandlers && webkit.messageHandlers.microcam;
+  if (!EMBEDDED || !handler) return;
+  const state = JSON.stringify({ drawing, tool, color, size: textSize, shapes: shapes.length, photoEnabled,
+                                 frozen: !!frozen, offline, job });
+  if (state !== reported) { reported = state; handler.postMessage(state); }
+}
+const toolButton = name => document.querySelector(`[data-tool="${name}"]`);
+window.microcam = {
+  setDrawing: v => setDrawing(!!v),
+  setTool: name => toolButton(name) && toolButton(name).click(),
+  setColor: selectColor,
+  setTextSize: selectSize,
+  undo: () => $("undo").click(),
+  clear: () => $("clear").click(),
+  photo: () => $("photo").click(),
+  back: () => $("back").click(),
+  save: () => $("save").click(),
+};
+// Esc leaves drawing (not while typing a label or entering the PIN), as in the app.
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && drawing && !editing && $("pinDialog").classList.contains("hidden") && !frozen) setDrawing(false);
+});
 
 redraw(); startStream(); poll(); wake();
 </script>

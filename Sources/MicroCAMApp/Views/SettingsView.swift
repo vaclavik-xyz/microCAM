@@ -516,6 +516,13 @@ struct StreamSettingsTab: View {
                         Text("Viewers can")
                         Text("Photos taken from another device are saved on this Mac, like your own.")
                     }
+                    Picker(selection: $model.settings.streamQuality) {
+                        Text("Smooth").tag(StreamQuality.smooth)
+                        Text("Sharp").tag(StreamQuality.sharp)
+                    } label: {
+                        Text("Stream quality")
+                        Text("Smooth suits Wi-Fi. Sharp sends full HD and needs a fast network, or the picture stutters. Photos and videos are full quality either way.")
+                    }
                     SecureField(text: $pin, prompt: Text("Not set")) {
                         Text("PIN for photos")
                         Text("4–8 digits. Other devices need it to take photos.")
