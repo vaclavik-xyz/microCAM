@@ -28,7 +28,8 @@ KEY_FILE="${SPARKLE_KEY_FILE:-$HOME/.config/microcam/sparkle-ed25519.key}"
 # process detached from it (ssh, a terminal multiplexer started outside it,
 # an agent session after a restart) gets "No Keychain password item found"
 # although the profile exists. Don't create a new one: run from Terminal.app.
-launchctl print "gui/$(id -u)" >/dev/null 2>&1 || {
+# `launchctl managername` is "Aqua" there, "Background" or "StandardIO" outside.
+[ "$(launchctl managername 2>/dev/null)" = Aqua ] || {
     echo "Not in the GUI login session: notarization can't read its keychain profile. Run this from Terminal.app." >&2
     exit 1
 }
