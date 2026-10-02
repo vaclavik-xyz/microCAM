@@ -1,6 +1,7 @@
 import Foundation
 import MicroCAMCore
 import Network
+import WebKit
 
 /// Finds microCAM hosts via Bonjour, resolves one to an IPv4 URL and keeps
 /// the chosen source for the next launch. Tailscale does not carry Bonjour,
@@ -24,6 +25,53 @@ final class ViewerModel: ObservableObject {
     private let update: ((inout AppSettings) -> Void) -> Void
     private var browser: NWBrowser?
     private var resolving: NWConnection?
+
+    // MARK: Native tools for the stream page (window.microcam in StreamPage)
+
+    /// The page's drawing state, kept in sync both ways: a change here is sent
+    /// to the page, and what the page reports is applied without sending it back.
+    @Published var isDrawing = false { didSet { send("setDrawing(\(isDrawing))", if: isDrawing != oldValue) } }
+    @Published var drawTool = AnnotationShape.Kind.arrow { didSet { send("setTool('\(drawTool.rawValue)')", if: drawTool != oldValue) } }
+    @Published var drawColor = AppModel.drawColors[0] { didSet { send("setColor('\(drawColor)')", if: drawColor != oldValue) } }
+    @Published var textSize = AnnotationTextSize.medium { didSet { send("setTextSize('\(textSize.rawValue)')", if: textSize != oldValue) } }
+    @Published private(set) var hasDrawing = false
+    var canUndoDrawing: Bool { hasDrawing }
+    let drawingTools: [AnnotationShape.Kind] = [.arrow, .ellipse, .pen, .text]
+    /// A PIN is set on the camera computer, so photos can be taken from here.
+    @Published private(set) var photoEnabled = false
+    /// A photo taken from here is shown instead of the live picture.
+    @Published private(set) var showsPhoto = false
+    @Published private(set) var offline = false
+    @Published private(set) var job = ""
+    weak var webView: WKWebView?
+    private var applyingPageState = false
+
+    func undoDrawing() { send("undo()") }
+    func clearDrawing() { send("clear()") }
+    func takePhoto() { send("photo()") }
+    func backToLive() { send("back()") }
+    func saveDrawingAsPhoto() { send("save()") }
+
+    private func send(_ call: String, if changed: Bool = true) {
+        guard changed, !applyingPageState else { return }
+        webView?.evaluateJavaScript("window.microcam && microcam.\(call)")
+    }
+
+    /// The JSON the page posts to `microcam` whenever its state changes.
+    func receivePageState(_ json: String) {
+        guard let state = StreamPageState.decode(json) else { return }
+        applyingPageState = true
+        defer { applyingPageState = false }
+        if isDrawing != state.drawing { isDrawing = state.drawing }
+        if let tool = AnnotationShape.Kind(rawValue: state.tool), drawTool != tool { drawTool = tool }
+        if drawColor != state.color { drawColor = state.color }
+        if let size = AnnotationTextSize(rawValue: state.size), textSize != size { textSize = size }
+        hasDrawing = state.shapes > 0
+        photoEnabled = state.photoEnabled
+        showsPhoto = state.frozen
+        offline = state.offline
+        job = state.job
+    }
 
     init(settings: @escaping () -> AppSettings, update: @escaping ((inout AppSettings) -> Void) -> Void) {
         self.settings = settings
@@ -77,6 +125,7 @@ final class ViewerModel: ObservableObject {
                     if case .hostPort(let host, let port)? = connection.currentPath?.remoteEndpoint,
                        case .ipv4(let address) = host,
                        let url = ViewerURL.stream(host: "\(address)", port: port.rawValue, language: Self.pageLanguage) {
+                        if self.url != url { self.resetPageState() }
                         self.url = url
                         self.status = source.name
                         self.update { $0.viewerSourceName = source.name; $0.viewerManualURL = nil }
@@ -115,6 +164,7 @@ final class ViewerModel: ObservableObject {
         components.path = "/"
         components.queryItems = [URLQueryItem(name: "embedded", value: "1"), URLQueryItem(name: "lang", value: Self.pageLanguage)]
         guard let url = components.url else { return false }
+        if self.url != url { resetPageState() }
         self.url = url
         status = components.host ?? ""
         update { $0.viewerManualURL = manual; $0.viewerSourceName = nil }
@@ -123,7 +173,20 @@ final class ViewerModel: ObservableObject {
 
     func disconnect() {
         url = nil
+        resetPageState()
         update { $0.viewerSourceName = nil; $0.viewerManualURL = nil }
         autoConnect()
     }
+
+    /// A new page starts with nothing drawn and no photo.
+    private func resetPageState() {
+        applyingPageState = true
+        defer { applyingPageState = false }
+        isDrawing = false
+        hasDrawing = false
+        showsPhoto = false
+        photoEnabled = false
+    }
 }
+
+extension ViewerModel: DrawingTarget {}

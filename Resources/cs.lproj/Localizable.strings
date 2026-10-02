@@ -355,3 +355,14 @@
 "Sharp" = "Ostrá";
 "Stream quality" = "Kvalita přenosu";
 "Smooth suits Wi-Fi. Sharp sends full HD and needs a fast network, or the picture stutters. Photos and videos are full quality either way." = "Plynulá se hodí pro Wi-Fi. Ostrá posílá Full HD a potřebuje rychlou síť, jinak se obraz zasekává. Fotky a videa mají plnou kvalitu v obou případech.";
+
+/* Viewer: native tools */
+"Live view" = "Živý obraz";
+"Back to the live picture" = "Zpět na živý obraz";
+"Save as photo" = "Uložit jako fotku";
+"Save the drawing as a new photo on the camera Mac" = "Uložit kresbu jako novou fotku na počítači s kamerou";
+"Take a photo on the camera Mac" = "Vyfotit na počítači s kamerou";
+"Draw on the picture" = "Kreslit do obrazu";
+"Offline" = "Nepřipojeno";
+"Photo" = "Fotka";
+"Live" = "Živě";

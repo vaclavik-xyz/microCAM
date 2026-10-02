@@ -12,7 +12,9 @@ import Quartz
 /// also serves the frames as a live stream for `scripts/stream-smoke.sh`.
 /// `MICROCAM_DEMO_MCP_PORT` (and optionally `MICROCAM_DEMO_MCP_TOKEN`) serves
 /// the MCP server on 127.0.0.1 with an in-memory token, never the Keychain one.
-/// `MICROCAM_DEMO_VIEWER=1` starts in viewer mode instead (no network search).
+/// `MICROCAM_DEMO_VIEWER=1` starts in viewer mode instead (no network search);
+/// with `MICROCAM_DEMO_VIEWER_URL` (a demo stream, optionally with
+/// `MICROCAM_DEMO_VIEWER_PIN`) it connects and runs the native drawing tools.
 struct DemoConfig {
     let frames: [URL]
     let root: URL
@@ -25,6 +27,8 @@ struct DemoConfig {
     var mcpPort: Int? = nil
     var mcpToken: String? = nil
     var viewer = false
+    var viewerURL: String? = nil
+    var viewerPIN: String? = nil
 
     static func fromEnvironment(_ env: [String: String] = ProcessInfo.processInfo.environment) -> DemoConfig? {
         let urls = { (key: String) in
@@ -43,7 +47,9 @@ struct DemoConfig {
                           streamMode: env["MICROCAM_DEMO_STREAM_MODE"].flatMap(StreamMode.init(rawValue:)),
                           mcpPort: env["MICROCAM_DEMO_MCP_PORT"].flatMap { Int($0) },
                           mcpToken: env["MICROCAM_DEMO_MCP_TOKEN"],
-                          viewer: env["MICROCAM_DEMO_VIEWER"] == "1")
+                          viewer: env["MICROCAM_DEMO_VIEWER"] == "1",
+                          viewerURL: env["MICROCAM_DEMO_VIEWER_URL"],
+                          viewerPIN: env["MICROCAM_DEMO_VIEWER_PIN"])
     }
 
     /// Separate, freshly reset settings domain: the demo never touches real settings.
@@ -54,6 +60,7 @@ struct DemoConfig {
         if viewer {
             var settings = AppSettings()
             settings.appMode = .viewer
+            settings.viewerManualURL = viewerURL
             store.save(settings)
         }
         return store
@@ -80,6 +87,8 @@ final class DemoDriver {
 
     func start() {
         if model.launchMode == .viewer {
+            // No Bonjour search in the demo; only the given demo stream.
+            if let url = config.viewerURL { model.viewer.connect(manual: url) }
             NSApp.activate(ignoringOtherApps: true)
             if let dir = config.shotsDir { Task { await runViewerScript(into: dir) } }
             return
@@ -601,12 +610,57 @@ final class DemoDriver {
         main.setFrame(NSRect(x: 80, y: 80, width: 1280, height: 800), display: true)
         await pause(1.5)
         capture(main, withChildren: true, as: "11-viewer", in: dir)
+        if config.viewerURL != nil { await viewerToolsScript(main, into: dir) }
         model.openSettingsRequest += 1
         await pause(2)
         if let settings = settingsWindow(besides: main) {
             capture(settings, withChildren: false, as: "12-viewer-settings", in: dir)
         }
         NSApp.terminate(nil)
+    }
+
+    /// Viewer connected to a demo stream: the page hides its own tools, the
+    /// native ones drive it, and the picture keeps its size.
+    private func viewerToolsScript(_ main: NSWindow, into dir: URL) async {
+        let viewer = model.viewer
+        func js(_ script: String) async -> Any? { try? await viewer.webView?.evaluateJavaScript(script) }
+        let imageWidth = "Math.round(document.getElementById('live').getBoundingClientRect().width)"
+        await pause(4)
+        capture(main, withChildren: true, as: "11b-viewer-live", in: dir)
+        check(await js("getComputedStyle(document.getElementById('bar')).display") as? String == "none",
+              "viewer: the page hides its own tools")
+        check(viewer.photoEnabled == (config.viewerPIN != nil), "viewer: photo button only with a PIN")
+        let liveWidth = await js(imageWidth) as? Int
+        viewer.isDrawing = true
+        await pause(1)
+        check(await js("drawing") as? Bool == true, "viewer: Draw turns drawing on in the page")
+        _ = await js("shapes.push({kind:'ellipse',points:[{x:.3,y:.3},{x:.6,y:.7}],color:color,width:.006}); redraw(); 0")
+        viewer.drawColor = AppModel.drawColors[1]
+        viewer.drawTool = .text
+        await pause(1)
+        check(viewer.hasDrawing, "viewer: the page reports what is drawn")
+        let pageTool = await js("tool") as? String, pageColor = await js("color") as? String
+        check(pageTool == "text" && pageColor == AppModel.drawColors[1], "viewer: tool and colour reach the page")
+        check(await js(imageWidth) as? Int == liveWidth, "viewer: drawing keeps the picture's size")
+        capture(main, withChildren: true, as: "11c-viewer-drawing", in: dir)
+        if let pin = config.viewerPIN {
+            viewer.takePhoto()
+            await pause(1.5)
+            _ = await js("""
+                (() => { const i = document.getElementById('pinInput'); i.value = '\(pin)';
+                         i.dispatchEvent(new Event('input')); document.getElementById('pinForm').requestSubmit(); return 0; })()
+                """)
+            await pause(3)
+            check(viewer.showsPhoto, "viewer: Take photo shows the photo")
+            capture(main, withChildren: true, as: "11d-viewer-photo", in: dir)
+            viewer.backToLive()
+            await pause(1.5)
+            check(!viewer.showsPhoto, "viewer: Live view goes back")
+        }
+        viewer.isDrawing = false
+        await pause(1)
+        try? checks.joined(separator: "\n").appending("\n")
+            .write(to: dir.appendingPathComponent("demo-checks-viewer.txt"), atomically: true, encoding: .utf8)
     }
 
     private func scrollViews(in view: NSView?) -> [NSScrollView] {

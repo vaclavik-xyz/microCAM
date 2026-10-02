@@ -356,3 +356,14 @@
 "Sharp" = "Sharp";
 "Stream quality" = "Stream quality";
 "Smooth suits Wi-Fi. Sharp sends full HD and needs a fast network, or the picture stutters. Photos and videos are full quality either way." = "Smooth suits Wi-Fi. Sharp sends full HD and needs a fast network, or the picture stutters. Photos and videos are full quality either way.";
+
+/* Viewer: native tools */
+"Live view" = "Live view";
+"Back to the live picture" = "Back to the live picture";
+"Save as photo" = "Save as photo";
+"Save the drawing as a new photo on the camera Mac" = "Save the drawing as a new photo on the camera Mac";
+"Take a photo on the camera Mac" = "Take a photo on the camera Mac";
+"Draw on the picture" = "Draw on the picture";
+"Offline" = "Offline";
+"Photo" = "Photo";
+"Live" = "Live";

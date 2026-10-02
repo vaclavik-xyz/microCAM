@@ -52,7 +52,7 @@ struct ContentView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing).padding(12)
                 }
                 if model.isDrawing {
-                    DrawingPalette()
+                    DrawingPalette(model: model)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom).padding(16)
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                 }

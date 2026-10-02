@@ -129,6 +129,10 @@ button.primary:disabled{opacity:1;background:rgba(255,59,48,.28);color:rgba(255,
 body.idle #dock,body.idle #status{opacity:0;pointer-events:none}
 body.idle #dock .panel{pointer-events:none}
 body.image-only #dock,body.image-only #status,body.image-only #ink{display:none!important}
+/* microCAM's viewer draws its own native tools and status; the page keeps the picture, drawing and messages */
+body.embedded #bar,body.embedded #swatches,body.embedded #sizes,body.embedded #status{display:none!important}
+/* messages above the native drawing tools at the bottom of the window */
+body.embedded #dock{padding-bottom:64px}
 
 /* narrow phones: secondary buttons show icons only, the main action keeps its words */
 @media (max-width:520px){ .lbl{display:none} #draw{width:var(--hit);padding:0} }
@@ -335,9 +339,10 @@ let tool = "arrow", color = "#ff3b30", drawing = false, shapes = [], current = n
 // label lands in the saved photo where it was typed.
 const LINE = 1.2, BASE = 0.9, OUTLINE = 0.12, MARGIN = 0.15, SIZES = { small: 0.03, medium: 0.045, large: 0.07 };
 const FONT = "-apple-system,BlinkMacSystemFont,system-ui,sans-serif";
-let textSize = "medium", editing = null, textDrag = null;
+let textSize = "medium", editing = null, textDrag = null, photoEnabled = false, job = "", reported = "";
 
 if (MODE === "imageOnly") document.body.classList.add("image-only");
+if (EMBEDDED) document.body.classList.add("embedded");
 // iPhone Safari has no element full screen; the viewer app has its own.
 const root = document.documentElement;
 if (EMBEDDED || !(root.requestFullscreen || root.webkitRequestFullscreen)) $("fs").classList.add("hidden");
@@ -359,6 +364,7 @@ function setOffline(v) {
 function setState() {
   $("stateLabel").textContent = frozen ? t("statePhoto") : offline ? t("stateOffline") : t("stateLive");
   document.body.classList.toggle("frozen", !!frozen);
+  report();
 }
 
 async function poll() {
@@ -369,6 +375,8 @@ async function poll() {
     $("job").classList.toggle("hidden", !s.job);
     // Without a PIN on the camera computer nobody can take a photo: no button.
     $("photo").classList.toggle("hidden", !s.photoEnabled);
+    photoEnabled = !!s.photoEnabled; job = s.job || "";
+    report();
     if (offline && !frozen) startStream();
   } catch (e) { if (!frozen) setOffline(true); }
   setTimeout(poll, 3000);
@@ -541,6 +549,7 @@ document.querySelectorAll("#swatches button, #sizes button, #colorBtn").forEach(
   ["pointerdown", "mousedown"].forEach(ev => b.addEventListener(ev, e => { if (editing) e.preventDefault(); })));
 
 function redraw() {
+  report();
   ctx.clearRect(0, 0, ink.width, ink.height);
   for (const s of current ? [...shapes, current] : shapes) drawShape(s, ink.width, ink.height);
   $("undo").disabled = $("clear").disabled = !shapes.length;
@@ -588,6 +597,7 @@ function setDrawing(v) {
   if (!v) showSwatches(false);
   scheduleReserve();
   wake();
+  report();
 }
 function showSwatches(v) {
   $("swatches").classList.toggle("hidden", !v);
@@ -604,17 +614,20 @@ document.querySelectorAll("[data-tool]").forEach(b => b.onclick = () => {
   document.querySelectorAll("[data-tool]").forEach(x => x.classList.toggle("on", x === b));
   document.body.classList.toggle("tool-text", tool === "text");
   showSizes();
+  report();
 });
 function selectColor(c) {
   color = c;
   document.querySelectorAll("[data-color]").forEach(x => x.classList.toggle("on", x.dataset.color === c));
   document.querySelector(".chip-color").style.setProperty("--c", color);
   placeEditor();
+  report();
 }
 function selectSize(name) {
   textSize = name;
   document.querySelectorAll("[data-size]").forEach(x => x.classList.toggle("on", x.dataset.size === name));
   placeEditor();
+  report();
 }
 document.querySelectorAll("[data-color]").forEach(b => b.onclick = () => { selectColor(b.dataset.color); showSwatches(false); });
 document.querySelectorAll("[data-size]").forEach(b => b.onclick = () => selectSize(b.dataset.size));
@@ -774,6 +787,31 @@ function wake() {
   idleTimer = setTimeout(() => { if (!drawing && !frozen) document.body.classList.add("idle"); }, 3000);
 }
 ["pointermove", "pointerdown", "keydown"].forEach(ev => window.addEventListener(ev, wake));
+
+// ---- microCAM's viewer: native tools drive the page, the page reports its state back ----
+function report() {
+  const handler = window.webkit && webkit.messageHandlers && webkit.messageHandlers.microcam;
+  if (!EMBEDDED || !handler) return;
+  const state = JSON.stringify({ drawing, tool, color, size: textSize, shapes: shapes.length, photoEnabled,
+                                 frozen: !!frozen, offline, job });
+  if (state !== reported) { reported = state; handler.postMessage(state); }
+}
+const toolButton = name => document.querySelector(`[data-tool="${name}"]`);
+window.microcam = {
+  setDrawing: v => setDrawing(!!v),
+  setTool: name => toolButton(name) && toolButton(name).click(),
+  setColor: selectColor,
+  setTextSize: selectSize,
+  undo: () => $("undo").click(),
+  clear: () => $("clear").click(),
+  photo: () => $("photo").click(),
+  back: () => $("back").click(),
+  save: () => $("save").click(),
+};
+// Esc leaves drawing (not while typing a label or entering the PIN), as in the app.
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && drawing && !editing && $("pinDialog").classList.contains("hidden") && !frozen) setDrawing(false);
+});
 
 redraw(); startStream(); poll(); wake();
 </script>
