@@ -6,7 +6,7 @@ Usage: scripts/stream-page-shots.py <base-url> <out-dir> [--pin 1234] [--locale 
 Run against the demo stream (see README, MICROCAM_DEMO_STREAM_PORT) — with --pin
 it also takes a photo, annotates it and saves the copy, so never point it with
 a PIN at a real bench. Needs Python Playwright with WebKit and Chromium.
-For every device and state (live, PIN panel empty / wrong / locked, drawing,
+For every device and state (live, self-timer on, PIN panel empty / wrong / locked, drawing,
 text label, annotated photo) it checks that each
 visible control lies fully inside the viewport, is at least 44 px (36 px with a mouse) and does not
 overlap another control, and it writes <device>-<state>.png. --locale sets the
@@ -221,6 +221,14 @@ def main():
                 page.mouse.move(10, 10)
                 ok &= check(page, f"{name} live")
                 page.screenshot(path=str(out / f"{slug}-1-live.png"))
+                # The self-timer at its longest delay is the widest the main actions get; then off again.
+                # (Without a PIN on the camera computer there is no photo button and no timer.)
+                if page.is_visible("#timer"):
+                    for _ in range(3):
+                        tap(page, "#timer")
+                    ok &= check(page, f"{name} self-timer")
+                    page.screenshot(path=str(out / f"{slug}-1b-self-timer.png"))
+                    tap(page, "#timer")
                 if args.pin:
                     ok &= pin_states(page, name, out, slug)
 

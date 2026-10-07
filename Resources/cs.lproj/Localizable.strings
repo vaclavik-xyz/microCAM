@@ -332,7 +332,10 @@
 "Start recording" = "Spustit nahrávání";
 "Starts a video in the current folder." = "Spustí video do aktuální složky.";
 "Stops the video and returns it once it is saved." = "Zastaví video a po uložení ho vrátí.";
-"Takes a photo into the current folder and returns it." = "Vyfotí do aktuální složky a fotku vrátí.";
+"Takes a photo into the current folder and returns it. With a delay, the self-timer counts down on the Mac first." = "Vyfotí do aktuální složky a fotku vrátí. Se zpožděním nejdřív odpočítá samospoušť na Macu.";
+"Delay" = "Zpoždění";
+"Seconds of self-timer countdown before the photo. 0 takes it right away." = "Kolik sekund samospoušť odpočítává před fotkou. 0 vyfotí hned.";
+"Take photo after ${delay} seconds" = "Vyfotit za ${delay} s";
 "The camera sends no picture. Check it in microCAM." = "Kamera neposílá obraz. Zkontroluj ji v microCAM.";
 "microCAM is already recording." = "microCAM už nahrává.";
 "microCAM is in viewer mode. Switch to camera mode in Settings → General." = "microCAM je v režimu prohlížeče. Přepni na režim kamery v Nastavení → Obecné.";

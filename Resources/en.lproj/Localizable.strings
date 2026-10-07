@@ -333,7 +333,10 @@
 "Start recording" = "Start recording";
 "Starts a video in the current folder." = "Starts a video in the current folder.";
 "Stops the video and returns it once it is saved." = "Stops the video and returns it once it is saved.";
-"Takes a photo into the current folder and returns it." = "Takes a photo into the current folder and returns it.";
+"Takes a photo into the current folder and returns it. With a delay, the self-timer counts down on the Mac first." = "Takes a photo into the current folder and returns it. With a delay, the self-timer counts down on the Mac first.";
+"Delay" = "Delay";
+"Seconds of self-timer countdown before the photo. 0 takes it right away." = "Seconds of self-timer countdown before the photo. 0 takes it right away.";
+"Take photo after ${delay} seconds" = "Take photo after ${delay} seconds";
 "The camera sends no picture. Check it in microCAM." = "The camera sends no picture. Check it in microCAM.";
 "microCAM is already recording." = "microCAM is already recording.";
 "microCAM is in viewer mode. Switch to camera mode in Settings → General." = "microCAM is in viewer mode. Switch to camera mode in Settings → General.";

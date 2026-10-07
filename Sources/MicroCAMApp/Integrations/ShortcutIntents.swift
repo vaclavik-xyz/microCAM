@@ -8,14 +8,26 @@ import MicroCAMCore
 
 struct TakePhotoIntent: AppIntent {
     static let title = LocalizedStringResource("Take photo")
-    static let description = IntentDescription(LocalizedStringResource("Takes a photo into the current folder and returns it."))
+    static let description = IntentDescription(LocalizedStringResource("Takes a photo into the current folder and returns it. With a delay, the self-timer counts down on the Mac first."))
+
+    /// The self-timer countdown in seconds; 0 takes the photo right away.
+    @Parameter(title: LocalizedStringResource("Delay"),
+               description: LocalizedStringResource("Seconds of self-timer countdown before the photo. 0 takes it right away."),
+               default: 0, inclusiveRange: (0, 30))   // SelfTimer.maxDelay; the metadata needs a literal
+    var delay: Int
+
+    static var parameterSummary: some ParameterSummary {
+        Summary("Take photo after \(\.$delay) seconds")
+    }
 
     @MainActor
     func perform() async throws -> some IntentResult & ReturnsValue<IntentFile> {
         let model = try ShortcutAccess.cameraModel()
         let url: URL = try await ShortcutAccess.holdingCamera(model) {
+            // On this Mac, like the photo button: the countdown shows over the
+            // picture. A busy or cancelled self-timer fails with its own message.
             try await withCheckedThrowingContinuation { continuation in
-                model.takePhoto { continuation.resume(with: $0) }
+                model.takePhoto(after: delay) { continuation.resume(with: $0) }
             }
         }
         return .result(value: IntentFile(fileURL: url))

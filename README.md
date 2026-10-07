@@ -226,7 +226,8 @@ The window:
 ### Shortcuts
 
 microCAM adds four actions to the Shortcuts app: *Take photo* and *Stop
-recording* return the file, so a shortcut can send it on; *Start recording*;
+recording* return the file, so a shortcut can send it on (*Take photo* has a
+*Delay* of 0–30 s for a self-timer countdown on the Mac); *Start recording*;
 *Set job* (empty clears it). The first three are also in Spotlight without
 any setup. They run in the open app, wake a camera paused by a hidden window
 and fail with a short message when there is no camera, no picture or no
@@ -335,6 +336,12 @@ camera computer via Bonjour.
   **Save as photo** saves a copy with the drawing (`…_2.jpg`); the original
   stays untouched. Remote photos need the *PIN for photos* set on the camera
   computer (without one the button is hidden); a wrong PIN locks the device out for a while.
+- **Self-timer:** the timer button next to **Take photo** switches between
+  off, 3, 5 and 10 s (the browser remembers it). The camera Mac counts down
+  over the picture and beeps, and the button counts along; Space, S or Esc at
+  the Mac cancels it. Only one countdown runs at a time. (For scripts:
+  `POST /photo?delay=5` with the PIN header answers once the photo is
+  saved; 409 means a countdown is already running or was cancelled.)
 - **Text:** pick **T**, tap where the label goes, type, and press Enter
   or tap elsewhere; Esc cancels. Tap a label to change it, drag it to move
   it. Three sizes appear next to the tools; the colour is the current one.
