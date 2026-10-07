@@ -369,3 +369,8 @@
 /* Leftover recordings */
 "Recovered an unfinished recording: %@" = "Obnoven nedokončený záznam: %@";
 "An unfinished recording ended before it could be played and was moved to the Trash." = "Nedokončený záznam skončil dřív, než se dal přehrát. Je v Koši.";
+
+/* Self-timer */
+"A self-timer is already counting down." = "Samospoušť už odpočítává.";
+"The self-timer was cancelled." = "Samospoušť byla zrušena.";
+"The self-timer delay must be 0 to %lld seconds." = "Zpoždění samospouště musí být 0 až %lld sekund.";

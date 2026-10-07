@@ -370,3 +370,8 @@
 /* Leftover recordings */
 "Recovered an unfinished recording: %@" = "Recovered an unfinished recording: %@";
 "An unfinished recording ended before it could be played and was moved to the Trash." = "An unfinished recording ended before it could be played and was moved to the Trash.";
+
+/* Self-timer */
+"A self-timer is already counting down." = "A self-timer is already counting down.";
+"The self-timer was cancelled." = "The self-timer was cancelled.";
+"The self-timer delay must be 0 to %lld seconds." = "The self-timer delay must be 0 to %lld seconds.";

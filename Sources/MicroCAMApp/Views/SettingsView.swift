@@ -263,6 +263,7 @@ extension PreviewSettingsTab {
     static func title(of button: ToolbarButton) -> LocalizedStringKey {
         switch button {
         case .photo: "Take photo"
+        case .selfTimer: "Self-timer"
         case .record: "Record"
         case .timelapse: "Timelapse"
         case .draw: "Draw"
