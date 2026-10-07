@@ -9,7 +9,7 @@ final class LocalizationTests: XCTestCase {
     static let sameAsEnglish: [String: Set<String>] = [
         "cs": ["microCAM", "URL", "Port", "Token", "Video", "Interval", "Text",
                // unit abbreviations after a number, the same in both languages
-               "s", "min", "h"],
+               "s", "min", "h", "%lld s"],
     ]
     /// Stream page keys meant to be identical to English, per language.
     static let streamSameAsEnglish: [String: Set<String>] = [

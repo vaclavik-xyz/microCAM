@@ -375,3 +375,12 @@
 "A self-timer is already counting down." = "A self-timer is already counting down.";
 "The self-timer was cancelled." = "The self-timer was cancelled.";
 "The self-timer delay must be 0 to %lld seconds." = "The self-timer delay must be 0 to %lld seconds.";
+"Self-timer" = "Self-timer";
+"Off" = "Off";
+"%lld s" = "%lld s";
+"Cancel self-timer" = "Cancel self-timer";
+"Cancel the countdown (Esc)" = "Cancel the countdown (Esc)";
+"Self-timer: photos wait for a countdown (S takes one photo with it)" = "Self-timer: photos wait for a countdown (S takes one photo with it)";
+"Photo in %lld s" = "Photo in %lld s";
+"Take photo with self-timer" = "Take photo with self-timer";
+"S – take a photo after the self-timer countdown, Esc – cancel it" = "S – take a photo after the self-timer countdown, Esc – cancel it";

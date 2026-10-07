@@ -374,3 +374,12 @@
 "A self-timer is already counting down." = "Samospoušť už odpočítává.";
 "The self-timer was cancelled." = "Samospoušť byla zrušena.";
 "The self-timer delay must be 0 to %lld seconds." = "Zpoždění samospouště musí být 0 až %lld sekund.";
+"Self-timer" = "Samospoušť";
+"Off" = "Vypnuto";
+"%lld s" = "%lld s";
+"Cancel self-timer" = "Zrušit samospoušť";
+"Cancel the countdown (Esc)" = "Zrušit odpočet (Esc)";
+"Self-timer: photos wait for a countdown (S takes one photo with it)" = "Samospoušť: fotky počkají na odpočet (S vyfotí se samospouští jednou)";
+"Photo in %lld s" = "Fotka za %lld s";
+"Take photo with self-timer" = "Vyfotit se samospouští";
+"S – take a photo after the self-timer countdown, Esc – cancel it" = "S – vyfotit po odpočtu samospouště, Esc – zrušit ho";

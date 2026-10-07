@@ -51,6 +51,7 @@ struct ContentView: View {
                         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 6))
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing).padding(12)
                 }
+                SelfTimerOverlay(runner: model.selfTimer)
                 if model.isDrawing {
                     DrawingPalette(model: model)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom).padding(16)
@@ -82,9 +83,10 @@ struct ContentView: View {
             // the group points at its middle).
             ToolbarItemGroup(placement: .principal) {
                 if shows(.photo) {
-                    Button { model.takePhoto() } label: { Label("Take photo", systemImage: "camera") }
+                    Button { model.handle(.photo) } label: { Label("Take photo", systemImage: "camera") }
                         .help("Take a photo (Space)")
                 }
+                SelfTimerToolbarButton(runner: model.selfTimer)
                 if shows(.record) { RecordButton() }
                 TimelapseToolbarButton(runner: model.timelapse, show: $model.showTimelapse)
             }
@@ -245,6 +247,73 @@ struct TimelapseToolbarButton: View {
         .help("Timelapse")
         .popover(isPresented: $show, arrowEdge: .bottom) {
             TimelapseForm(runner: runner).padding(16).frame(width: 320)
+        }
+    }
+}
+
+/// Off or a delay; while on, the delay shows next to the icon. During a
+/// countdown it turns into a cancel button.
+struct SelfTimerToolbarButton: View {
+    @EnvironmentObject private var model: AppModel
+    @ObservedObject var runner: SelfTimerRunner
+
+    var body: some View {
+        if ToolbarButtons.isVisible(.selfTimer, hidden: model.settings.hiddenToolbarButtons,
+                                    state: ToolbarButtonState(selfTimerActive: model.selfTimerOn || runner.isRunning)) {
+            if runner.isRunning {
+                Button { model.cancelSelfTimer() } label: {
+                    Label("Cancel self-timer", systemImage: "xmark.circle")
+                }
+                .help("Cancel the countdown (Esc)")
+            } else {
+                Menu {
+                    Picker("Self-timer", selection: delay) {
+                        Text("Off").tag(0)
+                        ForEach(SelfTimer.delays, id: \.self) { Text("\($0) s").tag($0) }
+                    }
+                    .pickerStyle(.inline)
+                } label: {
+                    if model.selfTimerOn {
+                        Label {
+                            Text("\(model.settings.selfTimerDelay) s")
+                        } icon: {
+                            Image(systemName: "camera.badge.clock").foregroundStyle(.tint)
+                        }
+                        .labelStyle(.titleAndIcon)
+                    } else {
+                        Label("Self-timer", systemImage: "camera.badge.clock")
+                    }
+                }
+                .help("Self-timer: photos wait for a countdown (S takes one photo with it)")
+            }
+        }
+    }
+
+    /// 0 is off; a delay turns the self-timer on and is remembered.
+    private var delay: Binding<Int> {
+        Binding(get: { model.selfTimerOn ? model.settings.selfTimerDelay : 0 },
+                set: { seconds in
+                    model.selfTimerOn = seconds > 0
+                    if seconds > 0 { model.settings.selfTimerDelay = seconds }
+                })
+    }
+}
+
+/// The countdown in large digits over the middle of the picture; never in the photo.
+struct SelfTimerOverlay: View {
+    @ObservedObject var runner: SelfTimerRunner
+
+    var body: some View {
+        if let remaining = runner.remaining {
+            Text(verbatim: "\(remaining)")
+                .font(.system(size: 96, weight: .semibold, design: .rounded).monospacedDigit())
+                .contentTransition(.numericText(countsDown: true))
+                .frame(width: 160, height: 160)
+                .background(.regularMaterial, in: Circle())
+                .shadow(color: .black.opacity(0.25), radius: 12, y: 3)
+                .animation(.easeOut(duration: 0.2), value: remaining)
+                .accessibilityLabel(Text("Photo in \(remaining) s"))
+                .allowsHitTesting(false)
         }
     }
 }

@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Self-timer: a photo after 3, 5 or 10 seconds, so both hands are free to
+  hold a probe or tweezers in the picture. Turn it on with the clock button
+  next to *Take photo*, or press `S` for one photo with the countdown. Large
+  digits over the picture and a beep each second; Space, `S` or `Esc`
+  cancels.
+
 ## 0.5.4 — 2026-10-02
 
 - The live stream is video now: full HD at up to 30 frames a second and

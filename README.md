@@ -105,6 +105,7 @@ folder on its own.
 | Quick key | Menu shortcut | Action |
 |---|---|---|
 | `Space` | `⌘ T` | take a photo |
+| `S` | `⌥ ⌘ T` | take a photo after the self-timer countdown (`Esc` cancels it) |
 | `Space` in the side panel | | Quick Look of the selected files (a photo when nothing is selected) |
 | `R` | `⌘ R` | start or stop recording |
 | `G` | `⌘ '` | show or hide the grid |
@@ -122,7 +123,7 @@ photos and videos are always full frame.
 
 The window:
 
-- **Toolbar.** Photo, video and timelapse sit together in the middle. Draw,
+- **Toolbar.** Photo, self-timer, video and timelapse sit together in the middle. Draw,
   image adjustments and Settings are on the right, and the active job is on
   the left when jobs are on. *Settings → Preview* turns single buttons off;
   their actions stay in the Camera menu with the shortcuts, and recording or
@@ -157,6 +158,13 @@ The window:
   another device, an AI agent) saves the original and a copy with the
   drawing (`…_2.jpg`); the message names both. Timelapse shots stay clean,
   pointers never go into files, and nothing is kept after quitting.
+- **Self-timer.** For a photo with both hands in the picture (a probe,
+  tweezers). Pick 3, 5 or 10 s with the clock button next to *Take photo*;
+  while it's on, Space, the button and `⌘ T` count down first, with large
+  digits over the picture and a beep each second. `S` takes one photo with
+  the countdown even while it's off. Space, `S` or `Esc` cancels it. The
+  delay is remembered; the self-timer itself is off after a relaunch, so
+  photos never wait by surprise.
 - **Find a job.** With jobs on, the search field at the top of the side
   panel lists the job folders whose code matches, with their file count and
   last day; a click switches to the job.
