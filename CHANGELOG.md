@@ -7,6 +7,10 @@
   next to *Take photo*, or press `S` for one photo with the countdown. Large
   digits over the picture and a beep each second; Space, `S` or `Esc`
   cancels.
+- The stream page has a self-timer button next to *Take photo* (off, 3, 5,
+  10 s): the camera Mac counts down and the button counts along. The
+  Shortcuts action *Take photo* has a *Delay*, e.g. for a foot pedal or a
+  Stream Deck.
 
 ## 0.5.4 — 2026-10-02
 
