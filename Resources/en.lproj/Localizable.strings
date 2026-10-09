@@ -382,8 +382,10 @@
 "%lld s" = "%lld s";
 "Cancel self-timer" = "Cancel self-timer";
 "Cancel the countdown (Esc)" = "Cancel the countdown (Esc)";
-"Take a photo (Space). Hold for the self-timer." = "Take a photo (Space). Hold for the self-timer.";
-"Take a photo after %lld s (Space). Hold for the self-timer." = "Take a photo after %lld s (Space). Hold for the self-timer.";
+"Take a photo (Space)" = "Take a photo (Space)";
+"Take a photo after %lld s (Space)" = "Take a photo after %lld s (Space)";
+"Photos wait for a countdown, so both hands are free. S takes one photo with it." = "Photos wait for a countdown, so both hands are free. S takes one photo with it.";
+"Self-timer and timelapse" = "Self-timer and timelapse";
 "Photo in %lld s" = "Photo in %lld s";
 "Take photo with self-timer" = "Take photo with self-timer";
 "S – take a photo after the self-timer countdown, Esc – cancel it" = "S – take a photo after the self-timer countdown, Esc – cancel it";

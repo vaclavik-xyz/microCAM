@@ -159,8 +159,9 @@ The window:
   drawing (`…_2.jpg`); the message names both. Timelapse shots stay clean,
   pointers never go into files, and nothing is kept after quitting.
 - **Self-timer.** For a photo with both hands in the picture (a probe,
-  tweezers). Hold the photo button (or use *Camera → Self-timer*) and pick
-  3, 5 or 10 s; the button then shows a clock. While it's on, Space, the
+  tweezers). Pick 3, 5 or 10 s at the top of the timelapse popover (the
+  clock in the toolbar) or in *Camera → Self-timer*; the photo button then
+  shows a clock. While it's on, Space, the
   button and `⌘ T` count down first, with large
   digits over the picture and a beep each second. `S` takes one photo with
   the countdown even while it's off. Space, `S` or `Esc` cancels it. The

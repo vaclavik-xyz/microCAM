@@ -240,18 +240,22 @@ struct TimelapseToolbarButton: View {
                 }
             }
         }
-        .help("Timelapse")
+        .help("Self-timer and timelapse")
         .popover(isPresented: $show, arrowEdge: .bottom) {
-            TimelapseForm(runner: runner).padding(16).frame(width: 320)
+            VStack(alignment: .leading, spacing: 16) {
+                SelfTimerSection()
+                Divider()
+                TimelapseForm(runner: runner)
+            }
+            .padding(16).frame(width: 320)
         }
     }
 }
 
-/// Take photo, with the self-timer inside it, as in the iPhone camera: a
-/// click takes a photo, holding the button opens Off / 3 / 5 / 10 s. While the
-/// self-timer is on the icon has a clock in the accent colour; during a
-/// countdown the button cancels it. No menu arrow, so the toolbar keeps its
-/// single photo button (a separate self-timer button looked like a second one).
+/// Take photo; a plain button, so it shares one capsule with record and
+/// timelapse (a pull-down menu got a capsule of its own). The self-timer is
+/// chosen in the timelapse popover and the Camera menu; while it's on the icon
+/// has a clock in the accent colour, and during a countdown the button cancels it.
 struct PhotoToolbarButton: View {
     @EnvironmentObject private var model: AppModel
     @ObservedObject var runner: SelfTimerRunner
@@ -265,9 +269,7 @@ struct PhotoToolbarButton: View {
                 }
                 .help("Cancel the countdown (Esc)")
             } else {
-                Menu {
-                    SelfTimerPicker()
-                } label: {
+                Button { model.handle(.photo) } label: {
                     Label {
                         Text("Take photo")
                     } icon: {
@@ -278,28 +280,50 @@ struct PhotoToolbarButton: View {
                             Image(systemName: "camera")
                         }
                     }
-                } primaryAction: {
-                    model.handle(.photo)
                 }
-                .menuIndicator(.hidden)
                 .help(model.selfTimerOn
-                      ? String(localized: "Take a photo after \(model.settings.selfTimerDelay) s (Space). Hold for the self-timer.")
-                      : String(localized: "Take a photo (Space). Hold for the self-timer."))
+                      ? String(localized: "Take a photo after \(model.settings.selfTimerDelay) s (Space)")
+                      : String(localized: "Take a photo (Space)"))
             }
         }
     }
 }
 
-/// Off or a delay, for the photo button and the Camera menu.
+/// Off or a delay: inline in the Camera menu, segmented in the timelapse popover.
 struct SelfTimerPicker: View {
     @EnvironmentObject private var model: AppModel
+    var segmented = false
 
     var body: some View {
         Picker("Self-timer", selection: $model.selfTimerChoice) {
             Text("Off").tag(0)
             ForEach(SelfTimer.delays, id: \.self) { Text("\($0) s").tag($0) }
         }
-        .pickerStyle(.inline)
+        .modifier(SelfTimerPickerStyle(segmented: segmented))
+    }
+}
+
+private struct SelfTimerPickerStyle: ViewModifier {
+    let segmented: Bool
+
+    func body(content: Content) -> some View {
+        if segmented { content.pickerStyle(.segmented).labelsHidden() } else { content.pickerStyle(.inline) }
+    }
+}
+
+/// Above the timelapse in its popover: both take photos on a clock, and the
+/// toolbar keeps one capsule of photo, record and timelapse.
+struct SelfTimerSection: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Self-timer").font(.headline)
+                Text("Photos wait for a countdown, so both hands are free. S takes one photo with it.")
+                    .font(.callout).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            SelfTimerPicker(segmented: true)
+        }
     }
 }
 

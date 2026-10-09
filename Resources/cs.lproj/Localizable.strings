@@ -381,8 +381,10 @@
 "%lld s" = "%lld s";
 "Cancel self-timer" = "Zrušit samospoušť";
 "Cancel the countdown (Esc)" = "Zrušit odpočet (Esc)";
-"Take a photo (Space). Hold for the self-timer." = "Vyfotit (mezerník). Podrž pro samospoušť.";
-"Take a photo after %lld s (Space). Hold for the self-timer." = "Vyfotit za %lld s (mezerník). Podrž pro samospoušť.";
+"Take a photo (Space)" = "Vyfotit (mezerník)";
+"Take a photo after %lld s (Space)" = "Vyfotit za %lld s (mezerník)";
+"Photos wait for a countdown, so both hands are free. S takes one photo with it." = "Fotky počkají na odpočet, takže máš obě ruce volné. S vyfotí s odpočtem jednou.";
+"Self-timer and timelapse" = "Samospoušť a časosběr";
 "Photo in %lld s" = "Fotka za %lld s";
 "Take photo with self-timer" = "Vyfotit se samospouští";
 "S – take a photo after the self-timer countdown, Esc – cancel it" = "S – vyfotit po odpočtu samospouště, Esc – zrušit ho";

@@ -3,9 +3,9 @@
 ## Unreleased
 
 - Self-timer: a photo after 3, 5 or 10 seconds, so both hands are free to
-  hold a probe or tweezers in the picture. Hold the photo button (or use
-  *Camera → Self-timer*) to turn it on, or press `S` for one photo with the
-  countdown. Large
+  hold a probe or tweezers in the picture. Turn it on at the top of the
+  timelapse popover or in *Camera → Self-timer*, or press `S` for one photo
+  with the countdown. Large
   digits over the picture and a beep each second; Space, `S` or `Esc`
   cancels.
 - The stream page has a self-timer button next to *Take photo* (off, 3, 5,
