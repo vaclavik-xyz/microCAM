@@ -76,4 +76,16 @@ final class ShortcutActionTests: XCTestCase {
         XCTAssertNil(ShortcutAction.from(characters: "c", hasModifiers: false, isEditingText: false,
                                          hasSelection: true))
     }
+
+    func testCommandBackspaceMovesTheSelectionToTheTrash() {
+        XCTAssertEqual(ShortcutAction.from(characters: "\u{7f}", hasModifiers: true, isEditingText: false,
+                                           hasSelection: true, isCommandOnly: true), .trashSelection)
+        XCTAssertNil(ShortcutAction.from(characters: "\u{7f}", hasModifiers: true, isEditingText: true,
+                                         hasSelection: true, isCommandOnly: true))
+        XCTAssertNil(ShortcutAction.from(characters: "\u{7f}", hasModifiers: true, isEditingText: false,
+                                         hasSelection: false, isCommandOnly: true))
+        // A plain ⌫ deletes nothing.
+        XCTAssertNil(ShortcutAction.from(characters: "\u{7f}", hasModifiers: false, isEditingText: false,
+                                         hasSelection: true))
+    }
 }

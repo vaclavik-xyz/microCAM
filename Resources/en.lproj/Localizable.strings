@@ -393,3 +393,11 @@
 /* Side panel: copy */
 "Copied: %lld" = "Copied: %lld";
 "⌘C – copy the selected files" = "⌘C – copy the selected files";
+
+/* Side panel: Trash */
+"Move to Trash" = "Move to Trash";
+"Move to Trash (⌘⌫)" = "Move to Trash (⌘⌫)";
+"%@ is still being saved" = "%@ is still being saved";
+"Moved to Trash: %lld" = "Moved to Trash: %lld";
+"Moved to Trash: %lld. Not moved: %@" = "Moved to Trash: %lld. Not moved: %@";
+"⌘⌫ – move the selected files to the Trash" = "⌘⌫ – move the selected files to the Trash";

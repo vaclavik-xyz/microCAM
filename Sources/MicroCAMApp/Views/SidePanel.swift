@@ -12,7 +12,7 @@ struct ComparePair: Identifiable {
 /// ⌘-click adds, ⇧-click selects a range, double-click opens. A drag from an
 /// unselected tile selects the tiles it passes; one from a selected tile
 /// copies the selected files into another app (`GridDragController`). ⌘C and
-/// Copy put them on the clipboard. After a click in the panel Space opens
+/// Copy put them on the clipboard, ⌘⌫ and Move to Trash delete them. After a click in the panel Space opens
 /// Quick Look instead of taking a photo (see `KeyboardMonitor`).
 struct SidePanel: View {
     @EnvironmentObject private var model: AppModel
@@ -156,6 +156,8 @@ struct SidePanel: View {
                 .menuStyle(.button).menuIndicator(.hidden).fixedSize()
                 .help("More actions for the selected files")
             }
+            Button { model.moveToTrash(library.selectedFiles) } label: { BarIcon("trash") }
+                .help("Move to Trash (⌘⌫)")
             // Grey filled circle, like the clear button of a search field.
             Button { library.grid = GridSelection() } label: {
                 Image(systemName: "xmark.circle.fill").font(.system(size: 15)).foregroundStyle(.secondary)
@@ -192,6 +194,8 @@ struct SidePanel: View {
         if model.settings.jobsEnabled {
             Button("Move to job…") { model.filesToMove = urls }
         }
+        Divider()
+        Button("Move to Trash", role: .destructive) { model.moveToTrash(urls) }
     }
 
     private func click(_ url: URL) {

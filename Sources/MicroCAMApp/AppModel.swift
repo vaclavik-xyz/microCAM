@@ -102,6 +102,7 @@ final class AppModel: ObservableObject {
         case .toggleRecording: toggleRecording()
         case .quickLook: previewSelection()
         case .copySelection: copyFiles(library.selectedFiles)
+        case .trashSelection: moveToTrash(library.selectedFiles)
         case .toggleDrawing: isDrawing.toggle()
         case .leaveDrawing: isDrawing = false
         }
@@ -609,6 +610,39 @@ final class AppModel: ObservableObject {
         pasteboard.clearContents()
         pasteboard.writeObjects(items)
         message = StatusMessage(text: String(localized: "Copied: \(urls.count)"), isError: false)
+    }
+
+    /// ⌘⌫ and Move to Trash in the side panel. The Trash keeps them, so no
+    /// question first, as in Finder. A photo or video still being written
+    /// stays, and files being moved to a job can't be touched until that ends.
+    func moveToTrash(_ urls: [URL]) {
+        guard !urls.isEmpty else { return }
+        guard !isMovingFiles else {
+            message = StatusMessage(text: String(localized: "Still moving the previous files. Try again in a moment."), isError: false)
+            return
+        }
+        var trashed = 0
+        var problems: [String] = []
+        for url in urls {
+            if pendingURLs.contains(url) {
+                problems.append(String(localized: "\(url.lastPathComponent) is still being saved"))
+                continue
+            }
+            do {
+                try FileManager.default.trashItem(at: url, resultingItemURL: nil)
+                trashed += 1
+            } catch {
+                problems.append("\(url.lastPathComponent): \(error.localizedDescription)")
+            }
+        }
+        library.grid = GridSelection()
+        capturesChanged()
+        if problems.isEmpty {
+            message = StatusMessage(text: String(localized: "Moved to Trash: \(trashed)"), isError: false)
+        } else {
+            let text = String(localized: "Moved to Trash: \(trashed). Not moved: \(problems.joined(separator: "; "))")
+            message = StatusMessage(text: text, isError: true)
+        }
     }
 
     /// Space in the side panel: Quick Look over the selection, or closes it.

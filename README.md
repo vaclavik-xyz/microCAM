@@ -108,6 +108,7 @@ folder on its own.
 | `S` | `⌥ ⌘ T` | take a photo after the self-timer countdown (`Esc` cancels it) |
 | `Space` in the side panel | | Quick Look of the selected files (a photo when nothing is selected) |
 | | `⌘ C` | copy the selected files (outside text fields) |
+| | `⌘ ⌫` | move the selected files to the Trash (outside text fields) |
 | `R` | `⌘ R` | start or stop recording |
 | `G` | `⌘ '` | show or hide the grid |
 | `D` | `⌘ D` | draw on the picture (`Esc` stops drawing) |
@@ -135,7 +136,8 @@ The window:
   (the panel scrolls at its edge), then drag the selected ones into another
   app. ⌘C or *Copy* (right click) puts them on the clipboard: Finder pastes
   files, Mail and Messages attachments, and a single photo also pastes as a
-  picture. The folder name at the top
+  picture. ⌘⌫, *Move to Trash* (right click) or the bin in the bar below
+  move them to the Trash, without asking: they can be put back from there. The folder name at the top
   opens the folder; share and compare appear at the bottom once you select
   files. The panel remembers its
   width. Hide it with the button next to the window buttons.

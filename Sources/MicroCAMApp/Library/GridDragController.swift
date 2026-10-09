@@ -80,6 +80,9 @@ final class GridDragController: NSObject, NSDraggingSource {
 
     /// Faster the further the pointer is past the edge zone, up to 24 pt a frame.
     private func scrollIfAtEdge() {
+        // The button is up but the gesture never ended (e.g. the grid was
+        // rebuilt under it): stop following the pointer.
+        guard NSEvent.pressedMouseButtons & 1 != 0 else { return finish() }
         guard let scrollView = gridView?.enclosingScrollView, let window = scrollView.window,
               let document = scrollView.documentView else { return }
         let clip = scrollView.contentView

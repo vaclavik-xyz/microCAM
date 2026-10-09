@@ -79,6 +79,7 @@ struct MicroCAMApp: App {
                         String(localized: "S – take a photo after the self-timer countdown, Esc – cancel it"),
                         String(localized: "Space in the side panel – Quick Look of the selected files"),
                         String(localized: "⌘C – copy the selected files"),
+                        String(localized: "⌘⌫ – move the selected files to the Trash"),
                         String(localized: "R – start or stop recording"),
                         String(localized: "G – show or hide the grid"),
                         String(localized: "D – draw on the picture, Esc – stop drawing"),
