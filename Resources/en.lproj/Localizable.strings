@@ -234,7 +234,6 @@
 "Stream" = "Stream";
 "System default" = "System default";
 "System" = "System";
-"Take a photo (Space)" = "Take a photo (Space)";
 "Take photo" = "Take photo";
 "Takes a photo at a fixed interval into the current folder. Start it from the toolbar." = "Takes a photo at a fixed interval into the current folder. Start it from the toolbar.";
 "Takes a photo at a fixed interval into the current folder." = "Takes a photo at a fixed interval into the current folder.";
@@ -333,7 +332,10 @@
 "Start recording" = "Start recording";
 "Starts a video in the current folder." = "Starts a video in the current folder.";
 "Stops the video and returns it once it is saved." = "Stops the video and returns it once it is saved.";
-"Takes a photo into the current folder and returns it." = "Takes a photo into the current folder and returns it.";
+"Takes a photo into the current folder and returns it. With a delay, the self-timer counts down on the Mac first." = "Takes a photo into the current folder and returns it. With a delay, the self-timer counts down on the Mac first.";
+"Delay" = "Delay";
+"Seconds of self-timer countdown before the photo. 0 takes it right away." = "Seconds of self-timer countdown before the photo. 0 takes it right away.";
+"Take photo after ${delay} seconds" = "Take photo after ${delay} seconds";
 "The camera sends no picture. Check it in microCAM." = "The camera sends no picture. Check it in microCAM.";
 "microCAM is already recording." = "microCAM is already recording.";
 "microCAM is in viewer mode. Switch to camera mode in Settings → General." = "microCAM is in viewer mode. Switch to camera mode in Settings → General.";
@@ -370,3 +372,20 @@
 /* Leftover recordings */
 "Recovered an unfinished recording: %@" = "Recovered an unfinished recording: %@";
 "An unfinished recording ended before it could be played and was moved to the Trash." = "An unfinished recording ended before it could be played and was moved to the Trash.";
+
+/* Self-timer */
+"A self-timer is already counting down." = "A self-timer is already counting down.";
+"The self-timer was cancelled." = "The self-timer was cancelled.";
+"The self-timer delay must be 0 to %lld seconds." = "The self-timer delay must be 0 to %lld seconds.";
+"Self-timer" = "Self-timer";
+"Off" = "Off";
+"%lld s" = "%lld s";
+"Cancel self-timer" = "Cancel self-timer";
+"Cancel the countdown (Esc)" = "Cancel the countdown (Esc)";
+"Take a photo (Space)" = "Take a photo (Space)";
+"Take a photo after %lld s (Space)" = "Take a photo after %lld s (Space)";
+"Photos wait for a countdown, so both hands are free. S takes one photo with it." = "Photos wait for a countdown, so both hands are free. S takes one photo with it.";
+"Self-timer and timelapse" = "Self-timer and timelapse";
+"Photo in %lld s" = "Photo in %lld s";
+"Take photo with self-timer" = "Take photo with self-timer";
+"S – take a photo after the self-timer countdown, Esc – cancel it" = "S – take a photo after the self-timer countdown, Esc – cancel it";

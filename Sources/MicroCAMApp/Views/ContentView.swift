@@ -51,6 +51,7 @@ struct ContentView: View {
                         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 6))
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing).padding(12)
                 }
+                SelfTimerOverlay(runner: model.selfTimer)
                 if model.isDrawing {
                     DrawingPalette(model: model)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom).padding(16)
@@ -81,10 +82,7 @@ struct ContentView: View {
             // on a button inside a toolbar ControlGroup never appears, one on
             // the group points at its middle).
             ToolbarItemGroup(placement: .principal) {
-                if shows(.photo) {
-                    Button { model.takePhoto() } label: { Label("Take photo", systemImage: "camera") }
-                        .help("Take a photo (Space)")
-                }
+                PhotoToolbarButton(runner: model.selfTimer)
                 if shows(.record) { RecordButton() }
                 TimelapseToolbarButton(runner: model.timelapse, show: $model.showTimelapse)
             }
@@ -242,9 +240,108 @@ struct TimelapseToolbarButton: View {
                 }
             }
         }
-        .help("Timelapse")
+        .help("Self-timer and timelapse")
         .popover(isPresented: $show, arrowEdge: .bottom) {
-            TimelapseForm(runner: runner).padding(16).frame(width: 320)
+            VStack(alignment: .leading, spacing: 16) {
+                SelfTimerSection()
+                Divider()
+                TimelapseForm(runner: runner)
+            }
+            .padding(16).frame(width: 320)
+        }
+    }
+}
+
+/// Take photo; a plain button, so it shares one capsule with record and
+/// timelapse (a pull-down menu got a capsule of its own). The self-timer is
+/// chosen in the timelapse popover and the Camera menu; while it's on the icon
+/// has a clock in the accent colour, and during a countdown the button cancels it.
+struct PhotoToolbarButton: View {
+    @EnvironmentObject private var model: AppModel
+    @ObservedObject var runner: SelfTimerRunner
+
+    var body: some View {
+        if ToolbarButtons.isVisible(.photo, hidden: model.settings.hiddenToolbarButtons,
+                                    state: ToolbarButtonState(selfTimerActive: model.selfTimerOn || runner.isRunning)) {
+            if runner.isRunning {
+                Button { model.cancelSelfTimer() } label: {
+                    Label("Cancel self-timer", systemImage: "xmark.circle")
+                }
+                .help("Cancel the countdown (Esc)")
+            } else {
+                Button { model.handle(.photo) } label: {
+                    Label {
+                        Text("Take photo")
+                    } icon: {
+                        // Colour only while on, like the timelapse button.
+                        if model.selfTimerOn {
+                            Image(systemName: "camera.badge.clock").foregroundStyle(.tint)
+                        } else {
+                            Image(systemName: "camera")
+                        }
+                    }
+                }
+                .help(model.selfTimerOn
+                      ? String(localized: "Take a photo after \(model.settings.selfTimerDelay) s (Space)")
+                      : String(localized: "Take a photo (Space)"))
+            }
+        }
+    }
+}
+
+/// Off or a delay: inline in the Camera menu, segmented in the timelapse popover.
+struct SelfTimerPicker: View {
+    @EnvironmentObject private var model: AppModel
+    var segmented = false
+
+    var body: some View {
+        Picker("Self-timer", selection: $model.selfTimerChoice) {
+            Text("Off").tag(0)
+            ForEach(SelfTimer.delays, id: \.self) { Text("\($0) s").tag($0) }
+        }
+        .modifier(SelfTimerPickerStyle(segmented: segmented))
+    }
+}
+
+private struct SelfTimerPickerStyle: ViewModifier {
+    let segmented: Bool
+
+    func body(content: Content) -> some View {
+        if segmented { content.pickerStyle(.segmented).labelsHidden() } else { content.pickerStyle(.inline) }
+    }
+}
+
+/// Above the timelapse in its popover: both take photos on a clock, and the
+/// toolbar keeps one capsule of photo, record and timelapse.
+struct SelfTimerSection: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Self-timer").font(.headline)
+                Text("Photos wait for a countdown, so both hands are free. S takes one photo with it.")
+                    .font(.callout).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            SelfTimerPicker(segmented: true)
+        }
+    }
+}
+
+/// The countdown in large digits over the middle of the picture; never in the photo.
+struct SelfTimerOverlay: View {
+    @ObservedObject var runner: SelfTimerRunner
+
+    var body: some View {
+        if let remaining = runner.remaining {
+            Text(verbatim: "\(remaining)")
+                .font(.system(size: 96, weight: .semibold, design: .rounded).monospacedDigit())
+                .contentTransition(.numericText(countsDown: true))
+                .frame(width: 160, height: 160)
+                .background(.regularMaterial, in: Circle())
+                .shadow(color: .black.opacity(0.25), radius: 12, y: 3)
+                .animation(.easeOut(duration: 0.2), value: remaining)
+                .accessibilityLabel(Text("Photo in \(remaining) s"))
+                .allowsHitTesting(false)
         }
     }
 }

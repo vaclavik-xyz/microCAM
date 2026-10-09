@@ -9,11 +9,11 @@ final class LocalizationTests: XCTestCase {
     static let sameAsEnglish: [String: Set<String>] = [
         "cs": ["microCAM", "URL", "Port", "Token", "Video", "Interval", "Text",
                // unit abbreviations after a number, the same in both languages
-               "s", "min", "h"],
+               "s", "min", "h", "%lld s"],
     ]
     /// Stream page keys meant to be identical to English, per language.
     static let streamSameAsEnglish: [String: Set<String>] = [
-        "cs": ["text"],
+        "cs": ["text", "seconds"],
     ]
     /// Files allowed to contain Czech text (folder names on disk, translations).
     static let czechAllowed: Set<String> = [

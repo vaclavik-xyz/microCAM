@@ -10,7 +10,9 @@ import MicroCAMCore
 /// free; text sizes and colours open over it, so picking a tool never shrinks
 /// the picture. Touch controls are at least 44 px, mouse ones 36 px, and the
 /// safe-area insets are respected. Without a PIN on the camera computer the
-/// photo button is not shown.
+/// photo button is not shown. Next to it the self-timer button cycles through
+/// off and `SelfTimer.delays`; the countdown runs on the camera computer
+/// (`POST /photo?delay=`), the photo button counts along.
 ///
 /// The live picture is H.264 (`/video`, fragmented MP4) played through Media
 /// Source Extensions, or `ManagedMediaSource` on iPhone; WebCodecs would be
@@ -29,6 +31,7 @@ enum StreamPage {
         template
             .replacingOccurrences(of: "__MODE__", with: mode.rawValue)
             .replacingOccurrences(of: "__EMBEDDED__", with: embedded ? "true" : "false")
+            .replacingOccurrences(of: "__DELAYS__", with: "[" + SelfTimer.delays.map(String.init).joined(separator: ",") + "]")
     }
 
     private static let template = #"""
@@ -113,6 +116,13 @@ button:disabled{color:var(--text)}
 button.primary:disabled{opacity:1;background:rgba(255,59,48,.28);color:rgba(255,255,255,.55);
   -webkit-text-fill-color:rgba(255,255,255,.55);box-shadow:inset 0 0 0 1px rgba(255,59,48,.35)}
 #photo{min-width:148px}
+/* counting down for a photo: the button stays bright and shows the seconds left */
+button.primary.counting:disabled{background:var(--accent);color:#fff;-webkit-text-fill-color:#fff;
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.22),0 8px 22px rgba(255,59,48,.32)}
+#photo.counting span{font-variant-numeric:tabular-nums}
+/* self-timer: just the icon while off, the delay next to it while on */
+#timer{width:var(--hit);padding:0}
+#timer.on{width:auto;padding:0 12px 0 9px;gap:4px;font-variant-numeric:tabular-nums}
 .chip-color{width:24px;height:24px;border-radius:50%;background:var(--c,#ff3b30);box-shadow:0 0 0 2px rgba(255,255,255,.9)}
 #colorBtn[aria-expanded=true]{background:var(--raised-hi)}
 .swatch{width:var(--hit);padding:0}
@@ -131,6 +141,7 @@ button.primary:disabled{opacity:1;background:rgba(255,59,48,.28);color:rgba(255,
   button,.btn{padding:0 11px;font-size:14px}
   button.primary{height:40px;padding:0 18px;font-size:15px}
   #photo{min-width:0}
+  #timer.on{padding:0 10px 0 7px}
   .swatch i{width:22px;height:22px}
   .chip-color{width:20px;height:20px}
 }
@@ -148,6 +159,9 @@ body.embedded #dock{padding-bottom:64px}
 @media (max-width:400px){ .sep{display:none} }
 /* the smallest phones (320 px): tighter spacing, no dividers */
 @media (max-width:360px){ :root{--gap:2px;--edge:8px} .sep{display:none} #photo{min-width:132px}
+  /* the delay under the self-timer icon, so Draw, the timer, Take photo and Full screen fit 320 px */
+  #timer.on{width:var(--hit);padding:0;flex-direction:column;gap:0;font-size:11px;line-height:1.1}
+  #timer.on svg{width:18px;height:18px}
   #palette{flex-wrap:wrap;justify-content:center;max-width:calc(4 * var(--hit) + 3 * var(--gap) + 12px);border-radius:26px} }
 
 #offline{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;
@@ -198,6 +212,9 @@ body.embedded #dock{padding-bottom:64px}
   #draw{width:var(--hit);padding:0}
   button.primary{width:64px;height:64px;min-width:0;padding:0;flex-direction:column;gap:1px;font-size:11px}
   #photo{min-width:0}
+  /* the delay goes under the self-timer icon */
+  #timer.on{width:var(--hit);padding:0;flex-direction:column;gap:0;font-size:11px;line-height:1.1}
+  #timer.on svg{width:18px;height:18px}
   /* "Take photo" is wider than the round button: wrap it onto two lines inside. */
   button.primary>span{white-space:normal;max-width:54px;line-height:1.05;text-align:center}
   #toast{position:fixed;left:50%;top:calc(var(--st) + var(--edge));bottom:auto;max-width:60vw}
@@ -249,7 +266,8 @@ body.embedded #dock{padding-bottom:64px}
   <div id="controls" class="panel">
     <span id="liveTools" class="group">
       <button id="draw" data-i18n-aria="draw" data-i18n-title="drawTitle"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4Z"/><path d="m13.5 6.5 4 4"/></svg><span class="lbl" data-i18n="draw"></span></button>
-      <button id="photo" class="primary" data-i18n-title="photoTitle"><svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13" r="3.5"/></svg><span data-i18n="photo"></span></button>
+      <button id="timer" data-i18n-title="timerTitle"><svg viewBox="0 0 24 24"><circle cx="12" cy="13.5" r="7.5"/><path d="M12 9.5v4l2.5 2M10 3h4"/></svg><span id="timerValue" class="hidden"></span></button>
+      <button id="photo" class="primary" data-i18n-title="photoTitle"><svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13" r="3.5"/></svg><span id="photoLabel" data-i18n="photo"></span></button>
     </span>
     <span id="shotTools" class="group hidden">
       <button id="back" data-i18n-aria="backTitle" data-i18n-title="backTitle"><svg viewBox="0 0 24 24"><path d="M15 5 8 12l7 7"/></svg><span class="lbl" data-i18n="back"></span></button>
@@ -274,7 +292,7 @@ body.embedded #dock{padding-bottom:64px}
   </form>
 </div>
 <script>
-const MODE = "__MODE__", EMBEDDED = __EMBEDDED__;
+const MODE = "__MODE__", EMBEDDED = __EMBEDDED__, DELAYS = __DELAYS__;
 const $ = id => document.getElementById(id);
 
 // ---- texts: one entry per language, the same keys in each ----
@@ -301,7 +319,11 @@ const STRINGS = {
     "actionOff": "This is turned off in microCAM on the camera computer.",
     "error": "Something went wrong (error {code}).",
     "photoLoadFailed": "Couldn't load the photo.",
-    "photoTaken": "Photo taken", "drawFirst": "Draw something first", "savedToJob": "Saved as a photo"
+    "photoTaken": "Photo taken", "drawFirst": "Draw something first", "savedToJob": "Saved as a photo",
+    "timerTitle": "Self-timer: a countdown on the camera computer before the photo",
+    "timerOff": "Self-timer off", "timerOn": "Self-timer {seconds}\u00a0s", "seconds": "{seconds}\u00a0s",
+    "timerBusy": "The camera computer is already counting down for a photo.",
+    "timerCancelled": "The countdown was cancelled on the camera computer."
   },
   "cs": {
     "offline": "Připojuji se k počítači s kamerou…",
@@ -325,7 +347,11 @@ const STRINGS = {
     "actionOff": "Tohle je v microCAMu na počítači s kamerou vypnuté.",
     "error": "Něco se pokazilo (chyba {code}).",
     "photoLoadFailed": "Fotku se nepodařilo načíst.",
-    "photoTaken": "Vyfoceno", "drawFirst": "Nejdřív něco nakresli", "savedToJob": "Uloženo jako fotka"
+    "photoTaken": "Vyfoceno", "drawFirst": "Nejdřív něco nakresli", "savedToJob": "Uloženo jako fotka",
+    "timerTitle": "Samospoušť: odpočet na počítači s kamerou před fotkou",
+    "timerOff": "Samospoušť vypnutá", "timerOn": "Samospoušť {seconds}\u00a0s", "seconds": "{seconds}\u00a0s",
+    "timerBusy": "Počítač s kamerou už odpočítává jinou fotku.",
+    "timerCancelled": "Odpočet na počítači s kamerou byl zrušen."
   }
 }; // end STRINGS
 // ?lang= (the viewer app passes its own), then the browser's languages, else English.
@@ -461,6 +487,7 @@ async function poll() {
     $("job").classList.toggle("hidden", !s.job);
     // Without a PIN on the camera computer nobody can take a photo: no button.
     $("photo").classList.toggle("hidden", !s.photoEnabled);
+    $("timer").classList.toggle("hidden", !s.photoEnabled);
     photoEnabled = !!s.photoEnabled; job = s.job || "";
     report();
     if (offline && !frozen && !useVideo) startStream();
@@ -804,6 +831,11 @@ async function withPin(send) {
     }
     localStorage.setItem(PIN_KEY, p);
     if (r.status === 403) { toast(t("actionOff")); return null; }
+    // The self-timer on the camera computer: already counting down, or cancelled there.
+    if (r.status === 409) {
+      const j = await r.json().catch(() => ({}));
+      toast(j.error === "cancelled" ? t("timerCancelled") : t("timerBusy")); return null;
+    }
     if (!r.ok) { toast(t("error", { code: r.status })); return null; }
     return r;
   }
@@ -826,10 +858,60 @@ async function setDownload(ref) {
   if (downloadURL && downloadURL !== shotURL) URL.revokeObjectURL(downloadURL);
   downloadURL = url; $("download").href = url; $("download").download = ref.name;
 }
-$("photo").onclick = async () => {
+// ---- self-timer: off, then the delays microCAM offers; the choice stays in this browser ----
+const TIMER_KEY = "microcamTimer";
+let timerDelay = 0, countdownTimer = 0;
+try { const v = parseInt(localStorage.getItem(TIMER_KEY), 10); if (DELAYS.includes(v)) timerDelay = v; } catch (e) {}
+function showTimer() {
+  const on = timerDelay > 0;
+  $("timer").classList.toggle("on", on);
+  $("timerValue").classList.toggle("hidden", !on);
+  $("timerValue").textContent = on ? t("seconds", { seconds: timerDelay }) : "";
+  $("timer").setAttribute("aria-label", on ? t("timerOn", { seconds: timerDelay }) : t("timerOff"));
+}
+$("timer").onclick = () => {
+  timerDelay = DELAYS[DELAYS.indexOf(timerDelay) + 1] || 0;   // off → first delay → … → last → off
+  try { localStorage.setItem(TIMER_KEY, String(timerDelay)); } catch (e) {}
+  showTimer();
+};
+showTimer();
+/// The photo button counts along with the camera computer while the request waits.
+function startCountdown(delay) {
+  stopCountdown();
+  if (!delay) return;
+  const end = Date.now() + delay * 1000, b = $("photo");
+  b.style.minWidth = b.offsetWidth + "px";   // the seconds are shorter than "Take photo"
+  b.classList.add("counting");
+  const tick = () => {
+    const left = Math.ceil((end - Date.now()) / 1000);
+    $("photoLabel").textContent = left > 0 ? t("seconds", { seconds: left }) : t("photo");
+  };
+  tick(); countdownTimer = setInterval(tick, 200);
+  wake();
+}
+function stopCountdown() {
+  if (!countdownTimer) return;
+  clearInterval(countdownTimer); countdownTimer = 0;
+  $("photo").classList.remove("counting"); $("photo").style.minWidth = "";
+  $("photoLabel").textContent = t("photo");
+  wake();
+}
+/// The answer comes once the photo is saved, after the countdown on the camera computer.
+async function takePhoto(delay) {
+  if ($("photo").disabled) return;
   closeEditor();
-  $("photo").disabled = true;
-  const ref = await post("/photo");
+  $("photo").disabled = true;   // the timer stays usable: a new delay is for the next photo
+  let ref = null;
+  try {
+    const r = await withPin(async p => {
+      startCountdown(delay);
+      try {
+        return await fetch("/photo" + (delay ? "?delay=" + delay : ""), { method: "POST",
+          headers: { "X-MicroCAM-PIN": p, "Content-Type": "application/json" }, body: "{}" });
+      } finally { stopCountdown(); }
+    });
+    ref = r && await r.json();
+  } catch (e) { toast(t("unreachable")); }
   $("photo").disabled = false;
   if (!ref) return;
   const url = await fetchCapture(ref);
@@ -844,7 +926,8 @@ $("photo").onclick = async () => {
   $("download").href = url; $("download").download = ref.name;
   setState(); setDrawing(true);
   toast(t("photoTaken"), ref.name);
-};
+}
+$("photo").onclick = () => takePhoto(timerDelay);
 $("save").onclick = async () => {
   commitText();
   if (!shapes.length) { toast(t("drawFirst")); return; }
@@ -870,7 +953,7 @@ let idleTimer;
 function wake() {
   document.body.classList.remove("idle");
   clearTimeout(idleTimer);
-  idleTimer = setTimeout(() => { if (!drawing && !frozen) document.body.classList.add("idle"); }, 3000);
+  idleTimer = setTimeout(() => { if (!drawing && !frozen && !countdownTimer) document.body.classList.add("idle"); }, 3000);
 }
 ["pointermove", "pointerdown", "keydown"].forEach(ev => window.addEventListener(ev, wake));
 
@@ -890,7 +973,7 @@ window.microcam = {
   setTextSize: selectSize,
   undo: () => $("undo").click(),
   clear: () => $("clear").click(),
-  photo: () => $("photo").click(),
+  photo: () => takePhoto(0),   // the viewer has no self-timer
   back: () => $("back").click(),
   save: () => $("save").click(),
 };

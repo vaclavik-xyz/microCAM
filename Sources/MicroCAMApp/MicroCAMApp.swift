@@ -23,12 +23,16 @@ struct MicroCAMApp: App {
                 }
             }
             // Menu shortcuts use ⌘ like other Mac apps (⌘T is Take Photo in
-            // Photo Booth). The quick single keys (Space, R, G, 0) are handled by
+            // Photo Booth). The quick single keys (Space, S, R, G, 0) are handled by
             // KeyboardMonitor instead: as menu shortcuts they would also fire
             // while typing in a text field, e.g. R in a job code.
             CommandMenu("Camera") {
                 Button("Take photo") { model.handle(.photo) }
                     .keyboardShortcut("t")
+                // Cancels a running countdown, like S.
+                Button("Take photo with self-timer") { model.handle(.selfTimer) }
+                    .keyboardShortcut("t", modifiers: [.command, .option])
+                Menu("Self-timer") { SelfTimerPicker().environmentObject(model) }
                 Button("Start or stop recording") { model.handle(.toggleRecording) }
                     .keyboardShortcut("r")
                 Divider()
@@ -72,6 +76,7 @@ struct MicroCAMApp: App {
                     alert.messageText = String(localized: "Keyboard shortcuts")
                     alert.informativeText = [
                         String(localized: "Space – take a photo"),
+                        String(localized: "S – take a photo after the self-timer countdown, Esc – cancel it"),
                         String(localized: "Space in the side panel – Quick Look of the selected files"),
                         String(localized: "R – start or stop recording"),
                         String(localized: "G – show or hide the grid"),

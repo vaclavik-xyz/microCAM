@@ -23,9 +23,20 @@ final class StreamBackendAdapter: StreamBackend {
         MainActor.assumeIsolated { model.layout?.listedFolders(for: model.settings.jobContext) ?? [] }
     }
 
-    func takePhoto(completion: @escaping (Result<String, Error>) -> Void) {
+    func takePhoto(delay: Int, completion: @escaping (Result<String, Error>) -> Void) {
         MainActor.assumeIsolated {
-            model.takePhoto(source: .remote) { completion($0.map(\.lastPathComponent)) }
+            model.takePhoto(after: delay, source: .remote) { result in
+                completion(result.map(\.lastPathComponent).mapError(Self.pageError))
+            }
+        }
+    }
+
+    /// The page shows its own text for a busy or cancelled self-timer.
+    private static func pageError(_ error: Error) -> Error {
+        switch error as? AppModel.SelfTimerError {
+        case .busy: StreamPhotoError.selfTimerBusy
+        case .cancelled: StreamPhotoError.selfTimerCancelled
+        case .invalidDelay, nil: error
         }
     }
 

@@ -96,7 +96,9 @@ final class AppModel: ObservableObject {
         switch action {
         case .toggleGrid: gridVisible.toggle()
         case .resetZoom: previewView?.resetZoom()
-        case .photo: takePhoto()
+        case .photo: photoPressed()
+        case .selfTimer: selfTimer.isRunning ? cancelSelfTimer() : takePhoto(after: settings.selfTimerDelay)
+        case .cancelSelfTimer: cancelSelfTimer()
         case .toggleRecording: toggleRecording()
         case .quickLook: previewSelection()
         case .toggleDrawing: isDrawing.toggle()
@@ -165,6 +167,7 @@ final class AppModel: ObservableObject {
         lifecycle.onWillSleep = { [weak self] in
             self?.stopRecording(reason: String(localized: "the Mac went to sleep"))
             self?.stopTimelapse()
+            self?.cancelSelfTimer()
         }
         timelapse.onShot = { [weak self] in self?.takePhoto(kind: .timelapse) }
         timelapse.onFinish = { [weak self] in
@@ -177,6 +180,7 @@ final class AppModel: ObservableObject {
         engine.onCameraDisconnected = { [weak self] in
             self?.stopRecording(reason: String(localized: "the camera was disconnected"))
             self?.stopTimelapse()
+            self?.cancelSelfTimer()
             self?.message = StatusMessage(text: String(localized: "The camera was disconnected. The picture comes back when you connect it again."), isError: true)
         }
         engine.onCamerasChanged = { [weak self] in
@@ -195,6 +199,7 @@ final class AppModel: ObservableObject {
             return view.bounds.contains(view.convert(event.locationInWindow, from: nil))
         }, hasSelection: { [weak self] in self?.library.selection.isEmpty == false },
            isDrawing: { [weak self] in self?.isDrawing == true },
+           isCountingDown: { [weak self] in self?.selfTimer.isRunning == true },
            handler: { [weak self] action in self?.handle(action) })
         checkUnfinishedRecordings()
         capturesChanged()
@@ -910,6 +915,79 @@ final class AppModel: ObservableObject {
             parts.append(String(localized: "An unfinished recording ended before it could be played and was moved to the Trash."))
         }
         if !parts.isEmpty { message = StatusMessage(text: parts.joined(separator: " "), isError: false) }
+    }
+
+    // MARK: Self-timer
+
+    enum SelfTimerError: LocalizedError {
+        case busy, cancelled, invalidDelay
+        var errorDescription: String? {
+            switch self {
+            case .busy: String(localized: "A self-timer is already counting down.")
+            case .cancelled: String(localized: "The self-timer was cancelled.")
+            case .invalidDelay: String(localized: "The self-timer delay must be 0 to \(SelfTimer.maxDelay) seconds.")
+            }
+        }
+    }
+
+    let selfTimer = SelfTimerRunner()
+    /// On in the toolbar: local photos (Space, the button, ⌘T) wait for the
+    /// countdown. Not saved, so after a relaunch photos are taken at once.
+    @Published var selfTimerOn = false
+    /// 0 while off, else the delay; picking a delay turns the self-timer on
+    /// and is remembered.
+    var selfTimerChoice: Int {
+        get { selfTimerOn ? settings.selfTimerDelay : 0 }
+        set {
+            selfTimerOn = newValue > 0
+            if newValue > 0 { settings.selfTimerDelay = newValue }
+        }
+    }
+    /// Told when a running countdown is cancelled instead of taking its photo.
+    private var selfTimerCompletion: ((Result<URL, Error>) -> Void)?
+
+    /// Space, the photo button and ⌘T: cancel a running countdown, or take a
+    /// photo, after the countdown while the self-timer is on.
+    func photoPressed() {
+        if selfTimer.isRunning { cancelSelfTimer() }
+        else if selfTimerOn { takePhoto(after: settings.selfTimerDelay) }
+        else { takePhoto() }
+    }
+
+    /// A photo after `seconds` of countdown over the picture, with a beep each
+    /// second (0 takes it right away). Only one countdown runs at a time: from
+    /// another device or a shortcut a second one fails with `busy`.
+    func takePhoto(after seconds: Int, source: CaptureSource = .local,
+                   completion: ((Result<URL, Error>) -> Void)? = nil) {
+        guard SelfTimer.isValid(remoteDelay: seconds) else {
+            completion?(.failure(SelfTimerError.invalidDelay))
+            return
+        }
+        guard seconds > 0 else { return takePhoto(source: source, completion: completion) }
+        guard !selfTimer.isRunning else {
+            completion?(.failure(SelfTimerError.busy))
+            return
+        }
+        // Fail now rather than after the countdown.
+        guard settings.storageRoot != nil else { return takePhoto(source: source, completion: completion) }
+        selfTimerCompletion = completion
+        selfTimer.start(seconds: seconds, onTick: { left in
+            // The last beep differs, so the photo doesn't come as a surprise.
+            NSSound(named: left == 1 ? "Pop" : "Tink")?.play()
+        }, onFire: { [weak self] in
+            guard let self else { return }
+            let completion = self.selfTimerCompletion
+            self.selfTimerCompletion = nil
+            self.takePhoto(source: source, completion: completion)
+        })
+    }
+
+    func cancelSelfTimer() {
+        guard selfTimer.isRunning else { return }
+        selfTimer.cancel()
+        let completion = selfTimerCompletion
+        selfTimerCompletion = nil
+        completion?(.failure(SelfTimerError.cancelled))
     }
 
     // MARK: Timelapse

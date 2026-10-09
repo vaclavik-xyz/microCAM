@@ -23,8 +23,17 @@ public protocol StreamBackend: AnyObject {
     func status() -> StreamStatus
     func page(mode: StreamMode, embedded: Bool) -> String
     func captureFolders() -> [URL]
-    func takePhoto(completion: @escaping (Result<String, Error>) -> Void)
+    /// `delay` is the self-timer countdown in seconds (0: right away); the
+    /// completion runs once the photo is saved, after the countdown.
+    func takePhoto(delay: Int, completion: @escaping (Result<String, Error>) -> Void)
     func saveAnnotated(_ request: AnnotationRequest, source: URL, completion: @escaping (Result<String, Error>) -> Void)
+}
+
+/// Photo failures the stream page explains in its own language: the
+/// self-timer is already counting down (from another device or the camera
+/// computer), or someone at the camera computer cancelled it.
+public enum StreamPhotoError: Error, Equatable {
+    case selfTimerBusy, selfTimerCancelled
 }
 
 /// The two live feeds: H.264 in fragmented MP4 for Media Source Extensions,
@@ -77,7 +86,7 @@ public final class StreamRouter {
             completion(.response(HTTPResponse(status: 200, headers: [("Content-Type", "image/jpeg")], body: data)))
         case (_, "/photo"), (_, "/annotated"):
             if let denied = remoteActionDenied(request, method: "POST") { return completion(.response(denied)) }
-            path == "/photo" ? photo(backend, completion) : annotated(request, backend, completion)
+            path == "/photo" ? photo(request, backend, completion) : annotated(request, backend, completion)
         case (_, "/"), (_, "/status"), (_, "/stream"), (_, "/video"):
             completion(.response(.text(405, "method not allowed")))
         default:
@@ -106,10 +115,17 @@ public final class StreamRouter {
         }
     }
 
-    private func photo(_ backend: StreamBackend, _ completion: @escaping (StreamRoute) -> Void) {
-        backend.takePhoto { result in
+    /// `POST /photo?delay=5`: the answer comes after the countdown and the
+    /// photo. 409 `busy` / `cancelled` when the self-timer is in the way.
+    private func photo(_ request: HTTPRequest, _ backend: StreamBackend, _ completion: @escaping (StreamRoute) -> Void) {
+        guard let delay = SelfTimer.remoteDelay(query: request.query["delay"]) else {
+            return completion(.response(.json(400, ErrorBody(error: "delay"))))
+        }
+        backend.takePhoto(delay: delay) { result in
             switch result {
             case .success(let name): completion(.response(.json(200, CaptureRef(name: name))))
+            case .failure(let error as StreamPhotoError):
+                completion(.response(.json(409, ErrorBody(error: error == .selfTimerBusy ? "busy" : "cancelled"))))
             case .failure(let error): completion(.response(.json(500, ErrorBody(error: error.localizedDescription))))
             }
         }

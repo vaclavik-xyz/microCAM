@@ -24,6 +24,7 @@ final class ToolbarButtonsTests: XCTestCase {
         XCTAssertTrue(ToolbarButtons.isVisible(.timelapse, hidden: hidden, state: .init(timelapseRunning: true)))
         XCTAssertTrue(ToolbarButtons.isVisible(.timelapse, hidden: hidden, state: .init(timelapseOpen: true)))
         XCTAssertTrue(ToolbarButtons.isVisible(.adjustments, hidden: hidden, state: .init(adjustmentsOpen: true)))
+        XCTAssertTrue(ToolbarButtons.isVisible(.photo, hidden: hidden, state: .init(selfTimerActive: true)))
         XCTAssertFalse(ToolbarButtons.isVisible(.photo, hidden: hidden, state: .init(recording: true)))
     }
 

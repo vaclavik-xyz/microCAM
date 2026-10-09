@@ -105,6 +105,7 @@ folder on its own.
 | Quick key | Menu shortcut | Action |
 |---|---|---|
 | `Space` | `⌘ T` | take a photo |
+| `S` | `⌥ ⌘ T` | take a photo after the self-timer countdown (`Esc` cancels it) |
 | `Space` in the side panel | | Quick Look of the selected files (a photo when nothing is selected) |
 | `R` | `⌘ R` | start or stop recording |
 | `G` | `⌘ '` | show or hide the grid |
@@ -157,6 +158,15 @@ The window:
   another device, an AI agent) saves the original and a copy with the
   drawing (`…_2.jpg`); the message names both. Timelapse shots stay clean,
   pointers never go into files, and nothing is kept after quitting.
+- **Self-timer.** For a photo with both hands in the picture (a probe,
+  tweezers). Pick 3, 5 or 10 s at the top of the timelapse popover (the
+  clock in the toolbar) or in *Camera → Self-timer*; the photo button then
+  shows a clock. While it's on, Space, the
+  button and `⌘ T` count down first, with large
+  digits over the picture and a beep each second. `S` takes one photo with
+  the countdown even while it's off. Space, `S` or `Esc` cancels it. The
+  delay is remembered; the self-timer itself is off after a relaunch, so
+  photos never wait by surprise.
 - **Find a job.** With jobs on, the search field at the top of the side
   panel lists the job folders whose code matches, with their file count and
   last day; a click switches to the job.
@@ -218,7 +228,8 @@ The window:
 ### Shortcuts
 
 microCAM adds four actions to the Shortcuts app: *Take photo* and *Stop
-recording* return the file, so a shortcut can send it on; *Start recording*;
+recording* return the file, so a shortcut can send it on (*Take photo* has a
+*Delay* of 0–30 s for a self-timer countdown on the Mac); *Start recording*;
 *Set job* (empty clears it). The first three are also in Spotlight without
 any setup. They run in the open app, wake a camera paused by a hidden window
 and fail with a short message when there is no camera, no picture or no
@@ -327,6 +338,12 @@ camera computer via Bonjour.
   **Save as photo** saves a copy with the drawing (`…_2.jpg`); the original
   stays untouched. Remote photos need the *PIN for photos* set on the camera
   computer (without one the button is hidden); a wrong PIN locks the device out for a while.
+- **Self-timer:** the timer button next to **Take photo** switches between
+  off, 3, 5 and 10 s (the browser remembers it). The camera Mac counts down
+  over the picture and beeps, and the button counts along; Space, S or Esc at
+  the Mac cancels it. Only one countdown runs at a time. (For scripts:
+  `POST /photo?delay=5` with the PIN header answers once the photo is
+  saved; 409 means a countdown is already running or was cancelled.)
 - **Text:** pick **T**, tap where the label goes, type, and press Enter
   or tap elsewhere; Esc cancels. Tap a label to change it, drag it to move
   it. Three sizes appear next to the tools; the colour is the current one.

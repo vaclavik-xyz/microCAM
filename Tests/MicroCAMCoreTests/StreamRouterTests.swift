@@ -3,14 +3,17 @@ import XCTest
 
 private final class FakeBackend: StreamBackend {
     var photos = 0
+    var delays: [Int] = []
+    var photoResult: Result<String, Error> = .success("PR-1_2026-09-21_10-00-00.jpg")
     var annotated: [AnnotationRequest] = []
     var folders: [URL] = []
     func status() -> StreamStatus { StreamStatus(job: "PR-1", mode: .controls, photoEnabled: true, viewers: 1) }
     func page(mode: StreamMode, embedded: Bool) -> String { "page-\(mode.rawValue)-\(embedded)" }
     func captureFolders() -> [URL] { folders }
-    func takePhoto(completion: @escaping (Result<String, Error>) -> Void) {
+    func takePhoto(delay: Int, completion: @escaping (Result<String, Error>) -> Void) {
         photos += 1
-        completion(.success("PR-1_2026-09-21_10-00-00.jpg"))
+        delays.append(delay)
+        completion(photoResult)
     }
     func saveAnnotated(_ request: AnnotationRequest, source: URL, completion: @escaping (Result<String, Error>) -> Void) {
         annotated.append(request)
@@ -69,6 +72,56 @@ final class StreamRouterTests: XCTestCase {
         XCTAssertEqual(status(route(request("POST", "/photo", headers: ["X-MicroCAM-PIN": "1234",
                                                                         "Origin": "http://bench:8090"]))), 200)
         XCTAssertEqual(backend.photos, 1)
+    }
+
+    func body(_ route: StreamRoute) -> String {
+        if case .response(let r) = route { return String(decoding: r.body, as: UTF8.self) }
+        return ""
+    }
+
+    func testPhotoPassesTheSelfTimerDelay() {
+        let pinHeader = ["X-MicroCAM-PIN": "1234"]
+        XCTAssertEqual(status(route(request("POST", "/photo", headers: pinHeader))), 200)
+        XCTAssertEqual(status(route(request("POST", "/photo?delay=5", headers: pinHeader))), 200)
+        XCTAssertEqual(status(route(request("POST", "/photo?delay=0", headers: pinHeader))), 200)
+        XCTAssertEqual(status(route(request("POST", "/photo?delay=\(SelfTimer.maxDelay)", headers: pinHeader))), 200)
+        XCTAssertEqual(backend.delays, [0, 5, 0, SelfTimer.maxDelay])
+    }
+
+    func testInvalidDelayIsABadRequest() {
+        let pinHeader = ["X-MicroCAM-PIN": "1234"]
+        for bad in ["-1", "\(SelfTimer.maxDelay + 1)", "abc", "2.5", ""] {
+            let r = route(request("POST", "/photo?delay=\(bad)", headers: pinHeader))
+            XCTAssertEqual(status(r), 400, "delay=\(bad)")
+            XCTAssertEqual(body(r), #"{"error":"delay"}"#)
+        }
+        XCTAssertEqual(backend.photos, 0)
+    }
+
+    /// The mode and PIN are checked before the delay, so a bad delay reveals nothing.
+    func testDelayIsCheckedAfterModeAndPin() {
+        XCTAssertEqual(status(route(request("POST", "/photo?delay=abc"))), 401)
+        XCTAssertEqual(status(route(request("GET", "/photo?delay=5", headers: ["X-MicroCAM-PIN": "1234"]))), 405)
+        mode = .imageOnly
+        XCTAssertEqual(status(route(request("POST", "/photo?delay=abc", headers: ["X-MicroCAM-PIN": "1234"]))), 403)
+        mode = .controls
+        pin = nil
+        XCTAssertEqual(status(route(request("POST", "/photo?delay=5", headers: ["X-MicroCAM-PIN": "1234"]))), 403)
+        XCTAssertEqual(backend.photos, 0)
+    }
+
+    func testBusyOrCancelledSelfTimerIsAConflict() {
+        let pinHeader = ["X-MicroCAM-PIN": "1234"]
+        backend.photoResult = .failure(StreamPhotoError.selfTimerBusy)
+        var r = route(request("POST", "/photo?delay=5", headers: pinHeader))
+        XCTAssertEqual(status(r), 409)
+        XCTAssertEqual(body(r), #"{"error":"busy"}"#)
+        backend.photoResult = .failure(StreamPhotoError.selfTimerCancelled)
+        r = route(request("POST", "/photo?delay=5", headers: pinHeader))
+        XCTAssertEqual(status(r), 409)
+        XCTAssertEqual(body(r), #"{"error":"cancelled"}"#)
+        backend.photoResult = .failure(CocoaError(.fileWriteNoPermission))
+        XCTAssertEqual(status(route(request("POST", "/photo", headers: pinHeader))), 500)
     }
 
     func testImageOnlyModeDisablesRemoteActions() {

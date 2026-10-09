@@ -48,6 +48,9 @@ public struct AppSettings: Equatable, Sendable {
     public var videoQuality = VideoQuality.standard
     public var timelapseInterval: TimeInterval = 60
     public var timelapseDuration: TimeInterval = 3600
+    /// The self-timer's countdown in seconds (one of `SelfTimer.delays`).
+    /// Whether it's on is not saved: after a relaunch photos are taken at once.
+    public var selfTimerDelay = SelfTimer.defaultDelay
     public var gridType = GridType.thirds
     public var gridColor = GridColor.white
     /// The camera's format under its name in the window title while nothing
@@ -111,7 +114,7 @@ public struct AppSettings: Equatable, Sendable {
 extension AppSettings: Codable {
     private enum CodingKeys: String, CodingKey {
         case storageRootPath, sortByType, jobsEnabled, activeJob, jpegQuality, videoCodec, videoQuality,
-             timelapseInterval, timelapseDuration, gridType, gridColor, showFormatInTitle, hiddenToolbarButtons, pauseWhenHidden,
+             timelapseInterval, timelapseDuration, selfTimerDelay, gridType, gridColor, showFormatInTitle, hiddenToolbarButtons, pauseWhenHidden,
              preventSleepWhileRecording, lastDeviceID, lastFormatByDevice, lastMicrophoneID,
              recordAudio, adjustmentsByDevice, cameraNames, webhookEnabled, webhookURL, webhookSendVideos,
              streamingEnabled, streamingPort, streamingMode, streamQuality, mcpEnabled, mcpPort, appMode, viewerSourceName, viewerManualURL
@@ -135,6 +138,7 @@ extension AppSettings: Codable {
         videoQuality = value(.videoQuality, d.videoQuality)
         timelapseInterval = value(.timelapseInterval, d.timelapseInterval)
         timelapseDuration = value(.timelapseDuration, d.timelapseDuration)
+        selfTimerDelay = value(.selfTimerDelay, d.selfTimerDelay)
         gridType = value(.gridType, d.gridType)
         gridColor = value(.gridColor, d.gridColor)
         showFormatInTitle = value(.showFormatInTitle, d.showFormatInTitle)

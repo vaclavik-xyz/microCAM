@@ -46,4 +46,19 @@ final class ShortcutActionTests: XCTestCase {
         XCTAssertNil(ShortcutAction.from(characters: "\u{1b}", hasModifiers: false, isEditingText: true,
                                          isDrawing: true))
     }
+
+    func testSelfTimerKeys() {
+        XCTAssertEqual(ShortcutAction.from(characters: "s", hasModifiers: false, isEditingText: false), .selfTimer)
+        XCTAssertEqual(ShortcutAction.from(characters: "S", hasModifiers: false, isEditingText: false), .selfTimer)
+        XCTAssertNil(ShortcutAction.from(characters: "s", hasModifiers: false, isEditingText: true))
+        XCTAssertNil(ShortcutAction.from(characters: "s", hasModifiers: true, isEditingText: false))
+        // Esc cancels the countdown first, even while drawing.
+        XCTAssertEqual(ShortcutAction.from(characters: "\u{1b}", hasModifiers: false, isEditingText: false,
+                                           isCountingDown: true), .cancelSelfTimer)
+        XCTAssertEqual(ShortcutAction.from(characters: "\u{1b}", hasModifiers: false, isEditingText: false,
+                                           isDrawing: true, isCountingDown: true), .cancelSelfTimer)
+        // Space stays the photo key; AppModel cancels a running countdown with it.
+        XCTAssertEqual(ShortcutAction.from(characters: " ", hasModifiers: false, isEditingText: false,
+                                           isCountingDown: true), .photo)
+    }
 }

@@ -233,7 +233,6 @@
 "Stream" = "Přenos";
 "System default" = "Výchozí systémový";
 "System" = "Podle systému";
-"Take a photo (Space)" = "Vyfotit (mezerník)";
 "Take photo" = "Vyfotit";
 "Takes a photo at a fixed interval into the current folder. Start it from the toolbar." = "Fotí v pravidelném intervalu do aktuální složky. Spustíš ho z panelu nástrojů.";
 "Takes a photo at a fixed interval into the current folder." = "Fotí v pravidelném intervalu do aktuální složky.";
@@ -332,7 +331,10 @@
 "Start recording" = "Spustit nahrávání";
 "Starts a video in the current folder." = "Spustí video do aktuální složky.";
 "Stops the video and returns it once it is saved." = "Zastaví video a po uložení ho vrátí.";
-"Takes a photo into the current folder and returns it." = "Vyfotí do aktuální složky a fotku vrátí.";
+"Takes a photo into the current folder and returns it. With a delay, the self-timer counts down on the Mac first." = "Vyfotí do aktuální složky a fotku vrátí. Se zpožděním nejdřív odpočítá samospoušť na Macu.";
+"Delay" = "Zpoždění";
+"Seconds of self-timer countdown before the photo. 0 takes it right away." = "Kolik sekund samospoušť odpočítává před fotkou. 0 vyfotí hned.";
+"Take photo after ${delay} seconds" = "Vyfotit za ${delay} s";
 "The camera sends no picture. Check it in microCAM." = "Kamera neposílá obraz. Zkontroluj ji v microCAM.";
 "microCAM is already recording." = "microCAM už nahrává.";
 "microCAM is in viewer mode. Switch to camera mode in Settings → General." = "microCAM je v režimu prohlížeče. Přepni na režim kamery v Nastavení → Obecné.";
@@ -369,3 +371,20 @@
 /* Leftover recordings */
 "Recovered an unfinished recording: %@" = "Obnoven nedokončený záznam: %@";
 "An unfinished recording ended before it could be played and was moved to the Trash." = "Nedokončený záznam skončil dřív, než se dal přehrát. Je v Koši.";
+
+/* Self-timer */
+"A self-timer is already counting down." = "Samospoušť už odpočítává.";
+"The self-timer was cancelled." = "Samospoušť byla zrušena.";
+"The self-timer delay must be 0 to %lld seconds." = "Zpoždění samospouště musí být 0 až %lld sekund.";
+"Self-timer" = "Samospoušť";
+"Off" = "Vypnuto";
+"%lld s" = "%lld s";
+"Cancel self-timer" = "Zrušit samospoušť";
+"Cancel the countdown (Esc)" = "Zrušit odpočet (Esc)";
+"Take a photo (Space)" = "Vyfotit (mezerník)";
+"Take a photo after %lld s (Space)" = "Vyfotit za %lld s (mezerník)";
+"Photos wait for a countdown, so both hands are free. S takes one photo with it." = "Fotky počkají na odpočet, takže máš obě ruce volné. S vyfotí s odpočtem jednou.";
+"Self-timer and timelapse" = "Samospoušť a časosběr";
+"Photo in %lld s" = "Fotka za %lld s";
+"Take photo with self-timer" = "Vyfotit se samospouští";
+"S – take a photo after the self-timer countdown, Esc – cancel it" = "S – vyfotit po odpočtu samospouště, Esc – zrušit ho";

@@ -11,13 +11,16 @@ public enum ToolbarButton: String, Codable, CaseIterable, Sendable {
 /// or anchors a popover opened from the menu.
 public struct ToolbarButtonState: Equatable, Sendable {
     public var recording = false
+    /// The self-timer is on or counting down.
+    public var selfTimerActive = false
     public var timelapseRunning = false
     public var timelapseOpen = false
     public var adjustmentsOpen = false
 
-    public init(recording: Bool = false, timelapseRunning: Bool = false,
+    public init(recording: Bool = false, selfTimerActive: Bool = false, timelapseRunning: Bool = false,
                 timelapseOpen: Bool = false, adjustmentsOpen: Bool = false) {
         self.recording = recording
+        self.selfTimerActive = selfTimerActive
         self.timelapseRunning = timelapseRunning
         self.timelapseOpen = timelapseOpen
         self.adjustmentsOpen = adjustmentsOpen
@@ -32,7 +35,9 @@ public enum ToolbarButtons {
         case .record: return state.recording
         case .timelapse: return state.timelapseRunning || state.timelapseOpen
         case .adjustments: return state.adjustmentsOpen
-        case .photo, .draw: return false
+        // The self-timer lives in the photo button: on or counting down, it shows.
+        case .photo: return state.selfTimerActive
+        case .draw: return false
         }
     }
 }
