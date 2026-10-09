@@ -9,14 +9,23 @@ struct ComparePair: Identifiable {
 }
 
 /// Grid of the current folder's captures, grouped by day. Click selects,
-/// ⌘-click adds, ⇧-click selects a range, double-click opens, drag copies
-/// the file into another app. After a click in the panel Space opens Quick
-/// Look instead of taking a photo (see `KeyboardMonitor`).
+/// ⌘-click adds, ⇧-click selects a range, double-click opens. A drag from an
+/// unselected tile selects the tiles it passes; one from a selected tile
+/// copies the selected files into another app (`GridDragController`). ⌘C and
+/// Copy put them on the clipboard. After a click in the panel Space opens
+/// Quick Look instead of taking a photo (see `KeyboardMonitor`).
 struct SidePanel: View {
     @EnvironmentObject private var model: AppModel
     @ObservedObject var library: LibraryModel
     @Binding var compare: ComparePair?
     @State private var jobQuery = ""
+    @State private var drag: GridDragController
+
+    init(library: LibraryModel, compare: Binding<ComparePair?>) {
+        self.library = library
+        _compare = compare
+        _drag = State(initialValue: GridDragController(library: library))
+    }
 
     private let columns = [GridItem(.adaptive(minimum: 84, maximum: 160), spacing: 8)]
 
@@ -39,14 +48,25 @@ struct SidePanel: View {
                             Section {
                                 ForEach(day.files, id: \.self) { url in
                                     CaptureTile(url: url, library: library, selected: library.selection.contains(url))
+                                        .background(GeometryReader { proxy in
+                                            Color.clear.preference(key: TileFrames.self,
+                                                                   value: [url: proxy.frame(in: .named(Self.gridSpace))])
+                                        })
                                         .onTapGesture { click(url) }
+                                        .gesture(DragGesture(minimumDistance: 4)
+                                            .onChanged { _ in drag.dragChanged(from: url) }
+                                            .onEnded { _ in drag.dragEnded() })
                                         .contextMenu { menu(for: library.grid.targets(forContextClickOn: url, in: library.files)) }
-                                        .onDrag { NSItemProvider(contentsOf: url) ?? NSItemProvider() }
                                 }
                             } header: {
                                 DayHeader(day: day.day)
                             }
                         }
+                    }
+                    .coordinateSpace(name: Self.gridSpace)
+                    .background(ViewAccessor { [drag] in drag.gridView = $0 })
+                    .onPreferenceChange(TileFrames.self) { [drag] frames in
+                        MainActor.assumeIsolated { drag.frames = frames }
                     }
                     .padding(.bottom, 10)
                 }
@@ -66,6 +86,8 @@ struct SidePanel: View {
         .background(ViewAccessor { model.sidePanelView = $0 })
         .modifier(JobSearchField(enabled: model.settings.jobsEnabled, text: $jobQuery))
     }
+
+    private static let gridSpace = "grid"
 
     /// Where captures go now, with the file count; click opens it in Finder.
     private var folderRow: some View {
@@ -154,6 +176,7 @@ struct SidePanel: View {
     private func menu(for urls: [URL]) -> some View {
         Button("Open") { urls.forEach { NSWorkspace.shared.open($0) } }
         Button("Quick Look") { model.preview(GridSelection(selected: Set(urls), anchor: urls.first)) }
+        Button("Copy") { model.copyFiles(urls) }
         if urls.count == 1, let url = urls.first {
             if MarkupSession.isAvailable(for: url) {
                 Button("Mark up…") { model.markUp(url) }
@@ -241,6 +264,14 @@ private struct BarIcon: View {
             .offset(y: -lift)
             .frame(width: 22, height: 22)
             .contentShape(Rectangle())
+    }
+}
+
+/// Each tile's frame in the grid, for `GridDragController`.
+private struct TileFrames: PreferenceKey {
+    static let defaultValue: [URL: CGRect] = [:]
+    static func reduce(value: inout [URL: CGRect], nextValue: () -> [URL: CGRect]) {
+        value.merge(nextValue()) { $1 }
     }
 }
 

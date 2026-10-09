@@ -388,3 +388,7 @@
 "Photo in %lld s" = "Fotka za %lld s";
 "Take photo with self-timer" = "Vyfotit se samospouští";
 "S – take a photo after the self-timer countdown, Esc – cancel it" = "S – vyfotit po odpočtu samospouště, Esc – zrušit ho";
+
+/* Side panel: copy */
+"Copied: %lld" = "Zkopírováno: %lld";
+"⌘C – copy the selected files" = "⌘C – zkopírovat označené soubory";

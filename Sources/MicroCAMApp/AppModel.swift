@@ -101,6 +101,7 @@ final class AppModel: ObservableObject {
         case .cancelSelfTimer: cancelSelfTimer()
         case .toggleRecording: toggleRecording()
         case .quickLook: previewSelection()
+        case .copySelection: copyFiles(library.selectedFiles)
         case .toggleDrawing: isDrawing.toggle()
         case .leaveDrawing: isDrawing = false
         }
@@ -587,6 +588,27 @@ final class AppModel: ObservableObject {
         }).editedCopyURL(of: source)
         pendingURLs.insert(destination)
         return destination
+    }
+
+    /// ⌘C and Copy in the side panel: the files, so Finder pastes them as
+    /// files and Mail or Messages as attachments. A single photo also goes as
+    /// an image, for apps that paste only pictures (Preview, Notes, a browser).
+    func copyFiles(_ urls: [URL]) {
+        guard !urls.isEmpty else { return }
+        let items = urls.map { url in
+            let item = NSPasteboardItem()
+            item.setString(url.absoluteString, forType: .fileURL)
+            return item
+        }
+        if urls.count == 1, let url = urls.first, url.pathExtension.lowercased() == "jpg",
+           let data = try? Data(contentsOf: url) {
+            items[0].setData(data, forType: NSPasteboard.PasteboardType(UTType.jpeg.identifier))
+            if let tiff = NSBitmapImageRep(data: data)?.tiffRepresentation { items[0].setData(tiff, forType: .tiff) }
+        }
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.writeObjects(items)
+        message = StatusMessage(text: String(localized: "Copied: \(urls.count)"), isError: false)
     }
 
     /// Space in the side panel: Quick Look over the selection, or closes it.

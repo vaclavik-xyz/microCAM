@@ -36,6 +36,9 @@ final class LibraryModel: ObservableObject {
         }
     }
 
+    /// A thumbnail already made for a tile, e.g. for the image of a drag.
+    func cachedThumbnail(for url: URL) -> NSImage? { cache.object(forKey: url as NSURL) }
+
     func thumbnail(for url: URL) async -> NSImage? {
         if let cached = cache.object(forKey: url as NSURL) { return cached }
         let request = QLThumbnailGenerator.Request(fileAt: url, size: CGSize(width: 180, height: 135),

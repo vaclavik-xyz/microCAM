@@ -107,6 +107,7 @@ folder on its own.
 | `Space` | `⌘ T` | take a photo |
 | `S` | `⌥ ⌘ T` | take a photo after the self-timer countdown (`Esc` cancels it) |
 | `Space` in the side panel | | Quick Look of the selected files (a photo when nothing is selected) |
+| | `⌘ C` | copy the selected files (outside text fields) |
 | `R` | `⌘ R` | start or stop recording |
 | `G` | `⌘ '` | show or hide the grid |
 | `D` | `⌘ D` | draw on the picture (`Esc` stops drawing) |
@@ -130,7 +131,11 @@ The window:
   a running timelapse shows its button anyway.
 - **Side panel.** The captures of the current folder as thumbnails, grouped
   by day. Click selects, ⌘-click adds, ⇧-click selects a range, double-click
-  opens, and you can drag a file into another app. The folder name at the top
+  opens. Without the keyboard: drag across the thumbnails to select them
+  (the panel scrolls at its edge), then drag the selected ones into another
+  app. ⌘C or *Copy* (right click) puts them on the clipboard: Finder pastes
+  files, Mail and Messages attachments, and a single photo also pastes as a
+  picture. The folder name at the top
   opens the folder; share and compare appear at the bottom once you select
   files. The panel remembers its
   width. Hide it with the button next to the window buttons.

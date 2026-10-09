@@ -4,14 +4,18 @@
 /// Finder; with nothing selected it still takes a photo, the app's main job.
 /// D starts or stops drawing on the picture; Esc stops it, and only then, so
 /// Esc keeps its usual meaning otherwise (and cancels a label being typed).
+/// ⌘C copies the selected files while nothing else would copy (no text is
+/// being edited), so the Edit menu's Copy keeps working in text fields.
 /// S starts a self-timer countdown; Esc cancels a running one first (Space
 /// and S cancel it too, see `AppModel.handle`).
 public enum ShortcutAction: Equatable, Sendable {
-    case photo, selfTimer, cancelSelfTimer, toggleRecording, toggleGrid, resetZoom, quickLook, toggleDrawing, leaveDrawing
+    case photo, selfTimer, cancelSelfTimer, copySelection, toggleRecording, toggleGrid, resetZoom, quickLook, toggleDrawing, leaveDrawing
 
     public static func from(characters: String?, hasModifiers: Bool, isEditingText: Bool,
                             inSidePanel: Bool = false, hasSelection: Bool = false,
-                            isDrawing: Bool = false, isCountingDown: Bool = false) -> ShortcutAction? {
+                            isDrawing: Bool = false, isCountingDown: Bool = false,
+                            isCommandOnly: Bool = false) -> ShortcutAction? {
+        if isCommandOnly, !isEditingText, hasSelection, characters?.lowercased() == "c" { return .copySelection }
         guard !hasModifiers, !isEditingText, let characters else { return nil }
         switch characters.lowercased() {
         case " ": return inSidePanel && hasSelection ? .quickLook : .photo
