@@ -934,6 +934,15 @@ final class AppModel: ObservableObject {
     /// On in the toolbar: local photos (Space, the button, ⌘T) wait for the
     /// countdown. Not saved, so after a relaunch photos are taken at once.
     @Published var selfTimerOn = false
+    /// 0 while off, else the delay; picking a delay turns the self-timer on
+    /// and is remembered.
+    var selfTimerChoice: Int {
+        get { selfTimerOn ? settings.selfTimerDelay : 0 }
+        set {
+            selfTimerOn = newValue > 0
+            if newValue > 0 { settings.selfTimerDelay = newValue }
+        }
+    }
     /// Told when a running countdown is cancelled instead of taking its photo.
     private var selfTimerCompletion: ((Result<URL, Error>) -> Void)?
 

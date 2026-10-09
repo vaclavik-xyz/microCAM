@@ -3,7 +3,7 @@ import Foundation
 /// Toolbar buttons the user can hide in Settings → Preview. Every action stays
 /// in the Camera menu with its shortcut. Settings and the job are always there.
 public enum ToolbarButton: String, Codable, CaseIterable, Sendable {
-    case photo, selfTimer, record, timelapse, draw, adjustments
+    case photo, record, timelapse, draw, adjustments
 }
 
 /// What the button would show right now; a hidden button still appears while
@@ -33,10 +33,11 @@ public enum ToolbarButtons {
         guard hidden.contains(button) else { return true }
         switch button {
         case .record: return state.recording
-        case .selfTimer: return state.selfTimerActive
         case .timelapse: return state.timelapseRunning || state.timelapseOpen
         case .adjustments: return state.adjustmentsOpen
-        case .photo, .draw: return false
+        // The self-timer lives in the photo button: on or counting down, it shows.
+        case .photo: return state.selfTimerActive
+        case .draw: return false
         }
     }
 }

@@ -233,7 +233,6 @@
 "Stream" = "Přenos";
 "System default" = "Výchozí systémový";
 "System" = "Podle systému";
-"Take a photo (Space)" = "Vyfotit (mezerník)";
 "Take photo" = "Vyfotit";
 "Takes a photo at a fixed interval into the current folder. Start it from the toolbar." = "Fotí v pravidelném intervalu do aktuální složky. Spustíš ho z panelu nástrojů.";
 "Takes a photo at a fixed interval into the current folder." = "Fotí v pravidelném intervalu do aktuální složky.";
@@ -382,7 +381,8 @@
 "%lld s" = "%lld s";
 "Cancel self-timer" = "Zrušit samospoušť";
 "Cancel the countdown (Esc)" = "Zrušit odpočet (Esc)";
-"Self-timer: photos wait for a countdown (S takes one photo with it)" = "Samospoušť: fotky počkají na odpočet (S vyfotí se samospouští jednou)";
+"Take a photo (Space). Hold for the self-timer." = "Vyfotit (mezerník). Podrž pro samospoušť.";
+"Take a photo after %lld s (Space). Hold for the self-timer." = "Vyfotit za %lld s (mezerník). Podrž pro samospoušť.";
 "Photo in %lld s" = "Fotka za %lld s";
 "Take photo with self-timer" = "Vyfotit se samospouští";
 "S – take a photo after the self-timer countdown, Esc – cancel it" = "S – vyfotit po odpočtu samospouště, Esc – zrušit ho";

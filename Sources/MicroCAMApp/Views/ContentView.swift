@@ -82,11 +82,7 @@ struct ContentView: View {
             // on a button inside a toolbar ControlGroup never appears, one on
             // the group points at its middle).
             ToolbarItemGroup(placement: .principal) {
-                if shows(.photo) {
-                    Button { model.handle(.photo) } label: { Label("Take photo", systemImage: "camera") }
-                        .help("Take a photo (Space)")
-                }
-                SelfTimerToolbarButton(runner: model.selfTimer)
+                PhotoToolbarButton(runner: model.selfTimer)
                 if shows(.record) { RecordButton() }
                 TimelapseToolbarButton(runner: model.timelapse, show: $model.showTimelapse)
             }
@@ -251,14 +247,17 @@ struct TimelapseToolbarButton: View {
     }
 }
 
-/// Off or a delay; while on, the delay shows next to the icon. During a
-/// countdown it turns into a cancel button.
-struct SelfTimerToolbarButton: View {
+/// Take photo, with the self-timer inside it, as in the iPhone camera: a
+/// click takes a photo, holding the button opens Off / 3 / 5 / 10 s. While the
+/// self-timer is on the icon has a clock in the accent colour; during a
+/// countdown the button cancels it. No menu arrow, so the toolbar keeps its
+/// single photo button (a separate self-timer button looked like a second one).
+struct PhotoToolbarButton: View {
     @EnvironmentObject private var model: AppModel
     @ObservedObject var runner: SelfTimerRunner
 
     var body: some View {
-        if ToolbarButtons.isVisible(.selfTimer, hidden: model.settings.hiddenToolbarButtons,
+        if ToolbarButtons.isVisible(.photo, hidden: model.settings.hiddenToolbarButtons,
                                     state: ToolbarButtonState(selfTimerActive: model.selfTimerOn || runner.isRunning)) {
             if runner.isRunning {
                 Button { model.cancelSelfTimer() } label: {
@@ -267,35 +266,40 @@ struct SelfTimerToolbarButton: View {
                 .help("Cancel the countdown (Esc)")
             } else {
                 Menu {
-                    Picker("Self-timer", selection: delay) {
-                        Text("Off").tag(0)
-                        ForEach(SelfTimer.delays, id: \.self) { Text("\($0) s").tag($0) }
-                    }
-                    .pickerStyle(.inline)
+                    SelfTimerPicker()
                 } label: {
-                    if model.selfTimerOn {
-                        Label {
-                            Text("\(model.settings.selfTimerDelay) s")
-                        } icon: {
+                    Label {
+                        Text("Take photo")
+                    } icon: {
+                        // Colour only while on, like the timelapse button.
+                        if model.selfTimerOn {
                             Image(systemName: "camera.badge.clock").foregroundStyle(.tint)
+                        } else {
+                            Image(systemName: "camera")
                         }
-                        .labelStyle(.titleAndIcon)
-                    } else {
-                        Label("Self-timer", systemImage: "camera.badge.clock")
                     }
+                } primaryAction: {
+                    model.handle(.photo)
                 }
-                .help("Self-timer: photos wait for a countdown (S takes one photo with it)")
+                .menuIndicator(.hidden)
+                .help(model.selfTimerOn
+                      ? String(localized: "Take a photo after \(model.settings.selfTimerDelay) s (Space). Hold for the self-timer.")
+                      : String(localized: "Take a photo (Space). Hold for the self-timer."))
             }
         }
     }
+}
 
-    /// 0 is off; a delay turns the self-timer on and is remembered.
-    private var delay: Binding<Int> {
-        Binding(get: { model.selfTimerOn ? model.settings.selfTimerDelay : 0 },
-                set: { seconds in
-                    model.selfTimerOn = seconds > 0
-                    if seconds > 0 { model.settings.selfTimerDelay = seconds }
-                })
+/// Off or a delay, for the photo button and the Camera menu.
+struct SelfTimerPicker: View {
+    @EnvironmentObject private var model: AppModel
+
+    var body: some View {
+        Picker("Self-timer", selection: $model.selfTimerChoice) {
+            Text("Off").tag(0)
+            ForEach(SelfTimer.delays, id: \.self) { Text("\($0) s").tag($0) }
+        }
+        .pickerStyle(.inline)
     }
 }
 

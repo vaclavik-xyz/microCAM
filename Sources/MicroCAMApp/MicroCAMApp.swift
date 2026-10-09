@@ -31,7 +31,8 @@ struct MicroCAMApp: App {
                     .keyboardShortcut("t")
                 // Cancels a running countdown, like S.
                 Button("Take photo with self-timer") { model.handle(.selfTimer) }
-                .keyboardShortcut("t", modifiers: [.command, .option])
+                    .keyboardShortcut("t", modifiers: [.command, .option])
+                Menu("Self-timer") { SelfTimerPicker().environmentObject(model) }
                 Button("Start or stop recording") { model.handle(.toggleRecording) }
                     .keyboardShortcut("r")
                 Divider()

@@ -234,7 +234,6 @@
 "Stream" = "Stream";
 "System default" = "System default";
 "System" = "System";
-"Take a photo (Space)" = "Take a photo (Space)";
 "Take photo" = "Take photo";
 "Takes a photo at a fixed interval into the current folder. Start it from the toolbar." = "Takes a photo at a fixed interval into the current folder. Start it from the toolbar.";
 "Takes a photo at a fixed interval into the current folder." = "Takes a photo at a fixed interval into the current folder.";
@@ -383,7 +382,8 @@
 "%lld s" = "%lld s";
 "Cancel self-timer" = "Cancel self-timer";
 "Cancel the countdown (Esc)" = "Cancel the countdown (Esc)";
-"Self-timer: photos wait for a countdown (S takes one photo with it)" = "Self-timer: photos wait for a countdown (S takes one photo with it)";
+"Take a photo (Space). Hold for the self-timer." = "Take a photo (Space). Hold for the self-timer.";
+"Take a photo after %lld s (Space). Hold for the self-timer." = "Take a photo after %lld s (Space). Hold for the self-timer.";
 "Photo in %lld s" = "Photo in %lld s";
 "Take photo with self-timer" = "Take photo with self-timer";
 "S – take a photo after the self-timer countdown, Esc – cancel it" = "S – take a photo after the self-timer countdown, Esc – cancel it";

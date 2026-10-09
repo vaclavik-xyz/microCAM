@@ -123,7 +123,7 @@ photos and videos are always full frame.
 
 The window:
 
-- **Toolbar.** Photo, self-timer, video and timelapse sit together in the middle. Draw,
+- **Toolbar.** Photo, video and timelapse sit together in the middle. Draw,
   image adjustments and Settings are on the right, and the active job is on
   the left when jobs are on. *Settings → Preview* turns single buttons off;
   their actions stay in the Camera menu with the shortcuts, and recording or
@@ -159,8 +159,9 @@ The window:
   drawing (`…_2.jpg`); the message names both. Timelapse shots stay clean,
   pointers never go into files, and nothing is kept after quitting.
 - **Self-timer.** For a photo with both hands in the picture (a probe,
-  tweezers). Pick 3, 5 or 10 s with the clock button next to *Take photo*;
-  while it's on, Space, the button and `⌘ T` count down first, with large
+  tweezers). Hold the photo button (or use *Camera → Self-timer*) and pick
+  3, 5 or 10 s; the button then shows a clock. While it's on, Space, the
+  button and `⌘ T` count down first, with large
   digits over the picture and a beep each second. `S` takes one photo with
   the countdown even while it's off. Space, `S` or `Esc` cancels it. The
   delay is remembered; the self-timer itself is off after a relaunch, so
