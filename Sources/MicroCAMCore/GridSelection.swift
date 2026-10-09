@@ -2,6 +2,9 @@ import Foundation
 
 /// Finder-like selection for the side-panel grid: click selects one item,
 /// ⌘-click toggles, ⇧-click selects the range from the last plain click.
+/// Without the keyboard: a drag that starts on an unselected item selects the
+/// range from it to the item under the pointer; one that starts on a selected
+/// item drags the whole selection into another app (see `dragSelects`).
 public struct GridSelection<Item: Hashable> {
     public var selected: Set<Item>
     public var anchor: Item?
@@ -21,6 +24,18 @@ public struct GridSelection<Item: Hashable> {
             selected = [item]
             anchor = item
         }
+    }
+
+    /// Whether a drag from `item` selects (true) or carries the selection
+    /// out of the app (false).
+    public func dragSelects(from item: Item) -> Bool { !selected.contains(item) }
+
+    /// A selecting drag from `start` that is now over `current`: the range
+    /// between them, in grid order, replaces the selection, as ⇧-click does.
+    public mutating func drag(from start: Item, to current: Item, in order: [Item]) {
+        guard let from = order.firstIndex(of: start), let to = order.firstIndex(of: current) else { return }
+        selected = Set(order[min(from, to)...max(from, to)])
+        anchor = start
     }
 
     /// A right-click on a selected item acts on the whole selection, on any

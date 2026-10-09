@@ -33,7 +33,8 @@ final class KeyboardMonitor {
                                                    inSidePanel: self?.inSidePanel == true,
                                                    hasSelection: hasSelection(),
                                                    isDrawing: isDrawing(),
-                                                   isCountingDown: isCountingDown()) else { return event }
+                                                   isCountingDown: isCountingDown(),
+                                                   isCommandOnly: modifiers == .command) else { return event }
             handler(action)
             return nil
         }

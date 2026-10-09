@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Side panel without the keyboard: drag across the thumbnails to select
+  them, then drag the selection into another app (all the files at once,
+  not only one). ⌘C and *Copy* in the right-click menu copy the selected
+  files.
+- Delete from the side panel: ⌘⌫, *Move to Trash* in the right-click menu or
+  the bin in the selection bar move the selected files to the Trash.
 - Self-timer: a photo after 3, 5 or 10 seconds, so both hands are free to
   hold a probe or tweezers in the picture. Turn it on at the top of the
   timelapse popover or in *Camera → Self-timer*, or press `S` for one photo

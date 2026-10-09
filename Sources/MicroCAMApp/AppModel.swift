@@ -101,6 +101,8 @@ final class AppModel: ObservableObject {
         case .cancelSelfTimer: cancelSelfTimer()
         case .toggleRecording: toggleRecording()
         case .quickLook: previewSelection()
+        case .copySelection: copyFiles(library.selectedFiles)
+        case .trashSelection: moveToTrash(library.selectedFiles)
         case .toggleDrawing: isDrawing.toggle()
         case .leaveDrawing: isDrawing = false
         }
@@ -587,6 +589,60 @@ final class AppModel: ObservableObject {
         }).editedCopyURL(of: source)
         pendingURLs.insert(destination)
         return destination
+    }
+
+    /// ⌘C and Copy in the side panel: the files, so Finder pastes them as
+    /// files and Mail or Messages as attachments. A single photo also goes as
+    /// an image, for apps that paste only pictures (Preview, Notes, a browser).
+    func copyFiles(_ urls: [URL]) {
+        guard !urls.isEmpty else { return }
+        let items = urls.map { url in
+            let item = NSPasteboardItem()
+            item.setString(url.absoluteString, forType: .fileURL)
+            return item
+        }
+        if urls.count == 1, let url = urls.first, url.pathExtension.lowercased() == "jpg",
+           let data = try? Data(contentsOf: url) {
+            items[0].setData(data, forType: NSPasteboard.PasteboardType(UTType.jpeg.identifier))
+            if let tiff = NSBitmapImageRep(data: data)?.tiffRepresentation { items[0].setData(tiff, forType: .tiff) }
+        }
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.writeObjects(items)
+        message = StatusMessage(text: String(localized: "Copied: \(urls.count)"), isError: false)
+    }
+
+    /// ⌘⌫ and Move to Trash in the side panel. The Trash keeps them, so no
+    /// question first, as in Finder. A photo or video still being written
+    /// stays, and files being moved to a job can't be touched until that ends.
+    func moveToTrash(_ urls: [URL]) {
+        guard !urls.isEmpty else { return }
+        guard !isMovingFiles else {
+            message = StatusMessage(text: String(localized: "Still moving the previous files. Try again in a moment."), isError: false)
+            return
+        }
+        var trashed = 0
+        var problems: [String] = []
+        for url in urls {
+            if pendingURLs.contains(url) {
+                problems.append(String(localized: "\(url.lastPathComponent) is still being saved"))
+                continue
+            }
+            do {
+                try FileManager.default.trashItem(at: url, resultingItemURL: nil)
+                trashed += 1
+            } catch {
+                problems.append("\(url.lastPathComponent): \(error.localizedDescription)")
+            }
+        }
+        library.grid = GridSelection()
+        capturesChanged()
+        if problems.isEmpty {
+            message = StatusMessage(text: String(localized: "Moved to Trash: \(trashed)"), isError: false)
+        } else {
+            let text = String(localized: "Moved to Trash: \(trashed). Not moved: \(problems.joined(separator: "; "))")
+            message = StatusMessage(text: text, isError: true)
+        }
     }
 
     /// Space in the side panel: Quick Look over the selection, or closes it.

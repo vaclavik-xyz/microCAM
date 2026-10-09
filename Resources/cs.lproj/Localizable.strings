@@ -388,3 +388,15 @@
 "Photo in %lld s" = "Fotka za %lld s";
 "Take photo with self-timer" = "Vyfotit se samospouští";
 "S – take a photo after the self-timer countdown, Esc – cancel it" = "S – vyfotit po odpočtu samospouště, Esc – zrušit ho";
+
+/* Side panel: copy */
+"Copied: %lld" = "Zkopírováno: %lld";
+"⌘C – copy the selected files" = "⌘C – zkopírovat označené soubory";
+
+/* Side panel: Trash */
+"Move to Trash" = "Přesunout do koše";
+"Move to Trash (⌘⌫)" = "Přesunout do koše (⌘⌫)";
+"%@ is still being saved" = "%@ se ještě ukládá";
+"Moved to Trash: %lld" = "Přesunuto do koše: %lld";
+"Moved to Trash: %lld. Not moved: %@" = "Přesunuto do koše: %lld. Nepřesunuto: %@";
+"⌘⌫ – move the selected files to the Trash" = "⌘⌫ – přesunout označené soubory do koše";
