@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.6.1 — 2026-10-26
 
 - Viewer: leaving the full-screen photo while the window is still going
   full screen no longer leaves the window full screen.
