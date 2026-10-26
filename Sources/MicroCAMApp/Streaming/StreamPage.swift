@@ -20,7 +20,7 @@ import MicroCAMCore
 /// ← / → and a swipe step through the rest of that list. With jobs on, the folder
 /// name at the top switches to another job or the photos without one, only
 /// for this page. The current folder reloads when `/status` reports new
-/// captures. Same PIN as for photos. On a big screen (`SIDEBAR`) the photos
+/// captures. Same PIN as for photos. On a big screen and in microCAM's viewer (`SIDEBAR`) the photos
 /// are a sidebar on the left, like the side panel on the camera Mac: the
 /// picture stays beside it and a tap keeps it open. On a phone they cover the
 /// screen and a tap closes them.
@@ -1125,7 +1125,9 @@ $("back").onclick = () => {
 // ---- photo browser ----
 let galleryOpen = false, galleryFolder = "", galleryListing = null, gallerySeq = 0, jobs = null;
 // Room for the sidebar and a picture beside it; smaller screens get the photos over the picture.
-const SIDEBAR = matchMedia("(min-width: 900px) and (min-height: 501px)");
+// microCAM's viewer always wants the sidebar, like the camera Mac's side panel, also in a window
+// narrower than a browser needs (a front-desk viewer was 889 px wide).
+const SIDEBAR = matchMedia(EMBEDDED ? "(min-width: 640px) and (min-height: 400px)" : "(min-width: 900px) and (min-height: 501px)");
 const docked = () => galleryOpen && SIDEBAR.matches;
 function applyDock() {
   document.body.classList.toggle("docked", docked());
