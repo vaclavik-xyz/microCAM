@@ -693,6 +693,9 @@ final class DemoDriver {
             await pause(2.5)
             check(await js("galleryOpen") as? Bool == true, "viewer: Photos opens the photo browser in the page")
             check((await js("document.querySelectorAll('.tile').length") as? Int ?? 0) > 0, "viewer: the photo browser lists photos")
+            check(viewer.isGalleryDocked, "viewer: in a big window the photos are a sidebar")
+            let sidebarImage = await js("Math.round(live.getBoundingClientRect().left)") as? Int ?? 0
+            check(sidebarImage >= Int(ViewerModel.sidebarWidth), "viewer: the picture sits beside the sidebar (left \(sidebarImage))")
             capture(main, withChildren: true, as: "11e-viewer-photos", in: dir)
             // The page gets every key: camera-mode shortcuts (0 resets the zoom) must not swallow a numpad 0.
             _ = await js("showPicker(true); 0")
@@ -711,14 +714,17 @@ final class DemoDriver {
             _ = await js("showPicker(false); 0")
             _ = await js("document.querySelector('.tile').click(); 0")
             await pause(2)
-            check(viewer.showsPhoto && !viewer.isGalleryOpen, "viewer: a photo from the browser replaces the live picture")
+            check(viewer.showsPhoto && viewer.isGalleryOpen, "viewer: a photo from the sidebar replaces the live picture, the sidebar stays")
             check(!viewer.isDrawing, "viewer: a photo from the browser opens without drawing")
+            let saveHidden = await js("document.getElementById('save').classList.contains('hidden')") as? Bool
+            check(!viewer.hasDrawing && saveHidden == true, "viewer: no Save without a drawing")
             capture(main, withChildren: true, as: "11f-viewer-photos-photo", in: dir)
             let first = await js("frozen.name") as? String
             _ = await js("document.getElementById('nextShot').click(); 0")
             await pause(1.5)
             let second = await js("frozen.name") as? String
             check(await js("frozen.index") as? Int == 1 && second != nil && second != first, "viewer: the arrow shows the next photo")
+            check(await js("document.querySelector('.tile.sel')?.dataset.name") as? String == second, "viewer: the sidebar marks the photo shown")
             capture(main, withChildren: true, as: "11g-viewer-photos-next", in: dir)
             viewer.backToLive()
             await pause(1.5)

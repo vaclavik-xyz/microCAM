@@ -20,7 +20,10 @@ import MicroCAMCore
 /// ← / → and a swipe step through the rest of that list. With jobs on, the folder
 /// name at the top switches to another job or the photos without one, only
 /// for this page. The current folder reloads when `/status` reports new
-/// captures. Same PIN as for photos.
+/// captures. Same PIN as for photos. On a big screen (`SIDEBAR`) the photos
+/// are a sidebar on the left, like the side panel on the camera Mac: the
+/// picture stays beside it and a tap keeps it open. On a phone they cover the
+/// screen and a tap closes them.
 ///
 /// The live picture is H.264 (`/video`, fragmented MP4) played through Media
 /// Source Extensions, or `ManagedMediaSource` on iPhone; WebCodecs would be
@@ -56,7 +59,7 @@ enum StreamPage {
 :root{
   --bg:#07080a;--panel:rgba(22,24,29,.84);--raised:rgba(255,255,255,.07);--raised-hi:rgba(255,255,255,.14);
   --on:#eef0f4;--on-ink:#0b0c0f;--line:rgba(255,255,255,.09);--text:#eef0f4;--muted:#9aa3b2;--accent:#ff3b30;
-  --hit:44px;--gap:4px;--edge:12px;--reserve-b:0px;--reserve-r:0px;
+  --hit:44px;--gap:4px;--edge:12px;--reserve-b:0px;--reserve-r:0px;--reserve-l:0px;--side:320px;
   --st:env(safe-area-inset-top,0px);--sr:env(safe-area-inset-right,0px);
   --sb:env(safe-area-inset-bottom,0px);--sl:env(safe-area-inset-left,0px);
 }
@@ -66,7 +69,7 @@ html,body{margin:0;position:fixed;inset:0;overflow:hidden;background:var(--bg);c
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
   touch-action:none;overscroll-behavior:none;-webkit-text-size-adjust:100%}
 /* the image is centred in the space the main panel leaves free, so it never sits under the controls */
-#stage{position:fixed;top:0;left:0;right:var(--reserve-r);bottom:var(--reserve-b);display:flex;align-items:center;justify-content:center}
+#stage{position:fixed;top:0;left:var(--reserve-l);right:var(--reserve-r);bottom:var(--reserve-b);display:flex;align-items:center;justify-content:center}
 #stage img,#stage video{max-width:100%;max-height:100%;display:block;-webkit-user-drag:none}
 #ink{position:fixed;touch-action:none;pointer-events:none}
 body.drawing #ink{pointer-events:auto;cursor:crosshair}
@@ -79,7 +82,7 @@ body.drawing.tool-text #ink{cursor:text}
 svg{width:22px;height:22px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 
 /* ---- status chip ---- */
-#status{position:fixed;top:calc(var(--st) + var(--edge));left:calc(var(--sl) + var(--edge));
+#status{position:fixed;top:calc(var(--st) + var(--edge));left:calc(var(--reserve-l) + var(--sl) + var(--edge));
   display:flex;align-items:center;gap:8px;height:30px;padding:0 12px 0 10px;border-radius:15px;
   background:rgba(22,24,29,.62);border:1px solid var(--line);
   -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
@@ -94,7 +97,7 @@ body.offline #status .dot{background:var(--muted);box-shadow:none}
 }
 
 /* ---- dock of floating panels ---- */
-#dock{position:fixed;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;gap:8px;
+#dock{position:fixed;left:var(--reserve-l);right:0;bottom:0;display:flex;flex-direction:column;align-items:center;gap:8px;
   padding:0 calc(var(--sr) + var(--edge)) calc(var(--sb) + var(--edge)) calc(var(--sl) + var(--edge));
   pointer-events:none;transition:opacity .35s}
 .panel{display:flex;align-items:center;gap:var(--gap);padding:5px;border-radius:28px;max-width:100%;
@@ -241,7 +244,7 @@ body.embedded #dock{padding-bottom:64px}
   background:rgba(22,24,29,.62);border:1px solid var(--line);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
 .nav:active:not(:disabled){transform:translateY(-50%) scale(.94)}
 .nav:disabled{opacity:0;pointer-events:none}
-#prevShot{left:calc(var(--sl) + var(--edge))}
+#prevShot{left:calc(var(--reserve-l) + var(--sl) + var(--edge))}
 #nextShot{right:calc(var(--reserve-r) + var(--sr) + var(--edge))}
 
 /* ---- photo browser: the camera Mac's photos by day ---- */
@@ -291,6 +294,14 @@ body.embedded #dock{padding-bottom:64px}
   #jobList{padding-bottom:calc(var(--sb) + 12px)}
   .tiles{grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:6px}
 }
+/* big screens: a sidebar on the left; the picture, its tools and the status move right of it */
+body.docked{--reserve-l:var(--side)}
+body.docked #gallery{inset:0 auto 0 0;width:var(--side);z-index:4;padding:0;background:none;
+  -webkit-backdrop-filter:none;backdrop-filter:none}
+body.docked .sheet{width:100%;border-radius:0;border:0;border-right:1px solid var(--line);box-shadow:none}
+body.docked .sheet header{padding:calc(var(--st) + 8px) 8px 8px calc(var(--sl) + 8px)}
+body.docked #galleryBody{padding:0 12px calc(var(--sb) + 12px) calc(var(--sl) + 12px)}
+body.docked .tiles{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px}
 @media (orientation:landscape) and (max-height:380px){ :root{--gap:2px} .sep{display:none}
   /* seven tools in two columns of four and three */
   /* (a grid: a column-wrapping flexbox would not grow wider) */
@@ -776,6 +787,8 @@ function redraw() {
   ctx.clearRect(0, 0, ink.width, ink.height);
   for (const s of current ? [...shapes, current] : shapes) drawShape(s, ink.width, ink.height);
   $("undo").disabled = $("clear").disabled = !shapes.length;
+  // Saving makes a copy with the drawing; without one there is nothing to save.
+  $("save").classList.toggle("hidden", !shapes.length);
 }
 function drawShape(s, W, H) {
   if (s.kind === "text") {
@@ -1043,7 +1056,17 @@ function showShot(ref, url, draw) {
   shot.classList.remove("hidden"); stopStream(); showFeed();
   $("liveTools").classList.add("hidden"); $("shotTools").classList.remove("hidden");
   $("download").href = url; $("download").download = ref.name;
-  setState(); setDrawing(draw); showNav();
+  setState(); setDrawing(draw); showNav(); markShown();
+}
+/// The photo shown is highlighted in the open sidebar, scrolled into view as the arrows step.
+function markShown() {
+  let shown = null;
+  document.querySelectorAll(".tile").forEach(t => {
+    const on = !!frozen && t.dataset.name === frozen.name;
+    t.classList.toggle("sel", on);
+    if (on) shown = t;
+  });
+  if (shown && docked()) shown.scrollIntoView({ block: "nearest" });
 }
 $("photo").onclick = () => takePhoto(timerDelay);
 $("save").onclick = async () => {
@@ -1064,17 +1087,27 @@ $("back").onclick = () => {
   frozen = null; shapes = []; redraw();
   shot.classList.add("hidden"); showFeed();
   $("shotTools").classList.add("hidden"); $("liveTools").classList.remove("hidden");
-  setState(); setDrawing(false); showNav(); startStream();
+  setState(); setDrawing(false); showNav(); markShown(); startStream();
 };
 
 // ---- photo browser ----
 let galleryOpen = false, galleryFolder = "", galleryListing = null, gallerySeq = 0, jobs = null;
+// Room for the sidebar and a picture beside it; smaller screens get the photos over the picture.
+const SIDEBAR = matchMedia("(min-width: 900px) and (min-height: 501px)");
+const docked = () => galleryOpen && SIDEBAR.matches;
+function applyDock() {
+  document.body.classList.toggle("docked", docked());
+  $("gallery").setAttribute("aria-modal", !docked());
+  scheduleReserve(); report();
+}
+if (SIDEBAR.addEventListener) SIDEBAR.addEventListener("change", applyDock); else SIDEBAR.addListener(applyDock);
 const thumbs = new Map();   // thumbnail address → blob URL, kept while the page is open
 function openGallery() {
   if (!photoEnabled || galleryOpen) return;
   commitText();
   galleryOpen = true;
   $("gallery").classList.remove("hidden");
+  applyDock();
   showPicker(false);
   if (galleryListing) renderGallery();
   loadGallery();
@@ -1086,6 +1119,7 @@ function closeGallery() {
   galleryOpen = false;
   $("gallery").classList.add("hidden");
   $("jobSearch").blur();
+  applyDock();
   wake(); report();
 }
 $("photos").onclick = openGallery;
@@ -1138,6 +1172,7 @@ function renderGallery() {
       count++;
       const tile = document.createElement("button"), img = document.createElement("img"), time = document.createElement("span");
       tile.className = "tile";
+      tile.dataset.name = p.name;
       tile.classList.toggle("sel", !!frozen && frozen.name === p.name);
       time.textContent = timeLabel(p.name);
       tile.setAttribute("aria-label", heading.textContent + " " + time.textContent);
@@ -1159,7 +1194,7 @@ function renderGallery() {
 async function openPhoto(p, listing) {
   const url = await fetchCapture(p);
   if (!url) return;
-  closeGallery();
+  if (!docked()) closeGallery();
   // Pinned to the folder it was listed from: "" would follow the camera computer to another job.
   const folder = listing.folder || (listing.job ? listing.job : listing.jobs ? "_unassigned" : "");
   const list = listing.days.flatMap(d => d.photos);
@@ -1191,7 +1226,7 @@ async function stepPhoto(delta) {
 $("prevShot").onclick = () => stepPhoto(-1);
 $("nextShot").onclick = () => stepPhoto(1);
 document.addEventListener("keydown", e => {
-  if (!frozen || !frozen.list || editing || galleryOpen || pinDone || e.metaKey || e.altKey || e.ctrlKey) return;
+  if (!frozen || !frozen.list || editing || (galleryOpen && !docked()) || pinDone || e.metaKey || e.altKey || e.ctrlKey) return;
   if (e.target && /^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return;
   if (e.key === "ArrowLeft") { e.preventDefault(); stepPhoto(-1); }
   else if (e.key === "ArrowRight") { e.preventDefault(); stepPhoto(1); }
@@ -1289,7 +1324,8 @@ $("jobSearch").addEventListener("keydown", e => {
 });
 // Esc closes the job list, then the photos (before the PIN panel and drawing get it).
 document.addEventListener("keydown", e => {
-  if (e.key !== "Escape" || !galleryOpen || pinDone) return;
+  // A label being typed beside the sidebar keeps its own Esc.
+  if (e.key !== "Escape" || !galleryOpen || pinDone || editing) return;
   e.stopPropagation();
   if (!$("jobPicker").classList.contains("hidden")) showPicker(false); else closeGallery();
 }, true);
@@ -1308,7 +1344,8 @@ function report() {
   const handler = window.webkit && webkit.messageHandlers && webkit.messageHandlers.microcam;
   if (!EMBEDDED || !handler) return;
   const state = JSON.stringify({ drawing, tool, color, size: textSize, shapes: shapes.length, photoEnabled,
-                                 frozen: !!frozen, offline, job: shownJob(), gallery: galleryOpen });
+                                 frozen: !!frozen, offline, job: shownJob(), gallery: galleryOpen,
+                                 docked: docked() });
   if (state !== reported) { reported = state; handler.postMessage(state); }
 }
 const toolButton = name => document.querySelector(`[data-tool="${name}"]`);
