@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.5.6 — 2026-10-26
 
 - *Photos* on the stream page and in microCAM's viewer: the camera Mac's
   photos by day, e.g. to show a customer at the front desk what you found,
