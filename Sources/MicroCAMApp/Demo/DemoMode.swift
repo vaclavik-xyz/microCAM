@@ -783,6 +783,13 @@ final class DemoDriver {
             await pause(2.5)
             check(!viewer.isFullView && !main.styleMask.contains(.fullScreen) && viewer.isGalleryOpen,
                   "viewer: Esc goes back from full screen, the sidebar stays")
+            // The full view ends while the window is still animating into full screen: it comes back out.
+            press(" ", 49)
+            await pause(0.2)
+            _ = await js("setFullView(false); 0")
+            await pause(3.5)
+            check(!viewer.isFullView && !main.styleMask.contains(.fullScreen),
+                  "viewer: leaving the full view during the animation leaves no full screen behind (page \(viewer.isFullView), window \(main.styleMask.contains(.fullScreen)))")
             // Download hands over the original, or the drawing saved first as a copy (not written to Downloads here).
             func handedOver(_ withDrawing: Bool) async -> (name: String, bytes: Int)? {
                 let file = try? await viewer.webView?.callAsyncJavaScript("return await microcam.download(w)", arguments: ["w": withDrawing],

@@ -33,12 +33,34 @@ final class GridNavigationTests: XCTestCase {
         XCTAssertNil(target("e", .down))
     }
 
-    /// Rows off screen aren't laid out: as many captures on as the row is wide.
-    func testFallsBackToTheRowWidthWithoutFrames() {
+    /// Rows off screen aren't laid out: rows of the current row's width, each day starting a new row.
+    func testFallsBackToRowsWithinEachDayWithoutFrames() {
+        let days = [["a", "b", "c"], ["d", "e"]]
         let onScreen = ["a": frames["a"]!, "b": frames["b"]!]
-        XCTAssertEqual(target("a", .down, frames: onScreen), "c")
-        XCTAssertEqual(target("b", .down, frames: onScreen), "d")
-        XCTAssertEqual(target("c", .down, frames: [:]), "d")
+        func target(_ from: String, _ move: GridMove, _ frames: [String: CGRect]) -> String? {
+            GridNavigation.target(from: from, move: move, order: order, frames: frames, sections: days)
+        }
+        XCTAssertEqual(target("a", .down, onScreen), "c")
+        XCTAssertEqual(target("b", .down, onScreen), "c")   // the shorter row below: its last tile, not d
+        let lastRow = ["c": frames["c"]!, "x": CGRect(x: 110, y: 80, width: 100, height: 70)]
+        XCTAssertEqual(target("c", .down, lastRow), "d")    // into the next day's first row
+        let nextDay = ["d": frames["d"]!, "e": frames["e"]!]
+        XCTAssertEqual(target("e", .up, nextDay), "c")      // the previous day's last row, clamped
+        XCTAssertEqual(target("d", .up, nextDay), "c")
+        XCTAssertNil(target("a", .up, onScreen))
+        XCTAssertNil(target("e", .down, nextDay))
+    }
+
+    /// From a day's shorter last row the grid is still as wide as its widest row on screen.
+    func testColumnsComeFromTheWidestRow() {
+        let days = [["a", "b", "c", "d", "e"], ["f", "g", "h"]]   // three columns: a b c / d e, then f g h
+        let order = days.flatMap { $0 }
+        let frames: [String: CGRect] = [   // only day 1 on screen, d and e in its short last row
+            "a": CGRect(x: 0, y: 0, width: 60, height: 40), "b": CGRect(x: 70, y: 0, width: 60, height: 40),
+            "c": CGRect(x: 140, y: 0, width: 60, height: 40),
+            "d": CGRect(x: 0, y: 50, width: 60, height: 40), "e": CGRect(x: 70, y: 50, width: 60, height: 40),
+        ]
+        XCTAssertEqual(GridNavigation.target(from: "e", move: .down, order: order, frames: frames, sections: days), "g")
     }
 
     func testNothingSelectedStartsAtTheFirst() {

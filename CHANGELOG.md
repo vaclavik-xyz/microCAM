@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+- Viewer: leaving the full-screen photo while the window is still going
+  full screen no longer leaves the window full screen.
+- Space works again on the PIN panel's buttons while a photo is shown.
+- *Download* with a drawing: when the saved copy can't be fetched, the error
+  stays on screen (not "Saved"), and trying again fetches that copy instead
+  of saving the drawing a second time.
+- Side panel: ↑ / ↓ no longer skip a capture where one day ends and the
+  next begins, also in rows not yet on screen.
+
 ## 0.6.0 — 2026-10-26
 
 - *Photos*: Space shows the photo on its own over the whole screen (the
