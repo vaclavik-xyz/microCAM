@@ -19,6 +19,9 @@ public struct StreamPageState: Decodable, Equatable, Sendable {
     public let frozen: Bool
     public let offline: Bool
     public let job: String
+    /// The photo browser is open; nil from a camera Mac whose page has none
+    /// (an older microCAM), so the viewer shows no Photos button for it.
+    public let gallery: Bool?
 
     public static func decode(_ json: String) -> StreamPageState? {
         json.data(using: .utf8).flatMap { try? JSONDecoder().decode(StreamPageState.self, from: $0) }

@@ -688,6 +688,18 @@ final class DemoDriver {
             viewer.backToLive()
             await pause(1.5)
             check(!viewer.showsPhoto, "viewer: Live view goes back")
+            check(viewer.galleryAvailable, "viewer: the page offers the photo browser")
+            viewer.isGalleryOpen = true
+            await pause(2.5)
+            check(await js("galleryOpen") as? Bool == true, "viewer: Photos opens the photo browser in the page")
+            check((await js("document.querySelectorAll('.tile').length") as? Int ?? 0) > 0, "viewer: the photo browser lists photos")
+            capture(main, withChildren: true, as: "11e-viewer-photos", in: dir)
+            _ = await js("document.querySelector('.tile').click(); 0")
+            await pause(2)
+            check(viewer.showsPhoto && !viewer.isGalleryOpen, "viewer: a photo from the browser replaces the live picture")
+            capture(main, withChildren: true, as: "11f-viewer-photos-photo", in: dir)
+            viewer.backToLive()
+            await pause(1.5)
         }
         viewer.isDrawing = false
         await pause(1)

@@ -11,7 +11,7 @@ struct ViewerView: View {
             Color.black
             if let url = viewer.url {
                 StreamWebView(url: url, viewer: viewer)
-                if viewer.isDrawing {
+                if viewer.isDrawing && !viewer.isGalleryOpen {
                     // The same tools as on the camera Mac, over the bottom of the picture.
                     DrawingPalette(model: viewer)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom).padding(16)
@@ -55,6 +55,11 @@ struct ViewerView: View {
                     }
                 }
                 ToolbarItemGroup(placement: .primaryAction) {
+                    if viewer.photoEnabled && viewer.galleryAvailable {
+                        Toggle(isOn: $viewer.isGalleryOpen) { Label("Photos", systemImage: "photo.on.rectangle") }
+                            .toggleStyle(.button)
+                            .help("Photos on the camera Mac")
+                    }
                     Toggle(isOn: $viewer.isDrawing) { Label("Draw", systemImage: "pencil.tip.crop.circle") }
                         .toggleStyle(.button)
                         .help("Draw on the picture")

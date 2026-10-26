@@ -345,6 +345,15 @@ camera computer via Bonjour.
   **Save as photo** saves a copy with the drawing (`…_2.jpg`); the original
   stays untouched. Remote photos need the *PIN for photos* set on the camera
   computer (without one the button is hidden); a wrong PIN locks the device out for a while.
+- **Photos:** the camera computer's photos by day, newest first, e.g. to
+  show a customer at the front desk what you found at the bench. Tap one to
+  see it instead of the live picture, draw on it and **Save as photo** (the
+  copy goes next to it); **Live view** goes back. The current folder updates
+  as new photos are taken. With jobs on, the name at the top opens **Find a
+  job**: another job or the photos without one. That changes only what this
+  device shows; the camera computer keeps saving into its own job. Photos
+  only (no videos), the newest 500 per folder, same PIN as for photos. In
+  microCAM's viewer it's the *Photos* button in the toolbar.
 - **Self-timer:** the timer button next to **Take photo** switches between
   off, 3, 5 and 10 s (the browser remembers it). The camera Mac counts down
   over the picture and beeps, and the button counts along; Space, S or Esc at
