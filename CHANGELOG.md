@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.5.9 — 2026-10-26
 
 - Viewer: *Photos* is a sidebar from a 640 px wide window on (was 900 px),
   so a smaller viewer window, like one 889 px wide at a front desk, gets it
