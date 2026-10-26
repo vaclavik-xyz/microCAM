@@ -1,7 +1,7 @@
 import AppKit
 import MicroCAMCore
 
-/// Single-key shortcuts for the main window only. Keys pass through while a
+/// Single-key shortcuts for the main window in camera mode only. Keys pass through while a
 /// text field is being edited (job codes contain R and 0) and in other
 /// windows (Settings, sheets). Key repeat is ignored.
 ///
