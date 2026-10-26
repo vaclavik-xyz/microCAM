@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- *Photos*: step through the photos with the arrows beside the picture,
+  ← / → or a swipe, without going back to the list. A photo from the list
+  opens without drawing; *Draw* turns it on.
+- Viewer: every key reaches the stream page. A numpad 0 (and S, R, G, D,
+  Space) was swallowed by the camera shortcuts, so a PIN like 2026 couldn't
+  be typed.
+
 ## 0.5.6 — 2026-10-26
 
 - *Photos* on the stream page and in microCAM's viewer: the camera Mac's

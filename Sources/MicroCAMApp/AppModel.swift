@@ -194,8 +194,10 @@ final class AppModel: ObservableObject {
             self.message = nil
             self.applyLifecycle()
         }
+        // Camera mode only: in viewer mode the window holds the stream page, whose PIN, job search and
+        // labels need every key (a swallowed numpad 0 kept a PIN like 2026 from being typed).
         keyboard = KeyboardMonitor(isMainWindow: { [weak self] window in
-            window != nil && window === self?.mainWindow
+            window != nil && window === self?.mainWindow && self?.launchMode == .camera
         }, isInSidePanel: { [weak self] event in
             guard let view = self?.sidePanelView, view.window === event.window else { return false }
             return view.bounds.contains(view.convert(event.locationInWindow, from: nil))
