@@ -28,7 +28,8 @@ public enum GridNavigation {
                         .min { abs($0.value.midX - here.midX) < abs($1.value.midX - here.midX) }?.key
                 }
             }
-            let columns = max(1, frames[current].map { here in frames.values.filter { abs($0.minY - here.minY) < 1 }.count } ?? 1)
+            // The widest row on screen: the current one may be a day's shorter last row.
+            let columns = max(1, Dictionary(grouping: frames.values) { ($0.minY).rounded() }.values.map(\.count).max() ?? 1)
             return rowNeighbour(of: current, down: down, columns: columns, sections: sections ?? [order])
         }
     }

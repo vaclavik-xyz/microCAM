@@ -66,14 +66,11 @@ final class ViewerModel: ObservableObject {
             windowFullScreenForPage = true
             window.toggleFullScreen(nil)
         } else if !isFullView, isFullScreen, windowFullScreenForPage {
-            leavingForPage = true
             window.toggleFullScreen(nil)
         }
     }
 
     private var fullScreenTransition = false
-    /// The window is leaving full screen because the page's full view ended (not the user).
-    private var leavingForPage = false
 
     private func observeFullScreen(of window: NSWindow) {
         guard fullScreenObservers.isEmpty else { return }
@@ -94,10 +91,9 @@ final class ViewerModel: ObservableObject {
             on(NSWindow.didExitFullScreenNotification) { model in
                 model.fullScreenTransition = false
                 model.windowFullScreenForPage = false
-                let ours = model.leavingForPage
-                model.leavingForPage = false
-                // Left by the user while the page showed its full view: end it there too.
-                if model.isFullView, !ours {
+                // Left by the user (or while the page wanted it again): the page's full view ends too,
+                // so page and window always agree.
+                if model.isFullView {
                     model.send("setFullView(false)")
                 } else {
                     DispatchQueue.main.async { [weak model] in MainActor.assumeIsolated { model?.followFullView() } }

@@ -1323,6 +1323,7 @@ function setFullView(v) {
   if (!(document.fullscreenElement || document.webkitFullscreenElement) && pageFullScreen) { pageFullScreen = false; setFullView(false); }
 }));
 document.addEventListener("keydown", e => {
+  if (e.key === " ") spaceDown = false;
   if (e.key !== " " || !frozen || editing || pinDone || e.metaKey || e.altKey || e.ctrlKey) return;
   if (e.target && /^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return;
   e.preventDefault();   // not a click on the focused button (a tile, Live view…)
@@ -1331,6 +1332,8 @@ document.addEventListener("keydown", e => {
 });
 // Only the Space whose keydown went to the full view: the PIN panel's buttons still take Space.
 document.addEventListener("keyup", e => { if (e.key === " " && spaceDown) { spaceDown = false; e.preventDefault(); } });
+// Its keyup may never come here (⌘-Tab in between).
+window.addEventListener("blur", () => { spaceDown = false; });
 // Esc leaves the full view first (before the sidebar and drawing get it).
 document.addEventListener("keydown", e => {
   if (e.key !== "Escape" || !fullView || pinDone || editing) return;

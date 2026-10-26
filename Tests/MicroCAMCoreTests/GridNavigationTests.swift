@@ -51,6 +51,18 @@ final class GridNavigationTests: XCTestCase {
         XCTAssertNil(target("e", .down, nextDay))
     }
 
+    /// From a day's shorter last row the grid is still as wide as its widest row on screen.
+    func testColumnsComeFromTheWidestRow() {
+        let days = [["a", "b", "c", "d", "e"], ["f", "g", "h"]]   // three columns: a b c / d e, then f g h
+        let order = days.flatMap { $0 }
+        let frames: [String: CGRect] = [   // only day 1 on screen, d and e in its short last row
+            "a": CGRect(x: 0, y: 0, width: 60, height: 40), "b": CGRect(x: 70, y: 0, width: 60, height: 40),
+            "c": CGRect(x: 140, y: 0, width: 60, height: 40),
+            "d": CGRect(x: 0, y: 50, width: 60, height: 40), "e": CGRect(x: 70, y: 50, width: 60, height: 40),
+        ]
+        XCTAssertEqual(GridNavigation.target(from: "e", move: .down, order: order, frames: frames, sections: days), "g")
+    }
+
     func testNothingSelectedStartsAtTheFirst() {
         XCTAssertEqual(target(nil, .down), "a")
         XCTAssertEqual(target("gone", .right), "a")
