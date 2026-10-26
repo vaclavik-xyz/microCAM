@@ -43,6 +43,10 @@ final class ViewerModel: ObservableObject {
     @Published private(set) var showsPhoto = false
     @Published private(set) var offline = false
     @Published private(set) var job = ""
+    /// The camera Mac's page has a photo browser (an older one has none).
+    @Published private(set) var galleryAvailable = false
+    /// The photo browser over the picture: the camera Mac's photos, by day.
+    @Published var isGalleryOpen = false { didSet { send("setGallery(\(isGalleryOpen))", if: isGalleryOpen != oldValue) } }
     weak var webView: WKWebView?
     private var applyingPageState = false
 
@@ -71,6 +75,8 @@ final class ViewerModel: ObservableObject {
         showsPhoto = state.frozen
         offline = state.offline
         job = state.job
+        galleryAvailable = state.gallery != nil
+        if isGalleryOpen != (state.gallery ?? false) { isGalleryOpen = state.gallery ?? false }
     }
 
     init(settings: @escaping () -> AppSettings, update: @escaping ((inout AppSettings) -> Void) -> Void) {
@@ -186,6 +192,8 @@ final class ViewerModel: ObservableObject {
         hasDrawing = false
         showsPhoto = false
         photoEnabled = false
+        galleryAvailable = false
+        isGalleryOpen = false
     }
 }
 

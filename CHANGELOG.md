@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- *Photos* on the stream page and in microCAM's viewer: the camera Mac's
+  photos by day, e.g. to show a customer at the front desk what you found,
+  even without a job. Tap one to see it, draw on it and save the drawing as
+  a copy. With jobs on you can look at another job or the photos without
+  one; the camera Mac keeps its own job. Same PIN as for photos.
+
 ## 0.5.5 — 2026-10-09
 
 - Self-timer: a photo after 3, 5 or 10 seconds, so both hands are free to

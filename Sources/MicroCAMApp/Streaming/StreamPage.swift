@@ -14,6 +14,13 @@ import MicroCAMCore
 /// off and `SelfTimer.delays`; the countdown runs on the camera computer
 /// (`POST /photo?delay=`), the photo button counts along.
 ///
+/// **Photos** opens the camera Mac's photos by day (`GET /gallery`, thumbnails
+/// from `/thumbs/`), newest first; a tap shows one instead of the live
+/// picture, to draw on like a photo taken from here. With jobs on, the folder
+/// name at the top switches to another job or the photos without one, only
+/// for this page. The current folder reloads when `/status` reports new
+/// captures. Same PIN as for photos.
+///
 /// The live picture is H.264 (`/video`, fragmented MP4) played through Media
 /// Source Extensions, or `ManagedMediaSource` on iPhone; WebCodecs would be
 /// simpler but needs HTTPS, and this page is served over plain HTTP. The
@@ -147,7 +154,7 @@ button.primary.counting:disabled{background:var(--accent);color:#fff;-webkit-tex
 }
 body.idle #dock,body.idle #status{opacity:0;pointer-events:none}
 body.idle #dock .panel{pointer-events:none}
-body.image-only #dock,body.image-only #status,body.image-only #ink{display:none!important}
+body.image-only #dock,body.image-only #status,body.image-only #ink,body.image-only #gallery{display:none!important}
 /* microCAM's viewer draws its own native tools and status; the page keeps the picture, drawing and messages */
 body.embedded #bar,body.embedded #swatches,body.embedded #sizes,body.embedded #status{display:none!important}
 /* messages above the native drawing tools at the bottom of the window */
@@ -225,6 +232,53 @@ body.embedded #dock{padding-bottom:64px}
   #pinNote{margin:6px 2px 8px}
   .card .row button{height:46px}
 }
+/* ---- photo browser: the camera Mac's photos by day ---- */
+#gallery{position:fixed;inset:0;z-index:8;display:flex;justify-content:center;
+  padding:calc(var(--st) + 16px) calc(var(--sr) + 16px) calc(var(--sb) + 16px) calc(var(--sl) + 16px);
+  background:rgba(4,5,7,.62);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.sheet{display:flex;flex-direction:column;width:min(1040px,100%);min-height:0;border-radius:24px;overflow:hidden;
+  background:#181a20;border:1px solid var(--line);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 24px 60px rgba(0,0,0,.55)}
+.sheet header{display:flex;align-items:center;gap:8px;padding:8px 8px 8px 12px;border-bottom:1px solid var(--line)}
+#galleryFolder{flex:1 1 auto;min-width:0;height:auto;min-height:var(--hit);padding:4px 12px;border-radius:14px;
+  flex-direction:column;align-items:flex-start;justify-content:center;gap:0;text-align:left}
+#galleryFolder .name{display:flex;align-items:center;gap:6px;max-width:100%;font-size:17px;font-weight:700}
+#galleryFolder .name span{overflow:hidden;text-overflow:ellipsis}
+#galleryFolder small{color:var(--muted);font-size:12px;font-weight:500}
+#galleryFolder svg{width:16px;height:16px;transition:transform .15s}
+#galleryFolder[aria-expanded=true] svg{transform:rotate(180deg)}
+#galleryFolder:disabled{opacity:1;cursor:default}
+#galleryFolder:disabled svg{display:none}
+.scroll{flex:1 1 auto;min-height:0;overflow-y:auto;touch-action:pan-y;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+#galleryBody{padding:2px 16px 16px}
+#galleryBody h3{margin:16px 2px 8px;font-size:13px;font-weight:600;color:var(--muted)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.tile{position:relative;display:block;width:100%;height:auto;min-width:0;padding:0;aspect-ratio:16/9;border-radius:12px;
+  overflow:hidden;background:var(--raised)}
+.tile img{display:block;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .2s}
+.tile img.loaded{opacity:1}
+.tile span{position:absolute;left:6px;bottom:5px;padding:1px 6px;border-radius:6px;background:rgba(0,0,0,.6);
+  font-size:11px;font-weight:600;font-variant-numeric:tabular-nums}
+.tile.sel::after{content:"";position:absolute;inset:0;border:3px solid #fff;border-radius:12px}
+.note{margin:18px 4px;color:var(--muted);font-size:14px;text-align:center}
+#jobPicker{display:flex;flex-direction:column;flex:1 1 auto;min-height:0}
+#jobSearch{flex:none;margin:12px 16px 4px;height:44px;padding:0 14px;border-radius:12px;border:1px solid var(--line);
+  background:rgba(255,255,255,.06);color:var(--text);font:inherit;font-size:16px;outline:none;
+  -webkit-user-select:text;user-select:text;touch-action:manipulation}
+#jobSearch:focus{border-color:rgba(255,255,255,.45)}
+#jobList{padding:4px 8px 12px}
+.job-item{display:flex;width:100%;height:auto;min-height:var(--hit);padding:7px 12px;border-radius:12px;
+  flex-direction:column;align-items:flex-start;gap:1px;text-align:left;white-space:normal}
+.job-item small{color:var(--muted);font-size:12px;font-weight:500}
+.job-item.sel{background:var(--raised-hi)}
+/* phones: the photos fill the screen */
+@media (max-width:520px),(max-height:500px){
+  #gallery{padding:0;background:#181a20}
+  .sheet{border-radius:0;border:0}
+  .sheet header{padding:calc(var(--st) + 6px) calc(var(--sr) + 8px) 6px calc(var(--sl) + 8px)}
+  #galleryBody{padding:0 calc(var(--sr) + 10px) calc(var(--sb) + 12px) calc(var(--sl) + 10px)}
+  #jobList{padding-bottom:calc(var(--sb) + 12px)}
+  .tiles{grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:6px}
+}
 @media (orientation:landscape) and (max-height:380px){ :root{--gap:2px} .sep{display:none}
   /* seven tools in two columns of four and three */
   /* (a grid: a column-wrapping flexbox would not grow wider) */
@@ -274,8 +328,26 @@ body.embedded #dock{padding-bottom:64px}
       <button id="save" class="primary" data-i18n-title="saveTitle"><svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg><span><span data-i18n="save"></span><span class="lbl" data-i18n="saveSuffix"></span></span></button>
       <a id="download" class="btn" download data-i18n-aria="download" data-i18n-title="download"><svg viewBox="0 0 24 24"><path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/></svg><span class="lbl" data-i18n="download"></span></a>
     </span>
+    <button id="photos" class="hidden" data-i18n-aria="photos" data-i18n-title="photosTitle" aria-haspopup="dialog"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="14" height="12" rx="2"/><path d="M7 4h12a2 2 0 0 1 2 2v9"/><path d="m3 16 4-3.5 3 2.5 2.5-2 4.5 4"/></svg><span class="lbl" data-i18n="photos"></span></button>
     <button id="fs" class="icon" data-i18n-aria="fullScreen" data-i18n-title="fullScreen"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
   </div>
+  </div>
+</div>
+<div id="gallery" class="hidden" role="dialog" aria-modal="true" aria-labelledby="galleryName">
+  <div class="sheet">
+    <header>
+      <button id="galleryFolder" aria-expanded="false" aria-controls="jobPicker" data-i18n-title="otherJob">
+        <span class="name"><span id="galleryName"></span><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span>
+        <small id="galleryHint"></small>
+      </button>
+      <button id="galleryClose" class="icon" data-i18n-aria="close" data-i18n-title="close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </header>
+    <div id="jobPicker" class="hidden">
+      <input id="jobSearch" type="search" autocomplete="off" autocapitalize="characters" spellcheck="false"
+             enterkeyhint="go" data-i18n-placeholder="findJob" data-i18n-aria="findJob">
+      <div id="jobList" class="scroll"></div>
+    </div>
+    <div id="galleryBody" class="scroll"><div id="galleryGrid"></div><p id="galleryNote" class="note hidden"></p></div>
   </div>
 </div>
 <div id="pinDialog" class="hidden" role="dialog" aria-modal="true" aria-labelledby="pinTitle">
@@ -323,7 +395,12 @@ const STRINGS = {
     "timerTitle": "Self-timer: a countdown on the camera computer before the photo",
     "timerOff": "Self-timer off", "timerOn": "Self-timer {seconds}\u00a0s", "seconds": "{seconds}\u00a0s",
     "timerBusy": "The camera computer is already counting down for a photo.",
-    "timerCancelled": "The countdown was cancelled on the camera computer."
+    "timerCancelled": "The countdown was cancelled on the camera computer.",
+    "photos": "Photos", "photosTitle": "Photos on the camera computer", "close": "Close",
+    "currentFolder": "Current folder", "noJob": "No job", "otherJob": "Show another job",
+    "findJob": "Find a job", "jobFiles": "Files: {count}", "noJobsFound": "No job matches.",
+    "noPhotos": "No photos here yet.", "morePhotos": "Showing the newest {count} photos.",
+    "today": "Today", "yesterday": "Yesterday"
   },
   "cs": {
     "offline": "Připojuji se k počítači s kamerou…",
@@ -351,7 +428,12 @@ const STRINGS = {
     "timerTitle": "Samospoušť: odpočet na počítači s kamerou před fotkou",
     "timerOff": "Samospoušť vypnutá", "timerOn": "Samospoušť {seconds}\u00a0s", "seconds": "{seconds}\u00a0s",
     "timerBusy": "Počítač s kamerou už odpočítává jinou fotku.",
-    "timerCancelled": "Odpočet na počítači s kamerou byl zrušen."
+    "timerCancelled": "Odpočet na počítači s kamerou byl zrušen.",
+    "photos": "Fotky", "photosTitle": "Fotky na počítači s kamerou", "close": "Zavřít",
+    "currentFolder": "Aktuální složka", "noJob": "Bez zakázky", "otherJob": "Zobrazit jinou zakázku",
+    "findJob": "Najít zakázku", "jobFiles": "Souborů: {count}", "noJobsFound": "Žádná zakázka neodpovídá.",
+    "noPhotos": "Tady zatím nejsou žádné fotky.", "morePhotos": "Zobrazeno {count} nejnovějších fotek.",
+    "today": "Dnes", "yesterday": "Včera"
   }
 }; // end STRINGS
 // ?lang= (the viewer app passes its own), then the browser's languages, else English.
@@ -373,7 +455,7 @@ let tool = "arrow", color = "#ff3b30", drawing = false, shapes = [], current = n
 // label lands in the saved photo where it was typed.
 const LINE = 1.2, BASE = 0.9, OUTLINE = 0.12, MARGIN = 0.15, SIZES = { small: 0.03, medium: 0.045, large: 0.07 };
 const FONT = "-apple-system,BlinkMacSystemFont,system-ui,sans-serif";
-let textSize = "medium", editing = null, textDrag = null, photoEnabled = false, job = "", reported = "";
+let textSize = "medium", editing = null, textDrag = null, photoEnabled = false, job = "", reported = "", captures = null;
 
 if (MODE === "imageOnly") document.body.classList.add("image-only");
 if (EMBEDDED) document.body.classList.add("embedded");
@@ -476,19 +558,31 @@ function setOffline(v) {
 function setState() {
   $("stateLabel").textContent = frozen ? t("statePhoto") : offline ? t("stateOffline") : t("stateLive");
   document.body.classList.toggle("frozen", !!frozen);
+  showJob();
   report();
+}
+/// The camera computer's job, or for a photo from the gallery the job it belongs to.
+function shownJob() { return frozen && "job" in frozen ? frozen.job || "" : job; }
+function showJob() {
+  $("job").textContent = shownJob();
+  $("job").classList.toggle("hidden", !shownJob());
 }
 
 async function poll() {
   try {
     const r = await fetch("/status", { cache: "no-store" });
     const s = await r.json();
-    $("job").textContent = s.job || "";
-    $("job").classList.toggle("hidden", !s.job);
+    const changed = s.captures !== captures || (s.job || "") !== job;
+    captures = s.captures;
     // Without a PIN on the camera computer nobody can take a photo: no button.
     $("photo").classList.toggle("hidden", !s.photoEnabled);
     $("timer").classList.toggle("hidden", !s.photoEnabled);
+    $("photos").classList.toggle("hidden", !s.photoEnabled);
     photoEnabled = !!s.photoEnabled; job = s.job || "";
+    showJob();
+    // New photos on the camera computer (or another job there): the open current folder reloads.
+    if (!photoEnabled) closeGallery();
+    else if (galleryOpen && changed && galleryListing && galleryListing.current) loadGallery();
     report();
     if (offline && !frozen && !useVideo) startStream();
   } catch (e) { if (!frozen) setOffline(true); }
@@ -916,16 +1010,22 @@ async function takePhoto(delay) {
   if (!ref) return;
   const url = await fetchCapture(ref);
   if (!url) return;
+  showShot(ref, url);
+  toast(t("photoTaken"), ref.name);
+}
+/// A photo instead of the live picture, ready to draw on. `ref.folder` is the
+/// gallery folder it came from ("" or none for the current one).
+function showShot(ref, url) {
+  closeEditor();
   if (downloadURL && downloadURL !== shotURL) URL.revokeObjectURL(downloadURL);
   if (shotURL) URL.revokeObjectURL(shotURL);
-  frozen = ref; shapes = [];
+  frozen = ref; shapes = []; redraw();
   shotURL = downloadURL = url;
   shot.src = url;
   shot.classList.remove("hidden"); stopStream(); showFeed();
   $("liveTools").classList.add("hidden"); $("shotTools").classList.remove("hidden");
   $("download").href = url; $("download").download = ref.name;
   setState(); setDrawing(true);
-  toast(t("photoTaken"), ref.name);
 }
 $("photo").onclick = () => takePhoto(timerDelay);
 $("save").onclick = async () => {
@@ -934,7 +1034,7 @@ $("save").onclick = async () => {
   if ($("save").disabled) return;   // one annotated copy per click, even on a double click
   $("save").disabled = true;
   try {
-    const ref = await post("/annotated", { source: frozen.name, shapes });
+    const ref = await post("/annotated", { source: frozen.name, folder: frozen.folder || "", shapes });
     if (!ref) return;
     await setDownload(ref);
     toast(t("savedToJob"), ref.name);
@@ -948,12 +1048,195 @@ $("back").onclick = () => {
   setState(); setDrawing(false); startStream();
 };
 
+// ---- photo browser ----
+let galleryOpen = false, galleryFolder = "", galleryListing = null, gallerySeq = 0, jobs = null;
+const thumbs = new Map();   // thumbnail address → blob URL, kept while the page is open
+function openGallery() {
+  if (!photoEnabled || galleryOpen) return;
+  commitText();
+  galleryOpen = true;
+  $("gallery").classList.remove("hidden");
+  showPicker(false);
+  if (galleryListing) renderGallery();
+  loadGallery();
+  setTimeout(() => $("galleryClose").focus(), 30);
+  wake(); report();
+}
+function closeGallery() {
+  if (!galleryOpen) return;
+  galleryOpen = false;
+  $("gallery").classList.add("hidden");
+  $("jobSearch").blur();
+  wake(); report();
+}
+$("photos").onclick = openGallery;
+$("galleryClose").onclick = closeGallery;
+async function loadGallery() {
+  const seq = ++gallerySeq;
+  const get = (p, folder) => fetch("/gallery" + (folder ? "?folder=" + encodeURIComponent(folder) : ""),
+                                   { headers: { "X-MicroCAM-PIN": p }, cache: "no-store" });
+  const r = await withPin(async p => {
+    const r = await get(p, galleryFolder);
+    // That job is gone, or jobs were turned off: back to the current folder.
+    if (r.status !== 404 || !galleryFolder) return r;
+    galleryFolder = "";
+    return get(p, "");
+  });
+  if (seq !== gallerySeq) return;
+  if (!r) { if (!galleryListing) closeGallery(); return; }
+  try { galleryListing = await r.json(); } catch (e) { return; }
+  if (seq === gallerySeq && galleryOpen) renderGallery();
+}
+function dayLabel(day, short) {
+  const d = /^(\d{4})-(\d{2})-(\d{2})$/.exec(day || "");
+  if (!d) return day || "";
+  const date = new Date(+d[1], d[2] - 1, +d[3]), today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const days = Math.round((today - date) / 864e5);
+  if (days === 0) return t("today");
+  if (days === 1) return t("yesterday");
+  try {
+    return new Intl.DateTimeFormat(LANG, short ? { day: "numeric", month: "short", year: "numeric" }
+      : { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(date);
+  } catch (e) { return day; }
+}
+// "PR-1_2026-09-21_14-30-05_2.jpg" → "14:30"
+const timeLabel = name => { const m = /_(\d{2})-(\d{2})-\d{2}(?:_\d+)?\.jpg$/i.exec(name); return m ? m[1] + ":" + m[2] : ""; };
+function renderGallery() {
+  const l = galleryListing, grid = $("galleryGrid");
+  $("galleryName").textContent = l.job || (l.jobs ? t("noJob") : t("photos"));
+  $("galleryHint").textContent = l.current ? t("currentFolder") : "";
+  $("galleryHint").classList.toggle("hidden", !l.current);
+  $("galleryFolder").disabled = !l.jobs;
+  const scroll = $("galleryBody").scrollTop;
+  grid.replaceChildren();
+  let count = 0;
+  for (const day of l.days) {
+    const heading = document.createElement("h3"), tiles = document.createElement("div");
+    heading.textContent = dayLabel(day.day);
+    tiles.className = "tiles";
+    for (const p of day.photos) {
+      count++;
+      const tile = document.createElement("button"), img = document.createElement("img"), time = document.createElement("span");
+      tile.className = "tile";
+      tile.classList.toggle("sel", !!frozen && frozen.name === p.name && (frozen.folder || "") === l.folder);
+      time.textContent = timeLabel(p.name);
+      tile.setAttribute("aria-label", heading.textContent + " " + time.textContent);
+      tile.title = p.name;
+      img.alt = ""; img.dataset.src = p.thumb;
+      img.onload = () => img.classList.add("loaded");
+      tile.append(img, time);
+      tile.onclick = () => openPhoto(p, l);
+      tiles.append(tile);
+      watchThumb(img);
+    }
+    grid.append(heading, tiles);
+  }
+  const note = !count ? t("noPhotos") : l.more ? t("morePhotos", { count }) : "";
+  $("galleryNote").textContent = note;
+  $("galleryNote").classList.toggle("hidden", !note);
+  $("galleryBody").scrollTop = scroll;
+}
+async function openPhoto(p, listing) {
+  const url = await fetchCapture(p);
+  if (!url) return;
+  closeGallery();
+  showShot({ name: p.name, url: p.url, folder: listing.folder, job: listing.job }, url);
+}
+// Thumbnails load as they scroll into view, a few at a time, with the PIN the gallery was listed with.
+let thumbQueue = [], thumbsLoading = 0;
+const thumbObserver = window.IntersectionObserver && new IntersectionObserver(entries => {
+  for (const e of entries) if (e.isIntersecting) { thumbObserver.unobserve(e.target); thumbQueue.push(e.target); }
+  pumpThumbs();
+}, { root: $("galleryBody"), rootMargin: "400px 0px" });
+function watchThumb(img) {
+  if (thumbs.has(img.dataset.src)) img.src = thumbs.get(img.dataset.src);
+  else if (thumbObserver) thumbObserver.observe(img);
+  else { thumbQueue.push(img); pumpThumbs(); }
+}
+function pumpThumbs() {
+  while (thumbsLoading < 4 && thumbQueue.length) {
+    const img = thumbQueue.shift(), src = img.dataset.src;
+    if (!img.isConnected) continue;
+    if (thumbs.has(src)) { img.src = thumbs.get(src); continue; }
+    thumbsLoading++;
+    fetch(src, { headers: { "X-MicroCAM-PIN": localStorage.getItem(PIN_KEY) || "" }, cache: "no-store" })
+      .then(r => r.ok ? r.blob() : null)
+      .then(b => { if (b) { const url = URL.createObjectURL(b); thumbs.set(src, url); img.src = url; } })
+      .catch(() => {})
+      .finally(() => { thumbsLoading--; pumpThumbs(); });
+  }
+}
+// ---- another job: only what this page shows; the camera computer keeps its job ----
+function showPicker(v) {
+  if (v && $("galleryFolder").disabled) return;
+  $("jobPicker").classList.toggle("hidden", !v);
+  $("galleryBody").classList.toggle("hidden", v);
+  $("galleryFolder").setAttribute("aria-expanded", v);
+  if (!v) { $("jobSearch").blur(); return; }
+  $("jobSearch").value = "";
+  renderJobs(); loadJobs();
+  setTimeout(() => $("jobSearch").focus(), 30);
+}
+$("galleryFolder").onclick = () => showPicker($("jobPicker").classList.contains("hidden"));
+async function loadJobs() {
+  const r = await withPin(p => fetch("/jobs", { headers: { "X-MicroCAM-PIN": p }, cache: "no-store" }));
+  if (!r) return;
+  try { jobs = (await r.json()).jobs || []; } catch (e) { jobs = []; }
+  renderJobs();
+}
+function jobItems() {
+  const q = $("jobSearch").value.trim().toUpperCase(), items = [];
+  if (!q) items.push({ folder: "", name: t("currentFolder"), detail: job || t("noJob") },
+                     { folder: "_unassigned", name: t("noJob"), detail: "" });
+  for (const j of (jobs || []).filter(j => j.code.includes(q)))
+    items.push({ folder: j.code, name: j.code, detail: t("jobFiles", { count: j.files }) + (j.lastDay ? " · " + dayLabel(j.lastDay, true) : "") });
+  return items;
+}
+function renderJobs() {
+  const items = jobItems(), list = $("jobList");
+  list.replaceChildren(...items.map(item => {
+    const b = document.createElement("button"), name = document.createElement("span");
+    b.className = "job-item";
+    b.classList.toggle("sel", item.folder === galleryFolder);
+    name.textContent = item.name;
+    b.append(name);
+    if (item.detail) { const d = document.createElement("small"); d.textContent = item.detail; b.append(d); }
+    b.onclick = () => pickFolder(item.folder);
+    return b;
+  }));
+  if (!items.length && jobs) {
+    const note = document.createElement("p");
+    note.className = "note"; note.textContent = t("noJobsFound");
+    list.append(note);
+  }
+}
+function pickFolder(folder) {
+  galleryFolder = folder;
+  showPicker(false);
+  $("galleryBody").scrollTop = 0;
+  loadGallery();
+}
+$("jobSearch").addEventListener("input", renderJobs);
+$("jobSearch").addEventListener("keydown", e => {
+  if (e.key !== "Enter" || e.isComposing) return;
+  e.preventDefault();
+  const items = jobItems();
+  if (items.length === 1) pickFolder(items[0].folder);
+});
+// Esc closes the job list, then the photos (before the PIN panel and drawing get it).
+document.addEventListener("keydown", e => {
+  if (e.key !== "Escape" || !galleryOpen || pinDone) return;
+  e.stopPropagation();
+  if (!$("jobPicker").classList.contains("hidden")) showPicker(false); else closeGallery();
+}, true);
+
 // ---- hide the controls when idle; any touch or mouse movement brings them back ----
 let idleTimer;
 function wake() {
   document.body.classList.remove("idle");
   clearTimeout(idleTimer);
-  idleTimer = setTimeout(() => { if (!drawing && !frozen && !countdownTimer) document.body.classList.add("idle"); }, 3000);
+  idleTimer = setTimeout(() => { if (!drawing && !frozen && !countdownTimer && !galleryOpen) document.body.classList.add("idle"); }, 3000);
 }
 ["pointermove", "pointerdown", "keydown"].forEach(ev => window.addEventListener(ev, wake));
 
@@ -962,7 +1245,7 @@ function report() {
   const handler = window.webkit && webkit.messageHandlers && webkit.messageHandlers.microcam;
   if (!EMBEDDED || !handler) return;
   const state = JSON.stringify({ drawing, tool, color, size: textSize, shapes: shapes.length, photoEnabled,
-                                 frozen: !!frozen, offline, job });
+                                 frozen: !!frozen, offline, job: shownJob(), gallery: galleryOpen });
   if (state !== reported) { reported = state; handler.postMessage(state); }
 }
 const toolButton = name => document.querySelector(`[data-tool="${name}"]`);
@@ -976,6 +1259,7 @@ window.microcam = {
   photo: () => takePhoto(0),   // the viewer has no self-timer
   back: () => $("back").click(),
   save: () => $("save").click(),
+  setGallery: v => v ? openGallery() : closeGallery(),
 };
 // Esc leaves drawing (not while typing a label or entering the PIN), as in the app.
 document.addEventListener("keydown", e => {
