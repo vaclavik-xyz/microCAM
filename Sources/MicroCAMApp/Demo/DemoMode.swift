@@ -302,6 +302,33 @@ final class DemoDriver {
             }
             model.quickLook.close()
             await pause(1)
+            // 8b2. The arrow keys in the side panel move the selection, as in Finder; Quick Look follows both ways.
+            let files = model.library.files
+            if files.count >= 4 {
+                model.library.grid = GridSelection(selected: [files[0]], anchor: files[0])
+                model.handle(.moveSelection(.right))
+                check(model.library.selection == [files[1]], "side panel: → selects the next capture")
+                model.handle(.moveSelection(.left))
+                check(model.library.selection == [files[0]], "side panel: ← selects the previous capture")
+                let frames = model.library.tileFrames
+                let columns = frames[files[0]].map { here in frames.values.filter { abs($0.minY - here.minY) < 1 }.count } ?? 0
+                model.handle(.moveSelection(.down))
+                check(columns > 0 && model.library.selection == [files[min(columns, files.count - 1)]],
+                      "side panel: ↓ selects the capture below (\(columns) columns)")
+                model.handle(.moveSelection(.up))
+                check(model.library.selection == [files[0]], "side panel: ↑ goes back up")
+                model.previewSelection()
+                await pause(1.5)
+                model.handle(.moveSelection(.right))
+                await pause(1)
+                let panel = QLPreviewPanel.shared()!
+                check(panel.currentPreviewItemIndex == 1, "side panel: an open Quick Look follows the arrows")
+                panel.currentPreviewItemIndex = 2
+                await pause(1)
+                check(model.library.selection == [files[2]], "side panel: the arrows in Quick Look move the selection")
+                model.quickLook.close()
+                await pause(1)
+            }
             model.markUp(photo)
             await pause(3)
             capture(main, withChildren: true, as: "08c-markup", in: dir)

@@ -9,8 +9,14 @@
 /// meaning).
 /// S starts a self-timer countdown; Esc cancels a running one first (Space
 /// and S cancel it too, see `AppModel.handle`).
+/// The arrow keys move the selection in the side panel while it has focus,
+/// as in Finder (`GridNavigation`); elsewhere they keep their usual meaning.
 public enum ShortcutAction: Equatable, Sendable {
+    /// NSUpArrowFunctionKey … NSRightArrowFunctionKey, as AppKit reports the arrow keys.
+    private static let arrows: [String: GridMove] = ["\u{F700}": .up, "\u{F701}": .down, "\u{F702}": .left, "\u{F703}": .right]
+
     case photo, selfTimer, cancelSelfTimer, copySelection, trashSelection, toggleRecording, toggleGrid, resetZoom, quickLook, toggleDrawing, leaveDrawing
+    case moveSelection(GridMove)
 
     public static func from(characters: String?, hasModifiers: Bool, isEditingText: Bool,
                             inSidePanel: Bool = false, hasSelection: Bool = false,
@@ -24,6 +30,7 @@ public enum ShortcutAction: Equatable, Sendable {
             }
         }
         guard !hasModifiers, !isEditingText, let characters else { return nil }
+        if inSidePanel, let move = arrows[characters] { return .moveSelection(move) }
         switch characters.lowercased() {
         case " ": return inSidePanel && hasSelection ? .quickLook : .photo
         case "s": return .selfTimer

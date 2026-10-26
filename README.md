@@ -107,6 +107,7 @@ folder on its own.
 | `Space` | `⌘ T` | take a photo |
 | `S` | `⌥ ⌘ T` | take a photo after the self-timer countdown (`Esc` cancels it) |
 | `Space` in the side panel | | Quick Look of the selected files (a photo when nothing is selected) |
+| `←` `→` `↑` `↓` in the side panel | | select the capture next to, above or below the selected one |
 | | `⌘ C` | copy the selected files (outside text fields) |
 | | `⌘ ⌫` | move the selected files to the Trash (outside text fields) |
 | `R` | `⌘ R` | start or stop recording |
@@ -143,7 +144,8 @@ The window:
   width. Hide it with the button next to the window buttons.
 - **Quick Look and Markup.** After a click in the side panel, Space opens
   the selected photos and videos in Quick Look, full size; the arrow keys
-  move on. With nothing selected, or after a click in the picture, Space
+  move on, and the selection in the panel moves along. Before that, the
+  arrow keys move the selection in the panel, as in Finder. With nothing selected, or after a click in the picture, Space
   takes a photo. *Mark up…* (right
   click, or the pen button once one photo is selected) opens the system
   Markup editor, the one from Finder: arrows, shapes, text, loupe, crop.

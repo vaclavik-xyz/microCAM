@@ -29,6 +29,17 @@ final class ShortcutActionTests: XCTestCase {
         XCTAssertEqual(ShortcutAction.from(characters: "r", hasModifiers: false, isEditingText: false,
                                            inSidePanel: true, hasSelection: true), .toggleRecording)
     }
+    /// As in Finder: the arrows move the selection while the side panel has focus, and only then.
+    func testArrowsInSidePanelMoveTheSelection() {
+        let keys: [(String, GridMove)] = [("\u{F700}", .up), ("\u{F701}", .down), ("\u{F702}", .left), ("\u{F703}", .right)]
+        for (key, move) in keys {
+            XCTAssertEqual(ShortcutAction.from(characters: key, hasModifiers: false, isEditingText: false, inSidePanel: true),
+                           .moveSelection(move))
+            XCTAssertNil(ShortcutAction.from(characters: key, hasModifiers: false, isEditingText: false, inSidePanel: false))
+            XCTAssertNil(ShortcutAction.from(characters: key, hasModifiers: true, isEditingText: false, inSidePanel: true))
+            XCTAssertNil(ShortcutAction.from(characters: key, hasModifiers: false, isEditingText: true, inSidePanel: true))
+        }
+    }
     func testSpaceInSidePanelWithoutSelectionTakesAPhoto() {
         XCTAssertEqual(ShortcutAction.from(characters: " ", hasModifiers: false, isEditingText: false,
                                            inSidePanel: true, hasSelection: false), .photo)

@@ -41,38 +41,47 @@ struct SidePanel: View {
                         .padding().frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             } else {
-                ScrollView {
-                    folderRow
-                    LazyVGrid(columns: columns, alignment: .leading, spacing: 10) {
-                        ForEach(CaptureDays.group(library.files), id: \.day) { day in
-                            Section {
-                                ForEach(day.files, id: \.self) { url in
-                                    CaptureTile(url: url, library: library, selected: library.selection.contains(url))
-                                        .background(GeometryReader { proxy in
-                                            Color.clear.preference(key: TileFrames.self,
-                                                                   value: [url: proxy.frame(in: .named(Self.gridSpace))])
-                                        })
-                                        .onTapGesture { click(url) }
-                                        .gesture(DragGesture(minimumDistance: 4)
-                                            .onChanged { _ in drag.dragChanged(from: url) }
-                                            .onEnded { _ in drag.dragEnded() })
-                                        .contextMenu { menu(for: library.grid.targets(forContextClickOn: url, in: library.files)) }
+                ScrollViewReader { scroller in
+                    ScrollView {
+                        folderRow
+                        LazyVGrid(columns: columns, alignment: .leading, spacing: 10) {
+                            ForEach(CaptureDays.group(library.files), id: \.day) { day in
+                                Section {
+                                    ForEach(day.files, id: \.self) { url in
+                                        CaptureTile(url: url, library: library, selected: library.selection.contains(url))
+                                            .background(GeometryReader { proxy in
+                                                Color.clear.preference(key: TileFrames.self,
+                                                                       value: [url: proxy.frame(in: .named(Self.gridSpace))])
+                                            })
+                                            .onTapGesture { click(url) }
+                                            .gesture(DragGesture(minimumDistance: 4)
+                                                .onChanged { _ in drag.dragChanged(from: url) }
+                                                .onEnded { _ in drag.dragEnded() })
+                                            .contextMenu { menu(for: library.grid.targets(forContextClickOn: url, in: library.files)) }
+                                    }
+                                } header: {
+                                    DayHeader(day: day.day)
                                 }
-                            } header: {
-                                DayHeader(day: day.day)
                             }
                         }
+                        .coordinateSpace(name: Self.gridSpace)
+                        .background(ViewAccessor { [drag] in drag.gridView = $0 })
+                        .onPreferenceChange(TileFrames.self) { [drag, library] frames in
+                            MainActor.assumeIsolated {
+                                drag.frames = frames
+                                library.tileFrames = frames
+                            }
+                        }
+                        .padding(.bottom, 10)
                     }
-                    .coordinateSpace(name: Self.gridSpace)
-                    .background(ViewAccessor { [drag] in drag.gridView = $0 })
-                    .onPreferenceChange(TileFrames.self) { [drag] frames in
-                        MainActor.assumeIsolated { drag.frames = frames }
+                    // The arrow keys move the selection; keep it in view.
+                    .onChange(of: library.grid.anchor) { _, anchor in
+                        if let anchor, library.selection == [anchor] { scroller.scrollTo(anchor) }
                     }
-                    .padding(.bottom, 10)
+                    .contentMargins(.horizontal, 10, for: .scrollContent)
+                    // A click next to the tiles clears the selection.
+                    .background(Color.clear.contentShape(Rectangle()).onTapGesture { library.grid = GridSelection() })
                 }
-                .contentMargins(.horizontal, 10, for: .scrollContent)
-                // A click next to the tiles clears the selection.
-                .background(Color.clear.contentShape(Rectangle()).onTapGesture { library.grid = GridSelection() })
             }
         }
         .safeAreaInset(edge: .bottom) {

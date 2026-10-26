@@ -6,6 +6,10 @@
   viewer's window goes full screen), like Quick Look on the camera Mac; the
   arrows still step, Space or Esc goes back. In the sidebar ↑ / ↓ go a row
   up or down.
+- Side panel: the arrow keys move the selection after a click in the panel,
+  as in Finder (← / → the previous or next capture, ↑ / ↓ the one above or
+  below), and the panel scrolls along. An open Quick Look follows, and its
+  own arrow keys move the selection in the panel.
 
 ## 0.5.9 — 2026-10-26
 
