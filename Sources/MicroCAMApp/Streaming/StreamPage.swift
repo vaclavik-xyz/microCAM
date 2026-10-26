@@ -1119,7 +1119,7 @@ function renderGallery() {
       count++;
       const tile = document.createElement("button"), img = document.createElement("img"), time = document.createElement("span");
       tile.className = "tile";
-      tile.classList.toggle("sel", !!frozen && frozen.name === p.name && (frozen.folder || "") === l.folder);
+      tile.classList.toggle("sel", !!frozen && frozen.name === p.name);
       time.textContent = timeLabel(p.name);
       tile.setAttribute("aria-label", heading.textContent + " " + time.textContent);
       tile.title = p.name;
@@ -1141,7 +1141,9 @@ async function openPhoto(p, listing) {
   const url = await fetchCapture(p);
   if (!url) return;
   closeGallery();
-  showShot({ name: p.name, url: p.url, folder: listing.folder, job: listing.job }, url);
+  // Pinned to the folder it was listed from: "" would follow the camera computer to another job.
+  const folder = listing.folder || (listing.job ? listing.job : listing.jobs ? "_unassigned" : "");
+  showShot({ name: p.name, url: p.url, folder, job: listing.job }, url);
 }
 // Thumbnails load as they scroll into view, a few at a time, with the PIN the gallery was listed with.
 let thumbQueue = [], thumbsLoading = 0;
