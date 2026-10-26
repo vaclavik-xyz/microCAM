@@ -693,6 +693,9 @@ final class DemoDriver {
             await pause(2.5)
             check(await js("galleryOpen") as? Bool == true, "viewer: Photos opens the photo browser in the page")
             check((await js("document.querySelectorAll('.tile').length") as? Int ?? 0) > 0, "viewer: the photo browser lists photos")
+            check(viewer.isGalleryDocked, "viewer: in a big window the photos are a sidebar")
+            let sidebarImage = await js("Math.round(live.getBoundingClientRect().left)") as? Int ?? 0
+            check(sidebarImage >= Int(ViewerModel.sidebarWidth), "viewer: the picture sits beside the sidebar (left \(sidebarImage))")
             capture(main, withChildren: true, as: "11e-viewer-photos", in: dir)
             // The page gets every key: camera-mode shortcuts (0 resets the zoom) must not swallow a numpad 0.
             _ = await js("showPicker(true); 0")
@@ -711,14 +714,34 @@ final class DemoDriver {
             _ = await js("showPicker(false); 0")
             _ = await js("document.querySelector('.tile').click(); 0")
             await pause(2)
-            check(viewer.showsPhoto && !viewer.isGalleryOpen, "viewer: a photo from the browser replaces the live picture")
+            check(viewer.showsPhoto && viewer.isGalleryOpen, "viewer: a photo from the sidebar replaces the live picture, the sidebar stays")
             check(!viewer.isDrawing, "viewer: a photo from the browser opens without drawing")
+            let saveHidden = await js("document.getElementById('save').classList.contains('hidden')") as? Bool
+            check(!viewer.hasDrawing && saveHidden == true, "viewer: no Save without a drawing")
             capture(main, withChildren: true, as: "11f-viewer-photos-photo", in: dir)
             let first = await js("frozen.name") as? String
             _ = await js("document.getElementById('nextShot').click(); 0")
             await pause(1.5)
             let second = await js("frozen.name") as? String
             check(await js("frozen.index") as? Int == 1 && second != nil && second != first, "viewer: the arrow shows the next photo")
+            check(await js("document.querySelector('.tile.sel')?.dataset.name") as? String == second, "viewer: the sidebar marks the photo shown")
+            // Download hands over the original, or the drawing saved first as a copy (not written to Downloads here).
+            func handedOver(_ withDrawing: Bool) async -> (name: String, bytes: Int)? {
+                let file = try? await viewer.webView?.callAsyncJavaScript("return await microcam.download(w)", arguments: ["w": withDrawing],
+                                                                         contentWorld: .page) as? [String: Any]
+                guard let name = file?["name"] as? String, let data = (file?["data"] as? String).flatMap({ Data(base64Encoded: $0) })
+                else { return nil }
+                return (name, data.count)
+            }
+            check(viewer.downloadAvailable, "viewer: the page offers Download")
+            let original = await handedOver(false)
+            check(original?.name == second && (original?.bytes ?? 0) > 1000, "viewer: Download hands over the original")
+            _ = await js("shapes.push({kind:'ellipse',points:[{x:.3,y:.3},{x:.6,y:.7}],color:color,width:.006}); redraw(); 0")
+            let drawn = await handedOver(true)
+            let copyIndex = drawn.flatMap { CaptureFileName.parse($0.name)?.index } ?? 0
+            check(drawn != nil && drawn?.name != second && copyIndex >= 2,
+                  "viewer: Download with drawing saves the copy first and hands it over (\(drawn?.name ?? "-"))")
+            _ = await js("shapes = []; redraw(); 0")
             capture(main, withChildren: true, as: "11g-viewer-photos-next", in: dir)
             viewer.backToLive()
             await pause(1.5)

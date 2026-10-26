@@ -45,6 +45,11 @@ final class ViewerModel: ObservableObject {
     @Published private(set) var job = ""
     /// The camera Mac's page has a photo browser (an older one has none).
     @Published private(set) var galleryAvailable = false
+    /// The camera Mac's page can hand over the shown photo (an older one can't).
+    @Published private(set) var downloadAvailable = false
+    /// The open photo browser is the page's sidebar on the left, `sidebarWidth` wide.
+    @Published private(set) var isGalleryDocked = false
+    static let sidebarWidth: CGFloat = 320   // --side in StreamPage
     /// The photo browser over the picture: the camera Mac's photos, by day.
     @Published var isGalleryOpen = false { didSet { send("setGallery(\(isGalleryOpen))", if: isGalleryOpen != oldValue) } }
     weak var webView: WKWebView?
@@ -55,6 +60,28 @@ final class ViewerModel: ObservableObject {
     func takePhoto() { send("photo()") }
     func backToLive() { send("back()") }
     func saveDrawingAsPhoto() { send("save()") }
+
+    /// The shown photo into this Mac's Downloads: the original, or with the drawing
+    /// (which the page first saves on the camera Mac, like Save as photo).
+    func downloadPhoto(withDrawing: Bool) {
+        webView?.callAsyncJavaScript("return await microcam.download(withDrawing)", arguments: ["withDrawing": withDrawing],
+                                     in: nil, in: .page) { [weak self] result in
+            guard let self, case .success(let value) = result, let file = value as? [String: Any],
+                  let name = file["name"] as? String, let base64 = file["data"] as? String else { return }
+            let saved = Data(base64Encoded: base64).flatMap { Self.saveInDownloads($0, name: name) }
+            self.webView?.callAsyncJavaScript("microcam.downloaded(ok, name)",
+                                              arguments: ["ok": saved != nil, "name": saved?.lastPathComponent ?? name],
+                                              in: nil, in: .page, completionHandler: nil)
+        }
+    }
+
+    /// In this Mac's Downloads, never over an existing file (`DownloadName`).
+    nonisolated static func saveInDownloads(_ data: Data, name: String, fileManager: FileManager = .default) -> URL? {
+        guard let folder = fileManager.urls(for: .downloadsDirectory, in: .userDomainMask).first,
+              let file = DownloadName.freeURL(for: name, in: folder, exists: { fileManager.fileExists(atPath: $0.path) })
+        else { return nil }
+        return (try? data.write(to: file, options: .withoutOverwriting)) != nil ? file : nil
+    }
 
     private func send(_ call: String, if changed: Bool = true) {
         guard changed, !applyingPageState else { return }
@@ -77,6 +104,8 @@ final class ViewerModel: ObservableObject {
         job = state.job
         galleryAvailable = state.gallery != nil
         if isGalleryOpen != (state.gallery ?? false) { isGalleryOpen = state.gallery ?? false }
+        isGalleryDocked = state.docked ?? false
+        downloadAvailable = state.download ?? false
     }
 
     init(settings: @escaping () -> AppSettings, update: @escaping ((inout AppSettings) -> Void) -> Void) {
@@ -194,6 +223,8 @@ final class ViewerModel: ObservableObject {
         photoEnabled = false
         galleryAvailable = false
         isGalleryOpen = false
+        isGalleryDocked = false
+        downloadAvailable = false
     }
 }
 

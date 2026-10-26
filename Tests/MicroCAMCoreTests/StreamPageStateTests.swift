@@ -18,6 +18,9 @@ final class StreamPageStateTests: XCTestCase {
     func testDecodesTheGalleryState() {
         let json = ##"{"drawing":false,"tool":"arrow","color":"#ff3b30","size":"medium","shapes":0,"photoEnabled":true,"frozen":false,"offline":false,"job":"","gallery":true}"##
         XCTAssertEqual(StreamPageState.decode(json)?.gallery, true)
+        XCTAssertNil(StreamPageState.decode(json)?.docked)
+        let docked = json.replacingOccurrences(of: #""gallery":true"#, with: #""gallery":true,"docked":true"#)
+        XCTAssertEqual(StreamPageState.decode(docked)?.docked, true)
     }
 
     func testRejectsOtherMessages() {

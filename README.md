@@ -348,8 +348,15 @@ camera computer via Bonjour.
 - **Photos:** the camera computer's photos by day, newest first, e.g. to
   show a customer at the front desk what you found at the bench. Tap one to
   see it instead of the live picture; the arrows at its sides, ← / → or a
-  swipe show the next and previous one. **Draw** to mark something and
-  **Save as photo** (the copy goes next to it); **Live view** goes back. The current folder updates
+  swipe show the next and previous one. On a big screen (and in microCAM's
+  viewer) the photos are a sidebar on the left, like the side panel on the
+  camera Mac, and stay open beside the picture; on a phone they cover the
+  screen. **Draw** to mark something and **Save as photo** (shown once
+  something is drawn; the copy goes next to it); **Live view** goes back.
+  In microCAM's viewer **Download** saves the shown photo in Downloads on
+  that Mac, e.g. to send it to the customer; with a drawing it saves that
+  version (kept as a copy on the camera computer too), and its arrow offers
+  the original. The current folder updates
   as new photos are taken. With jobs on, the name at the top opens **Find a
   job**: another job or the photos without one. That changes only what this
   device shows; the camera computer keeps saving into its own job. Photos

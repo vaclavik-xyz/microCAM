@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+- *Photos* in microCAM's viewer and on a big screen: a sidebar on the left,
+  like the side panel on the camera Mac. The picture stays beside it, a tap
+  shows a photo and keeps the sidebar open, the photo shown is marked as the
+  arrows step. On a phone the photos still cover the screen.
+- *Save as photo* shows only once something is drawn: without a drawing
+  there is nothing to save.
+- Viewer: *Download* saves the shown photo in Downloads on the viewer's
+  Mac, the original or with the drawing (saved as a copy on the camera Mac
+  too).
+
 ## 0.5.7 — 2026-10-26
 
 - *Photos*: step through the photos with the arrows beside the picture,

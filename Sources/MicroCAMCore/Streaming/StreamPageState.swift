@@ -22,6 +22,12 @@ public struct StreamPageState: Decodable, Equatable, Sendable {
     /// The photo browser is open; nil from a camera Mac whose page has none
     /// (an older microCAM), so the viewer shows no Photos button for it.
     public let gallery: Bool?
+    /// The open photo browser is a sidebar on the left (big screens), so the
+    /// picture and the drawing tools sit beside it.
+    public let docked: Bool?
+    /// The page hands the shown photo to the viewer (`microcam.download`);
+    /// nil from an older camera Mac.
+    public let download: Bool?
 
     public static func decode(_ json: String) -> StreamPageState? {
         json.data(using: .utf8).flatMap { try? JSONDecoder().decode(StreamPageState.self, from: $0) }

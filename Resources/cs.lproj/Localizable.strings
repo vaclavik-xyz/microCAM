@@ -366,6 +366,11 @@
 "Draw on the picture" = "Kreslit do obrazu";
 "Photos" = "Fotky";
 "Photos on the camera Mac" = "Fotky na počítači s kamerou";
+"Download" = "Stáhnout";
+"Download with drawing" = "Stáhnout s kresbou";
+"Download original" = "Stáhnout originál";
+"Save the photo with the drawing in Downloads on this Mac; the arrow offers the original" = "Uložit fotku s kresbou do Stažených souborů na tomhle Macu; šipka nabídne originál";
+"Save the photo in Downloads on this Mac" = "Uložit fotku do Stažených souborů na tomhle Macu";
 "Offline" = "Nepřipojeno";
 "Photo" = "Fotka";
 "Live" = "Živě";

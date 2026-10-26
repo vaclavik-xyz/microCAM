@@ -11,10 +11,12 @@ struct ViewerView: View {
             Color.black
             if let url = viewer.url {
                 StreamWebView(url: url, viewer: viewer)
-                if viewer.isDrawing && !viewer.isGalleryOpen {
+                // The photos over the picture hide the tools; beside it (a sidebar) they stay.
+                if viewer.isDrawing && (!viewer.isGalleryOpen || viewer.isGalleryDocked) {
                     // The same tools as on the camera Mac, over the bottom of the picture.
                     DrawingPalette(model: viewer)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom).padding(16)
+                        .padding(.leading, viewer.isGalleryOpen && viewer.isGalleryDocked ? ViewerModel.sidebarWidth : 0)
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             } else {
@@ -44,10 +46,30 @@ struct ViewerView: View {
                         Button { viewer.backToLive() } label: { Label("Live view", systemImage: "chevron.backward") }
                             .labelStyle(.titleAndIcon)
                             .help("Back to the live picture")
-                        Button { viewer.saveDrawingAsPhoto() } label: { Label("Save as photo", systemImage: "checkmark") }
-                            .labelStyle(.titleAndIcon)
-                            .disabled(!viewer.hasDrawing)
-                            .help("Save the drawing as a new photo on the camera Mac")
+                        // Saving makes a copy with the drawing: without one there is nothing to save.
+                        if viewer.hasDrawing {
+                            Button { viewer.saveDrawingAsPhoto() } label: { Label("Save as photo", systemImage: "checkmark") }
+                                .labelStyle(.titleAndIcon)
+                                .help("Save the drawing as a new photo on the camera Mac")
+                        }
+                        if viewer.downloadAvailable {
+                            if viewer.hasDrawing {
+                                Menu {
+                                    Button("Download with drawing") { viewer.downloadPhoto(withDrawing: true) }
+                                    Button("Download original") { viewer.downloadPhoto(withDrawing: false) }
+                                } label: {
+                                    Label("Download", systemImage: "arrow.down.to.line")
+                                } primaryAction: {
+                                    viewer.downloadPhoto(withDrawing: true)
+                                }
+                                .labelStyle(.titleAndIcon)
+                                .help("Save the photo with the drawing in Downloads on this Mac; the arrow offers the original")
+                            } else {
+                                Button { viewer.downloadPhoto(withDrawing: false) } label: { Label("Download", systemImage: "arrow.down.to.line") }
+                                    .labelStyle(.titleAndIcon)
+                                    .help("Save the photo in Downloads on this Mac")
+                            }
+                        }
                     } else if viewer.photoEnabled {
                         // Without a PIN on the camera computer nobody can take a photo: no button.
                         Button { viewer.takePhoto() } label: { Label("Take photo", systemImage: "camera") }
