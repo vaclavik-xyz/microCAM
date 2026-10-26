@@ -9,7 +9,7 @@ public enum GridMove: Equatable, Sendable {
 /// or next capture in grid order (across rows and days); ↑ / ↓ to the tile in
 /// the row above or below nearest to the current one's centre, from the
 /// frames of the tiles on screen. The grid is lazy, so for a row that isn't
-/// laid out it counts rows of the current row's width within each day
+/// laid out it counts rows of the widest on-screen row's width within each day
 /// (`sections`; each day starts a new row), to the same column, or the last
 /// tile of a shorter row. Nil at an edge: the selection stays.
 public enum GridNavigation {
