@@ -105,7 +105,19 @@ final class AppModel: ObservableObject {
         case .trashSelection: moveToTrash(library.selectedFiles)
         case .toggleDrawing: isDrawing.toggle()
         case .leaveDrawing: isDrawing = false
+        case .moveSelection(let move): moveSelection(move)
         }
+    }
+
+    /// The arrow keys in the side panel, as in Finder: one capture selected,
+    /// scrolled into view by the panel; an open Quick Look shows it.
+    func moveSelection(_ move: GridMove) {
+        let grid = library.grid
+        let current = grid.anchor.flatMap { grid.selected.contains($0) ? $0 : nil } ?? library.selectedFiles.first
+        guard let target = GridNavigation.target(from: current, move: move, order: library.files,
+                                                 frames: library.tileFrames) else { return }
+        library.grid = GridSelection(selected: [target], anchor: target)
+        if quickLook.isVisible { preview(library.grid) }
     }
 
     func zoomChanged(_ scale: CGFloat) { zoomScale = scale }
@@ -264,6 +276,12 @@ final class AppModel: ObservableObject {
         DispatchQueue.main.async { window.makeFirstResponder(nil) }
         lifecycle.attach(window: window)
         quickLook.attach(to: window)
+        // The arrows in Quick Look move the selection along, as in Finder (only while it shows the whole grid).
+        quickLook.onCurrentItem = { [weak self] url in
+            guard let self, self.library.selection.count <= 1, self.library.files.contains(url),
+                  self.library.selection != [url] else { return }
+            self.library.grid = GridSelection(selected: [url], anchor: url)
+        }
     }
 
     /// Single place that decides whether the camera runs.

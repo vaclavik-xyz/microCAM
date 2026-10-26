@@ -14,6 +14,9 @@ import Quartz
 final class QuickLookController: NSResponder, QLPreviewPanelDataSource, QLPreviewPanelDelegate {
     private var items: [URL] = []
     private var start = 0
+    private var indexObservation: NSKeyValueObservation?
+    /// The item the panel shows now, after its own arrow keys too.
+    var onCurrentItem: ((URL) -> Void)?
 
     func attach(to window: NSWindow) {
         guard window.nextResponder !== self else { return }
@@ -50,9 +53,19 @@ final class QuickLookController: NSResponder, QLPreviewPanelDataSource, QLPrevie
         panel.delegate = self
         panel.reloadData()
         panel.currentPreviewItemIndex = start
+        indexObservation = panel.observe(\.currentPreviewItemIndex) { [weak self] panel, _ in
+            let index = panel.currentPreviewItemIndex
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated {
+                    guard let self, self.items.indices.contains(index) else { return }
+                    self.onCurrentItem?(self.items[index])
+                }
+            }
+        }
     }
 
     override func endPreviewPanelControl(_ panel: QLPreviewPanel!) {
+        indexObservation = nil
         panel.dataSource = nil
         panel.delegate = nil
     }

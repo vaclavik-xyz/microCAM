@@ -9,6 +9,8 @@ final class LibraryModel: ObservableObject {
     var selection: Set<URL> { grid.selected }
     /// Selected files in list order (newest first).
     var selectedFiles: [URL] { files.filter(grid.selected.contains) }
+    /// Frames of the tiles on screen, in the grid's space, for ↑ / ↓ (`GridNavigation`).
+    var tileFrames: [URL: CGRect] = [:]
 
     private let cache: NSCache<NSURL, NSImage> = {
         let cache = NSCache<NSURL, NSImage>()
