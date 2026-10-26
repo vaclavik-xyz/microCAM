@@ -725,6 +725,23 @@ final class DemoDriver {
             let second = await js("frozen.name") as? String
             check(await js("frozen.index") as? Int == 1 && second != nil && second != first, "viewer: the arrow shows the next photo")
             check(await js("document.querySelector('.tile.sel')?.dataset.name") as? String == second, "viewer: the sidebar marks the photo shown")
+            // Download hands over the original, or the drawing saved first as a copy (not written to Downloads here).
+            func handedOver(_ withDrawing: Bool) async -> (name: String, bytes: Int)? {
+                let file = try? await viewer.webView?.callAsyncJavaScript("return await microcam.download(w)", arguments: ["w": withDrawing],
+                                                                         contentWorld: .page) as? [String: Any]
+                guard let name = file?["name"] as? String, let data = (file?["data"] as? String).flatMap({ Data(base64Encoded: $0) })
+                else { return nil }
+                return (name, data.count)
+            }
+            check(viewer.downloadAvailable, "viewer: the page offers Download")
+            let original = await handedOver(false)
+            check(original?.name == second && (original?.bytes ?? 0) > 1000, "viewer: Download hands over the original")
+            _ = await js("shapes.push({kind:'ellipse',points:[{x:.3,y:.3},{x:.6,y:.7}],color:color,width:.006}); redraw(); 0")
+            let drawn = await handedOver(true)
+            let copyIndex = drawn.flatMap { CaptureFileName.parse($0.name)?.index } ?? 0
+            check(drawn != nil && drawn?.name != second && copyIndex >= 2,
+                  "viewer: Download with drawing saves the copy first and hands it over (\(drawn?.name ?? "-"))")
+            _ = await js("shapes = []; redraw(); 0")
             capture(main, withChildren: true, as: "11g-viewer-photos-next", in: dir)
             viewer.backToLive()
             await pause(1.5)

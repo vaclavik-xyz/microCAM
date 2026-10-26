@@ -52,6 +52,24 @@ struct ViewerView: View {
                                 .labelStyle(.titleAndIcon)
                                 .help("Save the drawing as a new photo on the camera Mac")
                         }
+                        if viewer.downloadAvailable {
+                            if viewer.hasDrawing {
+                                Menu {
+                                    Button("Download with drawing") { viewer.downloadPhoto(withDrawing: true) }
+                                    Button("Download original") { viewer.downloadPhoto(withDrawing: false) }
+                                } label: {
+                                    Label("Download", systemImage: "arrow.down.to.line")
+                                } primaryAction: {
+                                    viewer.downloadPhoto(withDrawing: true)
+                                }
+                                .labelStyle(.titleAndIcon)
+                                .help("Save the photo with the drawing in Downloads on this Mac; the arrow offers the original")
+                            } else {
+                                Button { viewer.downloadPhoto(withDrawing: false) } label: { Label("Download", systemImage: "arrow.down.to.line") }
+                                    .labelStyle(.titleAndIcon)
+                                    .help("Save the photo in Downloads on this Mac")
+                            }
+                        }
                     } else if viewer.photoEnabled {
                         // Without a PIN on the camera computer nobody can take a photo: no button.
                         Button { viewer.takePhoto() } label: { Label("Take photo", systemImage: "camera") }

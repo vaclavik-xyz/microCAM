@@ -8,6 +8,9 @@
   arrows step. On a phone the photos still cover the screen.
 - *Save as photo* shows only once something is drawn: without a drawing
   there is nothing to save.
+- Viewer: *Download* saves the shown photo in Downloads on the viewer's
+  Mac, the original or with the drawing (saved as a copy on the camera Mac
+  too).
 
 ## 0.5.7 — 2026-10-26
 

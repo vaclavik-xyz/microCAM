@@ -426,7 +426,8 @@ const STRINGS = {
     "findJob": "Find a job", "jobFiles": "Files: {count}", "noJobsFound": "No job matches.",
     "noPhotos": "No photos here yet.", "morePhotos": "Showing the newest {count} photos.",
     "today": "Today", "yesterday": "Yesterday",
-    "previousPhoto": "Previous photo", "nextPhoto": "Next photo"
+    "previousPhoto": "Previous photo", "nextPhoto": "Next photo",
+    "downloaded": "Saved in Downloads on this Mac", "downloadFailed": "Couldn't save the photo on this Mac."
   },
   "cs": {
     "offline": "Připojuji se k počítači s kamerou…",
@@ -460,7 +461,8 @@ const STRINGS = {
     "findJob": "Najít zakázku", "jobFiles": "Souborů: {count}", "noJobsFound": "Žádná zakázka neodpovídá.",
     "noPhotos": "Tady zatím nejsou žádné fotky.", "morePhotos": "Zobrazeno {count} nejnovějších fotek.",
     "today": "Dnes", "yesterday": "Včera",
-    "previousPhoto": "Předchozí fotka", "nextPhoto": "Další fotka"
+    "previousPhoto": "Předchozí fotka", "nextPhoto": "Další fotka",
+    "downloaded": "Uloženo do Stažených souborů na tomhle Macu", "downloadFailed": "Fotku se na tenhle Mac nepodařilo uložit."
   }
 }; // end STRINGS
 // ?lang= (the viewer app passes its own), then the browser's languages, else English.
@@ -970,6 +972,7 @@ async function post(path, body) {
 }
 // Job photos need the PIN header, so they are fetched and shown as blob URLs.
 let shotURL = null, downloadURL = null;
+let savedShapes = null;   // the drawing the download link's copy was saved with
 async function fetchCapture(ref) {
   const r = await withPin(p => fetch(ref.url, { headers: { "X-MicroCAM-PIN": p }, cache: "no-store" }));
   if (!r) return null;
@@ -1050,7 +1053,7 @@ function showShot(ref, url, draw) {
   navIndex = null;
   if (downloadURL && downloadURL !== shotURL) URL.revokeObjectURL(downloadURL);
   if (shotURL) URL.revokeObjectURL(shotURL);
-  frozen = ref; shapes = []; redraw();
+  frozen = ref; shapes = []; savedShapes = null; redraw();
   shotURL = downloadURL = url;
   shot.src = url;
   shot.classList.remove("hidden"); stopStream(); showFeed();
@@ -1069,18 +1072,42 @@ function markShown() {
   if (shown && docked()) shown.scrollIntoView({ block: "nearest" });
 }
 $("photo").onclick = () => takePhoto(timerDelay);
-$("save").onclick = async () => {
+/// The drawing as a new photo next to the shown one; the download link then gets the copy.
+/// Resolves true once saved.
+async function saveDrawing() {
   commitText();
-  if (!shapes.length) { toast(t("drawFirst")); return; }
-  if ($("save").disabled) return;   // one annotated copy per click, even on a double click
+  if (!shapes.length) { toast(t("drawFirst")); return false; }
+  if ($("save").disabled) return false;   // one annotated copy per click, even on a double click
   $("save").disabled = true;
   try {
+    const drawn = JSON.stringify(shapes);
     const ref = await post("/annotated", { source: frozen.name, folder: frozen.folder || "", shapes });
-    if (!ref) return;
+    if (!ref) return false;
     await setDownload(ref);
+    savedShapes = drawn;
     toast(t("savedToJob"), ref.name);
+    return true;
   } finally { $("save").disabled = false; }
-};
+}
+$("save").onclick = saveDrawing;
+/// For microCAM's viewer, which saves the file on its own Mac: the shown photo
+/// as {name, data (base64)}, the original or with the drawing (saved first on
+/// the camera computer, like Save as photo, unless that drawing already was).
+async function downloadShown(withDrawing) {
+  if (!frozen) return null;
+  commitText();
+  const drawn = withDrawing && shapes.length > 0;
+  if (drawn && (savedShapes !== JSON.stringify(shapes) || downloadURL === shotURL) && !(await saveDrawing())) return null;
+  const url = drawn ? downloadURL : shotURL, name = drawn ? $("download").download : frozen.name;
+  const blob = await (await fetch(url)).blob();
+  const data = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(",")[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+  return { name, data };
+}
 $("back").onclick = () => {
   closeEditor();
   navIndex = null; navSeq++;
@@ -1345,7 +1372,7 @@ function report() {
   if (!EMBEDDED || !handler) return;
   const state = JSON.stringify({ drawing, tool, color, size: textSize, shapes: shapes.length, photoEnabled,
                                  frozen: !!frozen, offline, job: shownJob(), gallery: galleryOpen,
-                                 docked: docked() });
+                                 docked: docked(), download: true });
   if (state !== reported) { reported = state; handler.postMessage(state); }
 }
 const toolButton = name => document.querySelector(`[data-tool="${name}"]`);
@@ -1359,6 +1386,8 @@ window.microcam = {
   photo: () => takePhoto(0),   // the viewer has no self-timer
   back: () => $("back").click(),
   save: () => $("save").click(),
+  download: withDrawing => downloadShown(!!withDrawing),
+  downloaded: (ok, name) => ok ? toast(t("downloaded"), name) : toast(t("downloadFailed")),
   setGallery: v => v ? openGallery() : closeGallery(),
 };
 // Esc leaves drawing (not while typing a label or entering the PIN), as in the app.
