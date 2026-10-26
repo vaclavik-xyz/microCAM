@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.5.7 — 2026-10-26
 
 - *Photos*: step through the photos with the arrows beside the picture,
   ← / → or a swipe, without going back to the list. A photo from the list
