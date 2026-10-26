@@ -694,10 +694,32 @@ final class DemoDriver {
             check(await js("galleryOpen") as? Bool == true, "viewer: Photos opens the photo browser in the page")
             check((await js("document.querySelectorAll('.tile').length") as? Int ?? 0) > 0, "viewer: the photo browser lists photos")
             capture(main, withChildren: true, as: "11e-viewer-photos", in: dir)
+            // The page gets every key: camera-mode shortcuts (0 resets the zoom) must not swallow a numpad 0.
+            _ = await js("showPicker(true); 0")
+            await pause(0.5)
+            _ = await js("document.getElementById('jobSearch').focus(); 0")
+            main.makeFirstResponder(viewer.webView)
+            for type in [NSEvent.EventType.keyDown, .keyUp] {
+                if let key = NSEvent.keyEvent(with: type, location: .zero, modifierFlags: .numericPad, timestamp: ProcessInfo.processInfo.systemUptime,
+                                              windowNumber: main.windowNumber, context: nil, characters: "0",
+                                              charactersIgnoringModifiers: "0", isARepeat: false, keyCode: 82) {
+                    NSApp.sendEvent(key)
+                }
+            }
+            await pause(0.5)
+            check(await js("document.getElementById('jobSearch').value") as? String == "0", "viewer: a numpad 0 reaches the page")
+            _ = await js("showPicker(false); 0")
             _ = await js("document.querySelector('.tile').click(); 0")
             await pause(2)
             check(viewer.showsPhoto && !viewer.isGalleryOpen, "viewer: a photo from the browser replaces the live picture")
+            check(!viewer.isDrawing, "viewer: a photo from the browser opens without drawing")
             capture(main, withChildren: true, as: "11f-viewer-photos-photo", in: dir)
+            let first = await js("frozen.name") as? String
+            _ = await js("document.getElementById('nextShot').click(); 0")
+            await pause(1.5)
+            let second = await js("frozen.name") as? String
+            check(await js("frozen.index") as? Int == 1 && second != nil && second != first, "viewer: the arrow shows the next photo")
+            capture(main, withChildren: true, as: "11g-viewer-photos-next", in: dir)
             viewer.backToLive()
             await pause(1.5)
         }

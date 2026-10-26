@@ -16,7 +16,8 @@ import MicroCAMCore
 ///
 /// **Photos** opens the camera Mac's photos by day (`GET /gallery`, thumbnails
 /// from `/thumbs/`), newest first; a tap shows one instead of the live
-/// picture, to draw on like a photo taken from here. With jobs on, the folder
+/// picture, with drawing off (Draw turns it on). The arrows at its sides,
+/// ← / → and a swipe step through the rest of that list. With jobs on, the folder
 /// name at the top switches to another job or the photos without one, only
 /// for this page. The current folder reloads when `/status` reports new
 /// captures. Same PIN as for photos.
@@ -154,18 +155,20 @@ button.primary.counting:disabled{background:var(--accent);color:#fff;-webkit-tex
 }
 body.idle #dock,body.idle #status{opacity:0;pointer-events:none}
 body.idle #dock .panel{pointer-events:none}
-body.image-only #dock,body.image-only #status,body.image-only #ink,body.image-only #gallery{display:none!important}
+body.image-only #dock,body.image-only #status,body.image-only #ink,body.image-only #gallery,body.image-only .nav{display:none!important}
 /* microCAM's viewer draws its own native tools and status; the page keeps the picture, drawing and messages */
 body.embedded #bar,body.embedded #swatches,body.embedded #sizes,body.embedded #status{display:none!important}
 /* messages above the native drawing tools at the bottom of the window */
 body.embedded #dock{padding-bottom:64px}
 
 /* narrow phones: secondary buttons show icons only, the main action keeps its words */
-@media (max-width:520px){ .lbl{display:none} #draw{width:var(--hit);padding:0} }
+@media (max-width:520px){ .lbl{display:none} #draw,#photos{width:var(--hit);padding:0} }
 /* seven drawing tools fit a 375 px phone only without the dividers */
 @media (max-width:400px){ .sep{display:none} }
 /* the smallest phones (320 px): tighter spacing, no dividers */
 @media (max-width:360px){ :root{--gap:2px;--edge:8px} .sep{display:none} #photo{min-width:132px}
+  /* a shown photo has Draw, Live view, Save, Download and Photos */
+  #save{padding:0 16px}
   /* the delay under the self-timer icon, so Draw, the timer, Take photo and Full screen fit 320 px */
   #timer.on{width:var(--hit);padding:0;flex-direction:column;gap:0;font-size:11px;line-height:1.1}
   #timer.on svg{width:18px;height:18px}
@@ -216,7 +219,7 @@ body.embedded #dock{padding-bottom:64px}
   #bar{flex-direction:row;align-items:center}
   .sep{width:26px;height:1px;margin:3px 0}
   .lbl{display:none}
-  #draw{width:var(--hit);padding:0}
+  #draw,#photos{width:var(--hit);padding:0}
   button.primary{width:64px;height:64px;min-width:0;padding:0;flex-direction:column;gap:1px;font-size:11px}
   #photo{min-width:0}
   /* the delay goes under the self-timer icon */
@@ -232,6 +235,15 @@ body.embedded #dock{padding-bottom:64px}
   #pinNote{margin:6px 2px 8px}
   .card .row button{height:46px}
 }
+/* ---- previous / next photo from the photo browser, at the sides of the picture ---- */
+.nav{position:fixed;z-index:3;top:calc((100% - var(--reserve-b)) / 2);transform:translateY(-50%);
+  width:var(--hit);height:calc(var(--hit) + 12px);padding:0;border-radius:14px;
+  background:rgba(22,24,29,.62);border:1px solid var(--line);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+.nav:active:not(:disabled){transform:translateY(-50%) scale(.94)}
+.nav:disabled{opacity:0;pointer-events:none}
+#prevShot{left:calc(var(--sl) + var(--edge))}
+#nextShot{right:calc(var(--reserve-r) + var(--sr) + var(--edge))}
+
 /* ---- photo browser: the camera Mac's photos by day ---- */
 #gallery{position:fixed;inset:0;z-index:8;display:flex;justify-content:center;
   padding:calc(var(--st) + 16px) calc(var(--sr) + 16px) calc(var(--sb) + 16px) calc(var(--sl) + 16px);
@@ -290,6 +302,8 @@ body.embedded #dock{padding-bottom:64px}
 <canvas id="ink"></canvas>
 <input id="textEditor" class="hidden" type="text" maxlength="200" autocomplete="off" autocapitalize="sentences"
        spellcheck="false" enterkeyhint="done" data-i18n-placeholder="textPlaceholder" data-i18n-aria="text">
+<button id="prevShot" class="nav hidden" data-i18n-aria="previousPhoto" data-i18n-title="previousPhoto"><svg viewBox="0 0 24 24"><path d="M15 5 8 12l7 7"/></svg></button>
+<button id="nextShot" class="nav hidden" data-i18n-aria="nextPhoto" data-i18n-title="nextPhoto"><svg viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg></button>
 <div id="offline" class="hidden" data-i18n="offline"></div>
 <div id="status"><span class="dot"></span><span id="stateLabel"></span><span id="job" class="job hidden"></span></div>
 <div id="dock">
@@ -318,8 +332,8 @@ body.embedded #dock{padding-bottom:64px}
     <button id="clear" class="icon" data-i18n-aria="clear" data-i18n-title="clear"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg></button>
   </div>
   <div id="controls" class="panel">
+    <button id="draw" data-i18n-aria="draw" data-i18n-title="drawTitle"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4Z"/><path d="m13.5 6.5 4 4"/></svg><span class="lbl" data-i18n="draw"></span></button>
     <span id="liveTools" class="group">
-      <button id="draw" data-i18n-aria="draw" data-i18n-title="drawTitle"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4Z"/><path d="m13.5 6.5 4 4"/></svg><span class="lbl" data-i18n="draw"></span></button>
       <button id="timer" data-i18n-title="timerTitle"><svg viewBox="0 0 24 24"><circle cx="12" cy="13.5" r="7.5"/><path d="M12 9.5v4l2.5 2M10 3h4"/></svg><span id="timerValue" class="hidden"></span></button>
       <button id="photo" class="primary" data-i18n-title="photoTitle"><svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13" r="3.5"/></svg><span id="photoLabel" data-i18n="photo"></span></button>
     </span>
@@ -400,7 +414,8 @@ const STRINGS = {
     "currentFolder": "Current folder", "noJob": "No job", "otherJob": "Show another job",
     "findJob": "Find a job", "jobFiles": "Files: {count}", "noJobsFound": "No job matches.",
     "noPhotos": "No photos here yet.", "morePhotos": "Showing the newest {count} photos.",
-    "today": "Today", "yesterday": "Yesterday"
+    "today": "Today", "yesterday": "Yesterday",
+    "previousPhoto": "Previous photo", "nextPhoto": "Next photo"
   },
   "cs": {
     "offline": "Připojuji se k počítači s kamerou…",
@@ -433,7 +448,8 @@ const STRINGS = {
     "currentFolder": "Aktuální složka", "noJob": "Bez zakázky", "otherJob": "Zobrazit jinou zakázku",
     "findJob": "Najít zakázku", "jobFiles": "Souborů: {count}", "noJobsFound": "Žádná zakázka neodpovídá.",
     "noPhotos": "Tady zatím nejsou žádné fotky.", "morePhotos": "Zobrazeno {count} nejnovějších fotek.",
-    "today": "Dnes", "yesterday": "Včera"
+    "today": "Dnes", "yesterday": "Včera",
+    "previousPhoto": "Předchozí fotka", "nextPhoto": "Další fotka"
   }
 }; // end STRINGS
 // ?lang= (the viewer app passes its own), then the browser's languages, else English.
@@ -1010,13 +1026,15 @@ async function takePhoto(delay) {
   if (!ref) return;
   const url = await fetchCapture(ref);
   if (!url) return;
-  showShot(ref, url);
+  showShot(ref, url, true);
   toast(t("photoTaken"), ref.name);
 }
-/// A photo instead of the live picture, ready to draw on. `ref.folder` is the
-/// gallery folder it came from ("" or none for the current one).
-function showShot(ref, url) {
+/// A photo instead of the live picture; `draw` turns drawing on. `ref.folder` is the
+/// gallery folder it came from ("" or none for the current one), `ref.list` and
+/// `ref.index` the photo browser's list for the arrows.
+function showShot(ref, url, draw) {
   closeEditor();
+  navIndex = null;
   if (downloadURL && downloadURL !== shotURL) URL.revokeObjectURL(downloadURL);
   if (shotURL) URL.revokeObjectURL(shotURL);
   frozen = ref; shapes = []; redraw();
@@ -1025,7 +1043,7 @@ function showShot(ref, url) {
   shot.classList.remove("hidden"); stopStream(); showFeed();
   $("liveTools").classList.add("hidden"); $("shotTools").classList.remove("hidden");
   $("download").href = url; $("download").download = ref.name;
-  setState(); setDrawing(true);
+  setState(); setDrawing(draw); showNav();
 }
 $("photo").onclick = () => takePhoto(timerDelay);
 $("save").onclick = async () => {
@@ -1042,10 +1060,11 @@ $("save").onclick = async () => {
 };
 $("back").onclick = () => {
   closeEditor();
+  navIndex = null; navSeq++;
   frozen = null; shapes = []; redraw();
   shot.classList.add("hidden"); showFeed();
   $("shotTools").classList.add("hidden"); $("liveTools").classList.remove("hidden");
-  setState(); setDrawing(false); startStream();
+  setState(); setDrawing(false); showNav(); startStream();
 };
 
 // ---- photo browser ----
@@ -1143,8 +1162,50 @@ async function openPhoto(p, listing) {
   closeGallery();
   // Pinned to the folder it was listed from: "" would follow the camera computer to another job.
   const folder = listing.folder || (listing.job ? listing.job : listing.jobs ? "_unassigned" : "");
-  showShot({ name: p.name, url: p.url, folder, job: listing.job }, url);
+  const list = listing.days.flatMap(d => d.photos);
+  showShot({ name: p.name, url: p.url, folder, job: listing.job, list, index: list.indexOf(p) }, url, false);
 }
+// ---- previous / next photo of the list it was opened from ----
+let navSeq = 0, navIndex = null;   // navIndex: the photo being loaded, so quick presses keep counting
+function showNav() {
+  const list = frozen && frozen.list;
+  $("prevShot").classList.toggle("hidden", !list);
+  $("nextShot").classList.toggle("hidden", !list);
+  if (!list) return;
+  $("prevShot").disabled = frozen.index <= 0;
+  $("nextShot").disabled = frozen.index >= list.length - 1;
+}
+/// The next (+1, older) or previous (-1) photo; drawing stays on or off, what was drawn goes.
+async function stepPhoto(delta) {
+  if (!frozen || !frozen.list) return;
+  const index = (navIndex ?? frozen.index) + delta, p = frozen.list[index];
+  if (!p) return;
+  const seq = ++navSeq, from = frozen;
+  navIndex = index;
+  commitText();
+  const url = await fetchCapture(p);
+  if (seq !== navSeq || frozen !== from) { if (url) URL.revokeObjectURL(url); return; }
+  navIndex = null;
+  if (url) showShot({ ...from, name: p.name, url: p.url, index }, url, drawing);
+}
+$("prevShot").onclick = () => stepPhoto(-1);
+$("nextShot").onclick = () => stepPhoto(1);
+document.addEventListener("keydown", e => {
+  if (!frozen || !frozen.list || editing || galleryOpen || pinDone || e.metaKey || e.altKey || e.ctrlKey) return;
+  if (e.target && /^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return;
+  if (e.key === "ArrowLeft") { e.preventDefault(); stepPhoto(-1); }
+  else if (e.key === "ArrowRight") { e.preventDefault(); stepPhoto(1); }
+});
+// A sideways swipe over the photo while not drawing.
+let swipe = null;
+$("stage").addEventListener("pointerdown", e => { swipe = frozen && frozen.list && !drawing ? { x: e.clientX, y: e.clientY } : null; });
+$("stage").addEventListener("pointerup", e => {
+  if (!swipe) return;
+  const dx = e.clientX - swipe.x, dy = e.clientY - swipe.y;
+  swipe = null;
+  if (Math.abs(dx) > 50 && Math.abs(dx) > 2 * Math.abs(dy)) stepPhoto(dx < 0 ? 1 : -1);
+});
+$("stage").addEventListener("pointercancel", () => { swipe = null; });
 // Thumbnails load as they scroll into view, a few at a time, with the PIN the gallery was listed with.
 let thumbQueue = [], thumbsLoading = 0;
 const thumbObserver = window.IntersectionObserver && new IntersectionObserver(entries => {
