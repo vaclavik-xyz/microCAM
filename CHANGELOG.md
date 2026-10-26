@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Viewer: *Photos* is a sidebar from a 640 px wide window on (was 900 px),
+  so a smaller viewer window, like one 889 px wide at a front desk, gets it
+  too instead of the photos over the picture.
+
 ## 0.5.8 — 2026-10-26
 
 - *Photos* in microCAM's viewer and on a big screen: a sidebar on the left,

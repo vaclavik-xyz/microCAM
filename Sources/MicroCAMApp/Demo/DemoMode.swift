@@ -694,6 +694,13 @@ final class DemoDriver {
             check(await js("galleryOpen") as? Bool == true, "viewer: Photos opens the photo browser in the page")
             check((await js("document.querySelectorAll('.tile').length") as? Int ?? 0) > 0, "viewer: the photo browser lists photos")
             check(viewer.isGalleryDocked, "viewer: in a big window the photos are a sidebar")
+            // A front-desk viewer window was 889 px wide and got the photos over the picture.
+            let frame = main.frame
+            main.setFrame(NSRect(x: frame.minX, y: frame.minY, width: 889, height: 669), display: true)
+            await pause(1)
+            check(viewer.isGalleryDocked, "viewer: an 889 px window still gets the sidebar")
+            main.setFrame(frame, display: true)
+            await pause(1)
             let sidebarImage = await js("Math.round(live.getBoundingClientRect().left)") as? Int ?? 0
             check(sidebarImage >= Int(ViewerModel.sidebarWidth), "viewer: the picture sits beside the sidebar (left \(sidebarImage))")
             capture(main, withChildren: true, as: "11e-viewer-photos", in: dir)
