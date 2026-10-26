@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.6.0 — 2026-10-26
 
 - *Photos*: Space shows the photo on its own over the whole screen (the
   viewer's window goes full screen), like Quick Look on the camera Mac; the
