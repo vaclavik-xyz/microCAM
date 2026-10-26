@@ -348,7 +348,9 @@ camera computer via Bonjour.
 - **Photos:** the camera computer's photos by day, newest first, e.g. to
   show a customer at the front desk what you found at the bench. Tap one to
   see it instead of the live picture; the arrows at its sides, ← / → or a
-  swipe show the next and previous one. On a big screen (and in microCAM's
+  swipe show the next and previous one (in the sidebar ↑ / ↓ go a row up or
+  down). Space shows the photo on its own over the whole screen, like Quick
+  Look on the camera Mac; the arrows still step, Space or Esc goes back. On a big screen (and in microCAM's
   viewer) the photos are a sidebar on the left, like the side panel on the
   camera Mac, and stay open beside the picture; on a phone they cover the
   screen. **Draw** to mark something and **Save as photo** (shown once

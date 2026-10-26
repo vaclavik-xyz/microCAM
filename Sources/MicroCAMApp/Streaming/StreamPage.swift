@@ -23,7 +23,10 @@ import MicroCAMCore
 /// captures. Same PIN as for photos. On a big screen and in microCAM's viewer (`SIDEBAR`) the photos
 /// are a sidebar on the left, like the side panel on the camera Mac: the
 /// picture stays beside it and a tap keeps it open. On a phone they cover the
-/// screen and a tap closes them.
+/// screen and a tap closes them. Space shows the photo on its own over the
+/// whole screen (the viewer's window goes full screen too), like Quick Look on
+/// the camera Mac; the arrows keep stepping, Space or Esc goes back. ↑ / ↓
+/// move by a row of the sidebar.
 ///
 /// The live picture is H.264 (`/video`, fragmented MP4) played through Media
 /// Source Extensions, or `ManagedMediaSource` on iPhone; WebCodecs would be
@@ -296,6 +299,10 @@ body.embedded #dock{padding-bottom:64px}
 }
 /* big screens: a sidebar on the left; the picture, its tools and the status move right of it */
 body.docked{--reserve-l:var(--side)}
+/* Space: the photo on its own over the whole screen */
+body.full{--reserve-l:0px;--reserve-b:0px;--reserve-r:0px}
+body.full #gallery,body.full #dock,body.full #status,body.full .nav{display:none!important}
+body.full #ink{pointer-events:none}
 body.docked #gallery{inset:0 auto 0 0;width:var(--side);z-index:4;padding:0;background:none;
   -webkit-backdrop-filter:none;backdrop-filter:none}
 body.docked .sheet{width:100%;border-radius:0;border:0;border-right:1px solid var(--line);box-shadow:none}
@@ -1114,6 +1121,7 @@ async function downloadShown(withDrawing) {
   } catch (e) { toast(t("downloadFailed")); return null; }
 }
 $("back").onclick = () => {
+  setFullView(false);
   closeEditor();
   navIndex = null; navSeq++;
   frozen = null; shapes = []; redraw();
@@ -1246,7 +1254,7 @@ function showNav() {
 }
 /// The next (+1, older) or previous (-1) photo; drawing stays on or off, what was drawn goes.
 async function stepPhoto(delta) {
-  if (!frozen || !frozen.list) return;
+  if (!frozen || !frozen.list || !delta) return;
   const index = (navIndex ?? frozen.index) + delta, p = frozen.list[index];
   if (!p) return;
   const seq = ++navSeq, from = frozen;
@@ -1259,12 +1267,68 @@ async function stepPhoto(delta) {
 }
 $("prevShot").onclick = () => stepPhoto(-1);
 $("nextShot").onclick = () => stepPhoto(1);
+const STEPS = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -1, ArrowDown: 1 };
 document.addEventListener("keydown", e => {
-  if (!frozen || !frozen.list || editing || (galleryOpen && !docked()) || pinDone || e.metaKey || e.altKey || e.ctrlKey) return;
+  if (!frozen || !frozen.list || editing || (galleryOpen && !docked() && !fullView) || pinDone || e.metaKey || e.altKey || e.ctrlKey) return;
   if (e.target && /^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return;
-  if (e.key === "ArrowLeft") { e.preventDefault(); stepPhoto(-1); }
-  else if (e.key === "ArrowRight") { e.preventDefault(); stepPhoto(1); }
+  if (!(e.key in STEPS)) return;
+  e.preventDefault();
+  const vertical = e.key === "ArrowUp" || e.key === "ArrowDown";
+  stepPhoto(vertical && docked() && !fullView ? rowStep(STEPS[e.key]) : STEPS[e.key]);
 });
+/// ↑ / ↓ in the sidebar: to the photo above or below (the nearest one in the row
+/// above or below); as a step through the list. 0 at the top or bottom.
+function rowStep(direction) {
+  const tiles = [...document.querySelectorAll(".tile")], here = tiles.findIndex(t => t.dataset.name === frozen.list[navIndex ?? frozen.index]?.name);
+  if (here < 0) return direction;
+  const from = tiles[here].getBoundingClientRect(), x = from.left + from.width / 2;
+  const below = t => direction > 0 ? t.top > from.top + 1 : t.top < from.top - 1;
+  const rows = tiles.map((t, i) => ({ i, r: t.getBoundingClientRect() })).filter(t => below(t.r));
+  if (!rows.length) return 0;
+  const rowTop = direction > 0 ? Math.min(...rows.map(t => t.r.top)) : Math.max(...rows.map(t => t.r.top));
+  const row = rows.filter(t => Math.abs(t.r.top - rowTop) < 1);
+  const target = row.reduce((a, b) => Math.abs(b.r.left + b.r.width / 2 - x) < Math.abs(a.r.left + a.r.width / 2 - x) ? b : a);
+  const index = frozen.list.findIndex(p => p.name === tiles[target.i].dataset.name);
+  return index < 0 ? 0 : index - (navIndex ?? frozen.index);
+}
+// ---- Space: the photo on its own, full screen; Space or Esc goes back ----
+let fullView = false, pageFullScreen = false;
+function setFullView(v) {
+  v = !!v && !!frozen;
+  if (v === fullView) return;
+  if (v) commitText();
+  fullView = v;
+  document.body.classList.toggle("full", v);
+  // A browser goes full screen itself; microCAM's viewer turns its window full screen from the report.
+  if (!EMBEDDED) {
+    const fs = document.fullscreenElement || document.webkitFullscreenElement;
+    if (v && !fs && (root.requestFullscreen || root.webkitRequestFullscreen)) {
+      pageFullScreen = true;
+      Promise.resolve((root.requestFullscreen || root.webkitRequestFullscreen).call(root)).catch(() => { pageFullScreen = false; });
+    } else if (!v && fs && pageFullScreen) {
+      (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    }
+    if (!v) pageFullScreen = false;
+  }
+  scheduleReserve(); wake(); report();
+}
+// The browser's own Esc leaves full screen without a key event reaching the page.
+["fullscreenchange", "webkitfullscreenchange"].forEach(ev => document.addEventListener(ev, () => {
+  if (!(document.fullscreenElement || document.webkitFullscreenElement) && pageFullScreen) { pageFullScreen = false; setFullView(false); }
+}));
+document.addEventListener("keydown", e => {
+  if (e.key !== " " || !frozen || editing || pinDone || e.metaKey || e.altKey || e.ctrlKey) return;
+  if (e.target && /^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return;
+  e.preventDefault();   // not a click on the focused button (a tile, Live view…)
+  if (!e.repeat) setFullView(!fullView);
+});
+document.addEventListener("keyup", e => { if (e.key === " " && frozen && !editing && !(e.target && /^(INPUT|TEXTAREA)$/.test(e.target.tagName))) e.preventDefault(); });
+// Esc leaves the full view first (before the sidebar and drawing get it).
+document.addEventListener("keydown", e => {
+  if (e.key !== "Escape" || !fullView || pinDone || editing) return;
+  e.stopImmediatePropagation();   // the sidebar's Esc listener sits on the document too
+  setFullView(false);
+}, true);
 // A sideways swipe over the photo while not drawing.
 let swipe = null;
 $("stage").addEventListener("pointerdown", e => { swipe = frozen && frozen.list && !drawing ? { x: e.clientX, y: e.clientY } : null; });
@@ -1379,7 +1443,7 @@ function report() {
   if (!EMBEDDED || !handler) return;
   const state = JSON.stringify({ drawing, tool, color, size: textSize, shapes: shapes.length, photoEnabled,
                                  frozen: !!frozen, offline, job: shownJob(), gallery: galleryOpen,
-                                 docked: docked(), download: true });
+                                 docked: docked(), download: true, full: fullView });
   if (state !== reported) { reported = state; handler.postMessage(state); }
 }
 const toolButton = name => document.querySelector(`[data-tool="${name}"]`);
@@ -1394,6 +1458,7 @@ window.microcam = {
   back: () => $("back").click(),
   save: () => $("save").click(),
   download: withDrawing => downloadShown(!!withDrawing),
+  setFullView: v => setFullView(v),
   downloaded: (ok, name) => ok ? toast(t("downloaded"), name) : toast(t("downloadFailed")),
   setGallery: v => v ? openGallery() : closeGallery(),
 };

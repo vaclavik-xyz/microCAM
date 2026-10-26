@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import MicroCAMCore
 import Network
@@ -45,6 +46,36 @@ final class ViewerModel: ObservableObject {
     @Published private(set) var job = ""
     /// The camera Mac's page has a photo browser (an older one has none).
     @Published private(set) var galleryAvailable = false
+    /// Space on the page: the photo on its own, the window full screen.
+    @Published private(set) var isFullView = false
+    /// The window went full screen for the page's full view (not by the user), so leaving it goes back.
+    private var windowFullScreenForPage = false
+    private var fullScreenExit: NSObjectProtocol?
+
+    /// The page's full view drives the window's full screen; leaving full screen
+    /// another way (the green button, Ctrl-⌘-F) ends the page's full view too.
+    private func followFullView() {
+        guard let window = webView?.window else { return }
+        let isFullScreen = window.styleMask.contains(.fullScreen)
+        if isFullView, !isFullScreen {
+            windowFullScreenForPage = true
+            window.toggleFullScreen(nil)
+        } else if !isFullView, isFullScreen, windowFullScreenForPage {
+            windowFullScreenForPage = false
+            window.toggleFullScreen(nil)
+        }
+        if fullScreenExit == nil {
+            fullScreenExit = NotificationCenter.default.addObserver(forName: NSWindow.didExitFullScreenNotification, object: window,
+                                                                    queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    guard let self else { return }
+                    self.windowFullScreenForPage = false
+                    if self.isFullView { self.send("setFullView(false)") }
+                }
+            }
+        }
+    }
+
     /// The camera Mac's page can hand over the shown photo (an older one can't).
     @Published private(set) var downloadAvailable = false
     /// The open photo browser is the page's sidebar on the left, `sidebarWidth` wide.
@@ -106,6 +137,10 @@ final class ViewerModel: ObservableObject {
         if isGalleryOpen != (state.gallery ?? false) { isGalleryOpen = state.gallery ?? false }
         isGalleryDocked = state.docked ?? false
         downloadAvailable = state.download ?? false
+        if isFullView != (state.full ?? false) {
+            isFullView = state.full ?? false
+            followFullView()
+        }
     }
 
     init(settings: @escaping () -> AppSettings, update: @escaping ((inout AppSettings) -> Void) -> Void) {
@@ -225,6 +260,7 @@ final class ViewerModel: ObservableObject {
         isGalleryOpen = false
         isGalleryDocked = false
         downloadAvailable = false
+        if isFullView { isFullView = false; followFullView() }
     }
 }
 
