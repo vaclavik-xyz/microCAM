@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.5.8 — 2026-10-26
 
 - *Photos* in microCAM's viewer and on a big screen: a sidebar on the left,
   like the side panel on the camera Mac. The picture stays beside it, a tap
