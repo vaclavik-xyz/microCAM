@@ -12,7 +12,7 @@ struct ViewerView: View {
             if let url = viewer.url {
                 StreamWebView(url: url, viewer: viewer)
                 // The photos over the picture hide the tools; beside it (a sidebar) they stay.
-                if viewer.isDrawing && (!viewer.isGalleryOpen || viewer.isGalleryDocked) {
+                if viewer.isDrawing && (!viewer.isGalleryOpen || viewer.isGalleryDocked) && !viewer.isFullView {
                     // The same tools as on the camera Mac, over the bottom of the picture.
                     DrawingPalette(model: viewer)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom).padding(16)

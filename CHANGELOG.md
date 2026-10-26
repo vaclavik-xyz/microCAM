@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- *Photos*: Space shows the photo on its own over the whole screen (the
+  viewer's window goes full screen), like Quick Look on the camera Mac; the
+  arrows still step, Space or Esc goes back. In the sidebar ↑ / ↓ go a row
+  up or down.
+
 ## 0.5.9 — 2026-10-26
 
 - Viewer: *Photos* is a sidebar from a 640 px wide window on (was 900 px),

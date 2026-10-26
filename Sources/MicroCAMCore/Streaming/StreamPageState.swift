@@ -28,6 +28,8 @@ public struct StreamPageState: Decodable, Equatable, Sendable {
     /// The page hands the shown photo to the viewer (`microcam.download`);
     /// nil from an older camera Mac.
     public let download: Bool?
+    /// Space shows the photo on its own: the viewer's window goes full screen.
+    public let full: Bool?
 
     public static func decode(_ json: String) -> StreamPageState? {
         json.data(using: .utf8).flatMap { try? JSONDecoder().decode(StreamPageState.self, from: $0) }
