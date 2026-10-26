@@ -5,24 +5,28 @@ public struct StreamStatus: Codable, Equatable, Sendable {
     public var mode: StreamMode
     public var photoEnabled: Bool
     public var viewers: Int
-    public init(job: String?, mode: StreamMode, photoEnabled: Bool, viewers: Int) {
-        self.job = job; self.mode = mode; self.photoEnabled = photoEnabled; self.viewers = viewers
+    /// Goes up whenever captures change on the camera Mac, so an open photo
+    /// browser knows when to reload.
+    public var captures: Int
+    public init(job: String?, mode: StreamMode, photoEnabled: Bool, viewers: Int, captures: Int = 0) {
+        self.job = job; self.mode = mode; self.photoEnabled = photoEnabled; self.viewers = viewers; self.captures = captures
     }
 }
 
 public struct CaptureRef: Codable, Equatable, Sendable {
     public var name: String
     public var url: String
-    public init(name: String) {
+    public init(name: String, folder: GalleryFolder = .current) {
         self.name = name
-        url = "/captures/" + (name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? name)
+        url = StreamGallery.path("/captures/", name: name, folder: folder)
     }
 }
 
 public protocol StreamBackend: AnyObject {
     func status() -> StreamStatus
     func page(mode: StreamMode, embedded: Bool) -> String
-    func captureFolders() -> [URL]
+    /// nil while no storage folder is chosen.
+    func storage() -> StreamStorage?
     /// `delay` is the self-timer countdown in seconds (0: right away); the
     /// completion runs once the photo is saved, after the countdown.
     func takePhoto(delay: Int, completion: @escaping (Result<String, Error>) -> Void)
@@ -50,18 +54,25 @@ public enum StreamRoute {
 
 public final class StreamRouter {
     private struct ErrorBody: Encodable { let error: String; var retryAfter: Int? = nil }
+    private struct JobList: Encodable { let jobs: [GalleryJob] }
 
     private weak var backend: StreamBackend?
     private let pinGuard: PinGuard
     private let mode: () -> StreamMode
     private let pin: () -> String?
+    /// Runs file work (listing folders, reading photos, thumbnails) off the
+    /// main queue; tests run it in place.
+    private let work: (@escaping () -> Void) -> Void
+    private let thumbnails = ThumbnailCache()
 
     public init(backend: StreamBackend, pinGuard: PinGuard = PinGuard(),
-                mode: @escaping () -> StreamMode, pin: @escaping () -> String?) {
+                mode: @escaping () -> StreamMode, pin: @escaping () -> String?,
+                work: @escaping (@escaping () -> Void) -> Void = { DispatchQueue.global(qos: .userInitiated).async(execute: $0) }) {
         self.backend = backend
         self.pinGuard = pinGuard
         self.mode = mode
         self.pin = pin
+        self.work = work
     }
 
     public func handle(_ request: HTTPRequest, completion: @escaping (StreamRoute) -> Void) {
@@ -78,12 +89,35 @@ public final class StreamRouter {
             completion(.stream(.mjpeg))
         case ("GET", "/video"):
             completion(.stream(.video))
-        case (_, _) where path.hasPrefix("/captures/"):
+        case (_, _) where path.hasPrefix("/captures/") || path.hasPrefix("/thumbs/"):
             if let denied = remoteActionDenied(request, method: "GET") { return completion(.response(denied)) }
-            let name = String(path.dropFirst("/captures/".count))
-            guard let file = CaptureNameGuard.resolve(name, in: backend.captureFolders()),
-                  let data = try? Data(contentsOf: file) else { return completion(.response(.text(404, "not found"))) }
-            completion(.response(HTTPResponse(status: 200, headers: [("Content-Type", "image/jpeg")], body: data)))
+            let thumb = path.hasPrefix("/thumbs/")
+            let name = String(path.dropFirst(thumb ? "/thumbs/".count : "/captures/".count))
+            guard let folder = GalleryFolder(query: request.query["folder"]),
+                  let file = CaptureNameGuard.resolve(name, in: backend.storage()?.folders(for: folder) ?? [])
+            else { return completion(.response(.text(404, "not found"))) }
+            work { [thumbnails] in
+                guard let data = thumb ? thumbnails.jpeg(for: file) : try? Data(contentsOf: file) else {
+                    return completion(.response(.text(404, "not found")))
+                }
+                completion(.response(HTTPResponse(status: 200, headers: [("Content-Type", "image/jpeg")], body: data)))
+            }
+        case (_, "/gallery"):
+            if let denied = remoteActionDenied(request, method: "GET") { return completion(.response(denied)) }
+            guard let folder = GalleryFolder(query: request.query["folder"]) else {
+                return completion(.response(.json(400, ErrorBody(error: "folder"))))
+            }
+            guard let storage = backend.storage() else { return completion(.response(.json(404, ErrorBody(error: "storage")))) }
+            work {
+                guard let listing = StreamGallery.listing(folder, storage: storage) else {
+                    return completion(.response(.json(404, ErrorBody(error: "folder"))))
+                }
+                completion(.response(.json(200, listing)))
+            }
+        case (_, "/jobs"):
+            if let denied = remoteActionDenied(request, method: "GET") { return completion(.response(denied)) }
+            guard let storage = backend.storage(), storage.jobsEnabled else { return completion(.response(.json(200, JobList(jobs: [])))) }
+            work { completion(.response(.json(200, JobList(jobs: JobFinder.jobs(in: storage.layout).map(GalleryJob.init))))) }
         case (_, "/photo"), (_, "/annotated"):
             if let denied = remoteActionDenied(request, method: "POST") { return completion(.response(denied)) }
             path == "/photo" ? photo(request, backend, completion) : annotated(request, backend, completion)
@@ -94,7 +128,8 @@ public final class StreamRouter {
         }
     }
 
-    /// Photos, annotated copies and reading job captures all need controls
+    /// Photos, annotated copies and reading captures (the gallery, its
+    /// thumbnails and the job list too) all need controls
     /// mode, the expected method, the same origin and the PIN header (which a
     /// cross-site page cannot send without a CORS preflight we never answer).
     private func remoteActionDenied(_ request: HTTPRequest, method: String) -> HTTPResponse? {
@@ -136,12 +171,14 @@ public final class StreamRouter {
             return completion(.response(.json(400, ErrorBody(error: "json"))))
         }
         let clean = decoded.sanitized()
-        guard let source = CaptureNameGuard.resolve(clean.source, in: backend.captureFolders()) else {
+        guard let folder = GalleryFolder(query: clean.folder),
+              let source = CaptureNameGuard.resolve(clean.source, in: backend.storage()?.folders(for: folder) ?? []) else {
             return completion(.response(.json(404, ErrorBody(error: "source"))))
         }
+        // The copy lands next to the source, so it is read from the same folder.
         backend.saveAnnotated(clean, source: source) { result in
             switch result {
-            case .success(let name): completion(.response(.json(200, CaptureRef(name: name))))
+            case .success(let name): completion(.response(.json(200, CaptureRef(name: name, folder: folder))))
             case .failure(let error): completion(.response(.json(500, ErrorBody(error: error.localizedDescription))))
             }
         }

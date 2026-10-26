@@ -117,9 +117,14 @@ public struct AnnotationRequest: Codable, Sendable {
     public static let defaultColor = "#ff3b30"
 
     public var source: String
+    /// The gallery's `?folder=` value for a photo outside the current folder;
+    /// nil or empty for the current folder.
+    public var folder: String?
     public var shapes: [AnnotationShape]
 
-    public init(source: String, shapes: [AnnotationShape]) { self.source = source; self.shapes = shapes }
+    public init(source: String, folder: String? = nil, shapes: [AnnotationShape]) {
+        self.source = source; self.folder = folder; self.shapes = shapes
+    }
 
     public func sanitized() -> AnnotationRequest {
         var budget = Self.maxPoints
@@ -129,7 +134,7 @@ public struct AnnotationRequest: Codable, Sendable {
             budget -= clean.points.count
             out.append(clean)
         }
-        return AnnotationRequest(source: source, shapes: out)
+        return AnnotationRequest(source: source, folder: folder, shapes: out)
     }
 }
 

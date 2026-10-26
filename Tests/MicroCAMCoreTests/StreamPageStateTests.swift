@@ -11,6 +11,13 @@ final class StreamPageStateTests: XCTestCase {
         XCTAssertEqual(state.flatMap { AnnotationTextSize(rawValue: $0.size) }, .large)
         XCTAssertEqual(state?.shapes, 2)
         XCTAssertEqual(state?.job, "PR-1")
+        XCTAssertNil(state?.gallery)
+    }
+
+    /// A camera Mac with the photo browser reports whether it is open.
+    func testDecodesTheGalleryState() {
+        let json = ##"{"drawing":false,"tool":"arrow","color":"#ff3b30","size":"medium","shapes":0,"photoEnabled":true,"frozen":false,"offline":false,"job":"","gallery":true}"##
+        XCTAssertEqual(StreamPageState.decode(json)?.gallery, true)
     }
 
     func testRejectsOtherMessages() {

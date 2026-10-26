@@ -13,14 +13,14 @@ final class StreamBackendAdapter: StreamBackend {
             let s = model.settings
             return StreamStatus(job: s.jobsEnabled ? s.activeJob?.value : nil, mode: s.streamingMode,
                                 photoEnabled: s.streamingMode == .controls && model.streamPIN != nil,
-                                viewers: model.streamViewers)
+                                viewers: model.streamViewers, captures: model.captureRevision)
         }
     }
 
     func page(mode: StreamMode, embedded: Bool) -> String { StreamPage.html(mode: mode, embedded: embedded) }
 
-    func captureFolders() -> [URL] {
-        MainActor.assumeIsolated { model.layout?.listedFolders(for: model.settings.jobContext) ?? [] }
+    func storage() -> StreamStorage? {
+        MainActor.assumeIsolated { model.layout.map { StreamStorage(layout: $0, context: model.settings.jobContext) } }
     }
 
     func takePhoto(delay: Int, completion: @escaping (Result<String, Error>) -> Void) {
