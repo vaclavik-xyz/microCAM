@@ -979,10 +979,12 @@ async function fetchCapture(ref) {
   try { return URL.createObjectURL(await r.blob()); }
   catch (e) { toast(t("photoLoadFailed")); return null; }
 }
+/// Resolves false when the copy couldn't be fetched (the link keeps what it had).
 async function setDownload(ref) {
-  const url = await fetchCapture(ref); if (!url) return;
+  const url = await fetchCapture(ref); if (!url) return false;
   if (downloadURL && downloadURL !== shotURL) URL.revokeObjectURL(downloadURL);
   downloadURL = url; $("download").href = url; $("download").download = ref.name;
+  return true;
 }
 // ---- self-timer: off, then the delays microCAM offers; the choice stays in this browser ----
 const TIMER_KEY = "microcamTimer";
@@ -1083,10 +1085,11 @@ async function saveDrawing() {
     const drawn = JSON.stringify(shapes);
     const ref = await post("/annotated", { source: frozen.name, folder: frozen.folder || "", shapes });
     if (!ref) return false;
-    await setDownload(ref);
-    savedShapes = drawn;
+    const fetched = await setDownload(ref);
     toast(t("savedToJob"), ref.name);
-    return true;
+    // Saved, but the copy isn't here: a download would hand over the wrong file.
+    if (fetched) savedShapes = drawn;
+    return fetched;
   } finally { $("save").disabled = false; }
 }
 $("save").onclick = saveDrawing;
@@ -1099,14 +1102,16 @@ async function downloadShown(withDrawing) {
   const drawn = withDrawing && shapes.length > 0;
   if (drawn && (savedShapes !== JSON.stringify(shapes) || downloadURL === shotURL) && !(await saveDrawing())) return null;
   const url = drawn ? downloadURL : shotURL, name = drawn ? $("download").download : frozen.name;
-  const blob = await (await fetch(url)).blob();
-  const data = await new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result).split(",")[1]);
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
-  return { name, data };
+  try {
+    const blob = await (await fetch(url)).blob();
+    const data = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result).split(",")[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+    return { name, data };
+  } catch (e) { toast(t("downloadFailed")); return null; }
 }
 $("back").onclick = () => {
   closeEditor();

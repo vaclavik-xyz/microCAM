@@ -45,12 +45,12 @@ final class ViewerModel: ObservableObject {
     @Published private(set) var job = ""
     /// The camera Mac's page has a photo browser (an older one has none).
     @Published private(set) var galleryAvailable = false
-    /// The photo browser over the picture: the camera Mac's photos, by day.
     /// The camera Mac's page can hand over the shown photo (an older one can't).
     @Published private(set) var downloadAvailable = false
     /// The open photo browser is the page's sidebar on the left, `sidebarWidth` wide.
     @Published private(set) var isGalleryDocked = false
     static let sidebarWidth: CGFloat = 320   // --side in StreamPage
+    /// The photo browser over the picture: the camera Mac's photos, by day.
     @Published var isGalleryOpen = false { didSet { send("setGallery(\(isGalleryOpen))", if: isGalleryOpen != oldValue) } }
     weak var webView: WKWebView?
     private var applyingPageState = false
