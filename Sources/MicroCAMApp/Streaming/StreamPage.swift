@@ -980,6 +980,7 @@ async function post(path, body) {
 // Job photos need the PIN header, so they are fetched and shown as blob URLs.
 let shotURL = null, downloadURL = null;
 let savedShapes = null;   // the drawing the download link's copy was saved with
+let pendingCopy = null;   // {drawn, of, ref}: saved on the camera computer, not fetched back yet
 async function fetchCapture(ref) {
   const r = await withPin(p => fetch(ref.url, { headers: { "X-MicroCAM-PIN": p }, cache: "no-store" }));
   if (!r) return null;
@@ -1090,13 +1091,18 @@ async function saveDrawing() {
   $("save").disabled = true;
   try {
     const drawn = JSON.stringify(shapes);
-    const ref = await post("/annotated", { source: frozen.name, folder: frozen.folder || "", shapes });
+    // This drawing was saved but its copy didn't arrive: fetch it again instead of saving it twice.
+    const ref = pendingCopy && pendingCopy.drawn === drawn && pendingCopy.of === frozen ? pendingCopy.ref
+      : await post("/annotated", { source: frozen.name, folder: frozen.folder || "", shapes });
     if (!ref) return false;
-    const fetched = await setDownload(ref);
+    pendingCopy = { drawn, of: frozen, ref };
+    // Saved, but the copy isn't here: a download would hand over the wrong file, and the
+    // failure message (from fetching it) stays instead of "Saved".
+    if (!(await setDownload(ref))) return false;
+    pendingCopy = null;
+    savedShapes = drawn;
     toast(t("savedToJob"), ref.name);
-    // Saved, but the copy isn't here: a download would hand over the wrong file.
-    if (fetched) savedShapes = drawn;
-    return fetched;
+    return true;
   } finally { $("save").disabled = false; }
 }
 $("save").onclick = saveDrawing;
@@ -1292,7 +1298,7 @@ function rowStep(direction) {
   return index < 0 ? 0 : index - (navIndex ?? frozen.index);
 }
 // ---- Space: the photo on its own, full screen; Space or Esc goes back ----
-let fullView = false, pageFullScreen = false;
+let fullView = false, pageFullScreen = false, spaceDown = false;
 function setFullView(v) {
   v = !!v && !!frozen;
   if (v === fullView) return;
@@ -1320,9 +1326,11 @@ document.addEventListener("keydown", e => {
   if (e.key !== " " || !frozen || editing || pinDone || e.metaKey || e.altKey || e.ctrlKey) return;
   if (e.target && /^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return;
   e.preventDefault();   // not a click on the focused button (a tile, Live view…)
+  spaceDown = true;
   if (!e.repeat) setFullView(!fullView);
 });
-document.addEventListener("keyup", e => { if (e.key === " " && frozen && !editing && !(e.target && /^(INPUT|TEXTAREA)$/.test(e.target.tagName))) e.preventDefault(); });
+// Only the Space whose keydown went to the full view: the PIN panel's buttons still take Space.
+document.addEventListener("keyup", e => { if (e.key === " " && spaceDown) { spaceDown = false; e.preventDefault(); } });
 // Esc leaves the full view first (before the sidebar and drawing get it).
 document.addEventListener("keydown", e => {
   if (e.key !== "Escape" || !fullView || pinDone || editing) return;

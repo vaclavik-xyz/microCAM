@@ -114,8 +114,8 @@ final class AppModel: ObservableObject {
     func moveSelection(_ move: GridMove) {
         let grid = library.grid
         let current = grid.anchor.flatMap { grid.selected.contains($0) ? $0 : nil } ?? library.selectedFiles.first
-        guard let target = GridNavigation.target(from: current, move: move, order: library.files,
-                                                 frames: library.tileFrames) else { return }
+        guard let target = GridNavigation.target(from: current, move: move, order: library.files, frames: library.tileFrames,
+                                                 sections: CaptureDays.group(library.files).map(\.files)) else { return }
         library.grid = GridSelection(selected: [target], anchor: target)
         if quickLook.isVisible { preview(library.grid) }
     }

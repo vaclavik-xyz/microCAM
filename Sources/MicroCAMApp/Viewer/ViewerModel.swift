@@ -50,30 +50,60 @@ final class ViewerModel: ObservableObject {
     @Published private(set) var isFullView = false
     /// The window went full screen for the page's full view (not by the user), so leaving it goes back.
     private var windowFullScreenForPage = false
-    private var fullScreenExit: NSObjectProtocol?
+    private var fullScreenObservers: [NSObjectProtocol] = []
 
     /// The page's full view drives the window's full screen; leaving full screen
     /// another way (the green button, Ctrl-⌘-F) ends the page's full view too.
+    /// AppKit ignores a toggle while the window is still animating, so during
+    /// a transition nothing is toggled: when it ends, the window catches up with
+    /// the page (Space pressed twice quickly leaves no full screen behind).
     private func followFullView() {
         guard let window = webView?.window else { return }
+        observeFullScreen(of: window)
+        guard !fullScreenTransition else { return }
         let isFullScreen = window.styleMask.contains(.fullScreen)
         if isFullView, !isFullScreen {
             windowFullScreenForPage = true
             window.toggleFullScreen(nil)
         } else if !isFullView, isFullScreen, windowFullScreenForPage {
-            windowFullScreenForPage = false
+            leavingForPage = true
             window.toggleFullScreen(nil)
         }
-        if fullScreenExit == nil {
-            fullScreenExit = NotificationCenter.default.addObserver(forName: NSWindow.didExitFullScreenNotification, object: window,
-                                                                    queue: .main) { [weak self] _ in
-                MainActor.assumeIsolated {
-                    guard let self else { return }
-                    self.windowFullScreenForPage = false
-                    if self.isFullView { self.send("setFullView(false)") }
-                }
+    }
+
+    private var fullScreenTransition = false
+    /// The window is leaving full screen because the page's full view ended (not the user).
+    private var leavingForPage = false
+
+    private func observeFullScreen(of window: NSWindow) {
+        guard fullScreenObservers.isEmpty else { return }
+        let center = NotificationCenter.default
+        func on(_ name: Notification.Name, _ body: @escaping @MainActor (ViewerModel) -> Void) -> NSObjectProtocol {
+            center.addObserver(forName: name, object: window, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { if let self { body(self) } }
             }
         }
+        fullScreenObservers = [
+            on(NSWindow.willEnterFullScreenNotification) { $0.fullScreenTransition = true },
+            on(NSWindow.willExitFullScreenNotification) { $0.fullScreenTransition = true },
+            // A toggle inside this notification is still ignored: catch up on the next turn.
+            on(NSWindow.didEnterFullScreenNotification) { model in
+                model.fullScreenTransition = false
+                DispatchQueue.main.async { [weak model] in MainActor.assumeIsolated { model?.followFullView() } }
+            },
+            on(NSWindow.didExitFullScreenNotification) { model in
+                model.fullScreenTransition = false
+                model.windowFullScreenForPage = false
+                let ours = model.leavingForPage
+                model.leavingForPage = false
+                // Left by the user while the page showed its full view: end it there too.
+                if model.isFullView, !ours {
+                    model.send("setFullView(false)")
+                } else {
+                    DispatchQueue.main.async { [weak model] in MainActor.assumeIsolated { model?.followFullView() } }
+                }
+            },
+        ]
     }
 
     /// The camera Mac's page can hand over the shown photo (an older one can't).

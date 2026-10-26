@@ -33,12 +33,22 @@ final class GridNavigationTests: XCTestCase {
         XCTAssertNil(target("e", .down))
     }
 
-    /// Rows off screen aren't laid out: as many captures on as the row is wide.
-    func testFallsBackToTheRowWidthWithoutFrames() {
+    /// Rows off screen aren't laid out: rows of the current row's width, each day starting a new row.
+    func testFallsBackToRowsWithinEachDayWithoutFrames() {
+        let days = [["a", "b", "c"], ["d", "e"]]
         let onScreen = ["a": frames["a"]!, "b": frames["b"]!]
-        XCTAssertEqual(target("a", .down, frames: onScreen), "c")
-        XCTAssertEqual(target("b", .down, frames: onScreen), "d")
-        XCTAssertEqual(target("c", .down, frames: [:]), "d")
+        func target(_ from: String, _ move: GridMove, _ frames: [String: CGRect]) -> String? {
+            GridNavigation.target(from: from, move: move, order: order, frames: frames, sections: days)
+        }
+        XCTAssertEqual(target("a", .down, onScreen), "c")
+        XCTAssertEqual(target("b", .down, onScreen), "c")   // the shorter row below: its last tile, not d
+        let lastRow = ["c": frames["c"]!, "x": CGRect(x: 110, y: 80, width: 100, height: 70)]
+        XCTAssertEqual(target("c", .down, lastRow), "d")    // into the next day's first row
+        let nextDay = ["d": frames["d"]!, "e": frames["e"]!]
+        XCTAssertEqual(target("e", .up, nextDay), "c")      // the previous day's last row, clamped
+        XCTAssertEqual(target("d", .up, nextDay), "c")
+        XCTAssertNil(target("a", .up, onScreen))
+        XCTAssertNil(target("e", .down, nextDay))
     }
 
     func testNothingSelectedStartsAtTheFirst() {
